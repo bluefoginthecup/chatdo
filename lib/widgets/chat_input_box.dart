@@ -21,7 +21,6 @@ class ChatInputBox extends StatefulWidget {
 class _ChatInputBoxState extends State<ChatInputBox> {
   Mode? _selectedMode;
   DateTag? _selectedDateTag;
-  final List<String> _messageLog = [];
 
   List<DateTag> get currentDateOptions => _selectedMode == Mode.todo
       ? [DateTag.today, DateTag.tomorrow]
@@ -55,11 +54,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     if (text.isEmpty || _selectedMode == null || _selectedDateTag == null) return;
 
     widget.onSubmitted(text, _selectedMode!, resolveDate(_selectedDateTag!));
-
-    setState(() {
-      _messageLog.add(text);
-      widget.controller.clear();
-    });
+    widget.controller.clear();
   }
 
   @override
@@ -101,36 +96,53 @@ class _ChatInputBoxState extends State<ChatInputBox> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        ..._messageLog.map((msg) => Align(
-          alignment: Alignment.centerRight,
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 2),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.teal.shade100,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(msg),
-          ),
-        )),
       ],
     );
   }
 
+  ButtonStyle _buttonStyle({
+    required bool isSelected,
+    required Color baseColor,
+  }) {
+    return OutlinedButton.styleFrom(
+      backgroundColor: isSelected ? Colors.teal.shade100 : baseColor,
+      side: BorderSide(color: isSelected ? Colors.teal : Colors.grey),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      minimumSize: const Size(0, 36),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
   Widget _buildModeButton(Mode mode, String label) {
+    final bool isSelected = _selectedMode == mode;
+    final Color baseColor = Colors.amber.shade100;
+
     return OutlinedButton(
-      onPressed: () {
+      onPressed: () async {
         setState(() {
           _selectedMode = mode;
           _selectedDateTag = null;
         });
+        await Future.delayed(const Duration(milliseconds: 150));
+        if (mounted) {
+          setState(() {});
+        }
       },
-      child: Text(label),
+      style: _buttonStyle(isSelected: isSelected, baseColor: baseColor),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.teal.shade900 : Colors.black,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
     );
   }
 
   Widget _buildDateButton(DateTag tag) {
+    final bool isSelected = _selectedDateTag == tag;
+    final Color baseColor = Colors.teal.shade50;
+
     return OutlinedButton(
       onPressed: () {
         setState(() {
@@ -142,10 +154,14 @@ class _ChatInputBoxState extends State<ChatInputBox> {
           }
         });
       },
-      style: OutlinedButton.styleFrom(
-        backgroundColor: _selectedDateTag == tag ? Colors.teal.shade100 : null,
+      style: _buttonStyle(isSelected: isSelected, baseColor: baseColor),
+      child: Text(
+        getDateTagLabel(tag),
+        style: TextStyle(
+          color: isSelected ? Colors.teal.shade900 : Colors.black,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
-      child: Text(getDateTagLabel(tag)),
     );
   }
 }
