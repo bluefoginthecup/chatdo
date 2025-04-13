@@ -8,33 +8,36 @@ import 'screens/done_list_screen.dart';
 import 'providers/schedule_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_screen.dart';
 
-void main()
-  async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp();
-    initializeDateFormatting('ko_KR', null); // 한국어 로케일 초기화
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  initializeDateFormatting('ko_KR', null);
 
-    runApp(
-      ChangeNotifierProvider(
-        create: (_) => ScheduleProvider(),
-        child: const ChatDoApp(),
-      ),
-    );
-  }
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ScheduleProvider(),
+      child: const ChatDoApp(),
+    ),
+  );
+}
 
 class ChatDoApp extends StatelessWidget {
   const ChatDoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return MaterialApp(
       title: 'ChatDo',
       theme: ThemeData(
         primarySwatch: Colors.teal,
         useMaterial3: true,
       ),
-      home: const MainTabController(),
+      home: user == null ? const LoginScreen() : const MainTabController(),
     );
   }
 }
@@ -57,13 +60,6 @@ class _MainTabControllerState extends State<MainTabController> {
     const DoneListScreen(),
   ];
 
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   final List<BottomNavigationBarItem> _bottomItems = const [
     BottomNavigationBarItem(icon: Icon(Icons.chat), label: '홈'),
     BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: '캘린더'),
@@ -71,9 +67,54 @@ class _MainTabControllerState extends State<MainTabController> {
     BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: '한일'),
   ];
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Future<void> _confirmAndLogout() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('정말 로그아웃하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      await FirebaseAuth.instance.signOut();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('ChatDo'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: '로그아웃',
+            onPressed: _confirmAndLogout,
+          ),
+        ],
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: _bottomItems,
