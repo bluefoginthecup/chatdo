@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 
 class TodoListScreen extends StatefulWidget {
   const TodoListScreen({super.key});
@@ -16,6 +17,19 @@ class _TodoListScreenState extends State<TodoListScreen> {
   List<Map<String, dynamic>> _todoList = [];
   Set<int> _editingIndices = {};
   Map<int, TextEditingController> _editingControllers = {};
+
+  final List<String> _celebrationMessages = [
+    '🎉 할일 완료! 수고하셨습니다!',
+    '👏 잘했어요! 하나 끝!',
+    '✅ 똑똑하게 처리했네요!',
+    '🌟 완벽해요! 계속 이어가요!',
+    '💪 굿잡! 다음도 화이팅!',
+    '🙌 멋지게 해냈어요!',
+    '🥳 좋아요! 하나 더 도전?',
+    '🧠 똑똑한 선택이었어요!',
+    '🕊️ 마음이 한결 가볍겠네요!',
+    '🔥 완전 집중모드였어요!'
+  ];
 
   @override
   void initState() {
@@ -67,6 +81,25 @@ class _TodoListScreenState extends State<TodoListScreen> {
         .collection('logs')
         .doc(docId)
         .update({'mode': 'done'});
+
+    final random = Random();
+    final message = _celebrationMessages[random.nextInt(_celebrationMessages.length)];
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.green.shade200,
+          content: Text(
+            message,
+            style: TextStyle(
+              color: Colors.black, // 🖤 글자색: 블랙
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      );
+    }
 
     _fetchTodosForDate(_currentDate);
   }
@@ -130,7 +163,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 onPressed: () => _changeDateBy(-1),
               ),
               Text(
-                '$formattedDate 할일 목록',
+                '$formattedDate',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               IconButton(

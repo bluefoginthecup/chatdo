@@ -55,6 +55,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return _messagesByDate[dateString] ?? [];
   }
 
+  Widget _buildDot(Color color) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 1),
+      width: 6,
+      height: 6,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedMessages = _getMessagesForDay(_selectedDay ?? _focusedDay);
@@ -83,6 +95,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 color: Colors.orange,
                 shape: BoxShape.circle,
               ),
+            ),
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, date, events) {
+                final messages = _getMessagesForDay(date);
+                final hasTodo = messages.any((m) => m['mode'] == 'todo');
+                final hasDone = messages.any((m) => m['mode'] == 'done');
+
+                List<Widget> markers = [];
+                if (hasTodo) markers.add(_buildDot(Colors.red));
+                if (hasDone) markers.add(_buildDot(Colors.grey));
+
+                if (markers.isEmpty) return null;
+
+                return Positioned(
+                  bottom: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: markers,
+                  ),
+                );
+              },
             ),
           ),
           const SizedBox(height: 12),
@@ -115,3 +148,5 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
+
+class Event {}
