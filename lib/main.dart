@@ -10,11 +10,23 @@ import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
+import 'models/message.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   initializeDateFormatting('ko_KR', null);
+
+  // ✅ Hive 초기화
+  await Hive.initFlutter();
+
+  // ✅ 어댑터 등록
+  Hive.registerAdapter(MessageAdapter());
+
+  // ✅ 메시지 박스 열기
+  await Hive.openBox<Message>('messages');
 
   runApp(
     ChangeNotifierProvider(

@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import '../providers/schedule_provider.dart';
 import '../models/schedule_entry.dart';
 import '../widgets/chat_input_box.dart';
+import '../services/message_service.dart';
+
 
 class HomeChatScreen extends StatefulWidget {
   const HomeChatScreen({super.key});
@@ -192,6 +194,41 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
               child: ChatInputBox(
                 controller: _controller,
                 onSubmitted: _handleSendMessage,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      final now = DateTime.now();
+                      final dateStr = now.toIso8601String().substring(0, 10);
+                      await MessageService.addMessage(
+                        'Hive 저장 테스트 메시지',
+                        '할일',
+                        dateStr,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('✅ Hive에 메시지 저장됨')),
+                      );
+                    },
+                    child: const Text("Hive 저장"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      final list = MessageService.getAllMessages();
+                      for (final m in list) {
+                        debugPrint('${m.id} | ${m.text} | ${m.date}');
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('📤 ${list.length}개 메시지 콘솔 출력')),
+                      );
+                    },
+                    child: const Text("Hive 조회"),
+                  ),
+                ],
               ),
             ),
           ],
