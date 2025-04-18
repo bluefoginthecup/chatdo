@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import '../models/message.dart';
+import 'sync_service.dart'; // ✅ 반드시 추가
 
 class MessageService {
   static final _uuid = Uuid();
@@ -16,6 +17,15 @@ class MessageService {
     );
 
     await _box.add(message);
+
+    // ✅ syncQueue에도 등록
+    await SyncService.addEvent("add_message", {
+      "id": message.id,
+      "text": message.text,
+      "type": message.type,
+      "date": message.date,
+      "timestamp": message.timestamp,
+    });
   }
 
   static List<Message> getAllMessages() {

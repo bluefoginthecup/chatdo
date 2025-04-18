@@ -66,6 +66,8 @@ class _DoneListScreenState extends State<DoneListScreen> {
       'content': doc['content'] as String,
     }).toList();
 
+    if (!mounted) return;
+
     setState(() {
       _doneList = dones;
       _editingIndices.clear();

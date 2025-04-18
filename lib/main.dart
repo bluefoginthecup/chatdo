@@ -5,6 +5,7 @@ import 'screens/home_chat_screen.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/todo_list_screen.dart';
 import 'screens/done_list_screen.dart';
+import 'screens/room_screen.dart'; // ✅ 아가씨의 방 추가
 import 'providers/schedule_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -12,7 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 import 'models/message.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
+import 'package:hive/hive.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ void main() async {
 
   // ✅ 메시지 박스 열기
   await Hive.openBox<Message>('messages');
+  await Hive.openBox<Map>('syncQueue');
 
   runApp(
     ChangeNotifierProvider(
@@ -64,12 +66,12 @@ class MainTabController extends StatefulWidget {
 class _MainTabControllerState extends State<MainTabController> {
   int _selectedIndex = 0;
 
-
   final List<Widget> _pages = [
     const HomeChatScreen(),
     const CalendarScreen(),
     const TodoListScreen(),
     const DoneListScreen(),
+    const RoomScreen(), // ✅ 아가씨의 방 추가
   ];
 
   final List<BottomNavigationBarItem> _bottomItems = const [
@@ -77,6 +79,7 @@ class _MainTabControllerState extends State<MainTabController> {
     BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: '캘린더'),
     BottomNavigationBarItem(icon: Icon(Icons.list), label: '할일'),
     BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: '한일'),
+    BottomNavigationBarItem(icon: Icon(Icons.bedroom_baby), label: '방'), // ✅ 방 탭 추가
   ];
 
   void _onItemTapped(int index) {
