@@ -3,6 +3,7 @@ import 'package:flame/game.dart';
 import 'girl_sprite.dart';
 import 'jordy_sprite.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 
 class RoomGame extends FlameGame {
   late GirlSprite girl;
@@ -15,6 +16,8 @@ class RoomGame extends FlameGame {
   Future<void> onLoad() async {
     print("🧱 RoomGame size = $size");
     print("📱 canvasSize = $canvasSize");
+    print("📐 gameRef.size: $size");
+    print("🔍 devicePixelRatio = ${ui.window.devicePixelRatio}");
 
     await images.loadAll([
       'background.png',
@@ -37,4 +40,13 @@ class RoomGame extends FlameGame {
     jordy = JordySprite(position: Vector2(200, 150));
     add(jordy);
   }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    final paint = Paint()..color = const Color(0x55FF0000);
+    canvas.drawRect(size.toRect(), paint); // ✅ 게임 화면 전체 빨간 박스로
+  }
+
 }
+
