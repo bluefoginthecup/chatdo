@@ -2,10 +2,15 @@
 
 import 'package:flutter/material.dart';
 import '../models/schedule_entry.dart';
+import '../models/game_sync_data.dart';
 
 class ScheduleProvider with ChangeNotifier {
   final List<ScheduleEntry> _todos = [];
   final List<ScheduleEntry> _dones = [];
+
+  int point = 0;
+  int level = 1;
+  int _previousLevel = 1;
 
   List<ScheduleEntry> get todos {
     final sorted = [..._todos];
@@ -24,6 +29,9 @@ class ScheduleProvider with ChangeNotifier {
       _todos.add(entry);
     } else {
       _dones.add(entry);
+      point += 10;
+      _previousLevel = level;
+      level = 1 + (point ~/ 100);
     }
     notifyListeners();
   }
@@ -39,7 +47,44 @@ class ScheduleProvider with ChangeNotifier {
       content: entry.content,
       createdAt: entry.createdAt,
     ));
-    notifyListeners();  // 상태 업데이트
+    point += 10;
+    _previousLevel = level;
+    level = 1 + (point ~/ 100);
+    notifyListeners();
   }
 
+  int calculateStreak() {
+    final today = DateTime.now();
+    int streak = 0;
+    for (int i = 0; i < 30; i++) {
+      final date = today.subtract(Duration(days: i));
+      final hasDone = _dones.any((e) => _isSameDay(e.date, date));
+      if (hasDone) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  GameSyncData getGameSyncData() {
+    final today = DateTime.now();
+    final completedToday = _dones.any((e) => _isSameDay(e.date, today));
+    final lastTodoText = _dones.isNotEmpty ? _dones.last.content : null;
+
+    return GameSyncData(
+      point: point,
+      level: level,
+      completedCount: _dones.length,
+      consecutiveDays: calculateStreak(),
+      lastTodoText: lastTodoText,
+      leveledUp: level > _previousLevel,
+      completedToday: completedToday,
+    );
+  }
 }
