@@ -6,12 +6,14 @@ enum DateTag { today, tomorrow, yesterday }
 
 class ChatInputBox extends StatefulWidget {
   final TextEditingController controller;
+  final FocusNode? focusNode;
   final void Function(String text, Mode mode, DateTime date) onSubmitted;
 
   const ChatInputBox({
     super.key,
     required this.controller,
     required this.onSubmitted,
+    this.focusNode,
   });
 
   @override
@@ -19,8 +21,8 @@ class ChatInputBox extends StatefulWidget {
 }
 
 class _ChatInputBoxState extends State<ChatInputBox> {
-  Mode? _selectedMode;
-  DateTag? _selectedDateTag;
+  Mode? _selectedMode = Mode.todo;
+  DateTag? _selectedDateTag = DateTag.today;
 
   List<DateTag> get currentDateOptions => _selectedMode == Mode.todo
       ? [DateTag.today, DateTag.tomorrow]
@@ -53,6 +55,10 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     final text = widget.controller.text.trim();
     if (text.isEmpty || _selectedMode == null || _selectedDateTag == null) return;
 
+    // 키보드 자동 닫기
+    FocusScope.of(context).unfocus(); // 🔹 요 줄 추가
+
+
     widget.onSubmitted(text, _selectedMode!, resolveDate(_selectedDateTag!));
     widget.controller.clear();
   }
@@ -81,6 +87,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
             Expanded(
               child: TextField(
                 controller: widget.controller,
+                focusNode: widget.focusNode,
                 onSubmitted: (_) => _handleSubmit(),
                 decoration: const InputDecoration(
                   hintText: '메시지를 입력하세요',

@@ -30,6 +30,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
   late final Connectivity _connectivity;
   late final Stream<ConnectivityResult> _connectivityStream;
   late final StreamSubscription<ConnectivityResult> _subscription;
+  final FocusNode _focusNode = FocusNode();
 
 
   @override
@@ -106,6 +107,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -213,6 +215,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
               padding: const EdgeInsets.all(16.0),
               child: ChatInputBox(
                 controller: _controller,
+                focusNode: _focusNode,
                 onSubmitted: _handleSendMessage,
               ),
             ),

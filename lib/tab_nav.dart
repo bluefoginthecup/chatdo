@@ -12,7 +12,7 @@ class MainTabController extends StatefulWidget {
   State<MainTabController> createState() => _MainTabControllerState();
 }
 
-class _MainTabControllerState extends State<MainTabController> {
+class _MainTabControllerState extends State<MainTabController> with WidgetsBindingObserver {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = const [
@@ -30,6 +30,27 @@ class _MainTabControllerState extends State<MainTabController> {
     BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: '한일'),
     BottomNavigationBarItem(icon: Icon(Icons.bedroom_baby), label: '방'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {
+        _selectedIndex = 0;
+      });
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
