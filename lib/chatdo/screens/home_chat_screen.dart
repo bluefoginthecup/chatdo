@@ -89,18 +89,18 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   Future<void> _handleSendMessage(String text, Mode mode, DateTime date) async {
     if (text.trim().isEmpty || _userId == null) return;
 
+    final now = DateTime.now();
     final entry = ScheduleEntry(
       content: text,
       date: date,
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
+      createdAt: now,
     );
     Provider.of<ScheduleProvider>(context, listen: false).addEntry(entry);
     _controller.clear();
 
     _focusNode.unfocus(); // 메시지 전송 시 포커스 해제
     _shouldRefocusOnResume = true; // 다시 앱 열면 포커스 재개
-
-    final now = DateTime.now();
 
     await FirebaseFirestore.instance
         .collection('messages')
