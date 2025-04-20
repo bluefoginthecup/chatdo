@@ -44,7 +44,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       anchor: Anchor.topLeft,
       priority: 101,
       textRenderer: TextPaint(
-        style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 14),
+        style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 20),
       ),
     );
 
