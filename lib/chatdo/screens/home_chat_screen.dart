@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore는 추후 sync에 사용 가능
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,8 +13,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 import '../services/sync_service.dart';
 
-
-
 class HomeChatScreen extends StatefulWidget {
   const HomeChatScreen({super.key});
 
@@ -22,42 +20,54 @@ class HomeChatScreen extends StatefulWidget {
   State<HomeChatScreen> createState() => _HomeChatScreenState();
 }
 
-class _HomeChatScreenState extends State<HomeChatScreen> {
+class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObserver {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _focusNode = FocusNode();
   List<Map<String, dynamic>> _messageLog = [];
   String? _userId;
   late final Connectivity _connectivity;
   late final Stream<ConnectivityResult> _connectivityStream;
   late final StreamSubscription<ConnectivityResult> _subscription;
-  final FocusNode _focusNode = FocusNode();
-
+  bool _shouldRefocusOnResume = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
-    _loadMessagesFromHive(); // ✅ Hive 메시지 불러오기
-    SyncService.uploadAllIfConnected(); // 앱 실행 시 초기 1회 동기화
+    _loadMessagesFromHive();
+    SyncService.uploadAllIfConnected();
 
-    // ✅ 네트워크 변화 감지해서 자동 업로드
+    // 자동 포커스 (앱 처음 실행 시)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+
     _connectivity = Connectivity();
     _connectivityStream = _connectivity.onConnectivityChanged;
     _subscription = _connectivityStream.listen((result) {
       if (result != ConnectivityResult.none) {
-        SyncService.uploadAllIfConnected(); // 인터넷 연결되면 동기화
+        SyncService.uploadAllIfConnected();
       }
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _subscription.cancel();
+    _focusNode.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _shouldRefocusOnResume) {
+      _focusNode.requestFocus();
+    }
+  }
 
-  // ✅ Hive에서 메시지를 불러오는 함수
   Future<void> _loadMessagesFromHive() async {
     final box = Hive.box<Message>('messages');
     final loaded = box.values.toList();
@@ -76,7 +86,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
     _scrollToBottom();
   }
 
-  // 🔁 아직 Firestore도 쓰고 있다면 (향후 syncQueue로 옮기기 예정)
   Future<void> _handleSendMessage(String text, Mode mode, DateTime date) async {
     if (text.trim().isEmpty || _userId == null) return;
 
@@ -88,9 +97,11 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
     Provider.of<ScheduleProvider>(context, listen: false).addEntry(entry);
     _controller.clear();
 
+    _focusNode.unfocus(); // 메시지 전송 시 포커스 해제
+    _shouldRefocusOnResume = true; // 다시 앱 열면 포커스 재개
+
     final now = DateTime.now();
 
-    // ✅ 향후에는 Hive + syncQueue로 대체할 수 있음
     await FirebaseFirestore.instance
         .collection('messages')
         .doc(_userId)
@@ -102,12 +113,11 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
       'timestamp': now.toIso8601String(),
     });
 
-    await _loadMessagesFromHive(); // ✅ Hive 기준으로 다시 로딩
+    await _loadMessagesFromHive();
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNode.requestFocus();
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -219,70 +229,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> {
                 onSubmitted: _handleSendMessage,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                // mainAxisAlignment는 Expanded로 감싸서 공간을 균등하게 차지하므로 생략해도 무방합니다.
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final now = DateTime.now();
-                        final dateStr = now.toIso8601String().substring(0, 10);
-                        await MessageService.addMessage(
-                          'Hive 저장 테스트 메시지',
-                          '할일',
-                          dateStr,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('✅ Hive에 메시지 저장됨')),
-                        );
-                        await _loadMessagesFromHive(); // 저장 후 새로 불러오기
-                      },
-                      child: const Text("Hive 저장"),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final list = MessageService.getAllMessages();
-                        for (final m in list) {
-                          debugPrint('${m.id} | ${m.text} | ${m.date}');
-                        }
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('📤 ${list.length}개 메시지 콘솔 출력')),
-                        );
-                      },
-                      child: const Text("Hive 조회"),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final syncBox = Hive.box<Map>('syncQueue');
-                        await syncBox.add({
-                          "type": "add_message",
-                          "data": {
-                            "id": "1234",
-                            "text": "테스트 메시지",
-                            "type": "할일",
-                            "date": "2025-04-14",
-                            "timestamp": DateTime.now().millisecondsSinceEpoch,
-                          },
-                          "timestamp": DateTime.now().millisecondsSinceEpoch,
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('✅ syncQueue에 메시지 추가됨')),
-                        );
-                      },
-                      child: const Text("SyncQueue 테스트"),
-                    ),
-                  ),
-                ],
-              ),
-            )
           ],
         ),
       ),

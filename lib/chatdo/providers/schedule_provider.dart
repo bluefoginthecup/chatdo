@@ -7,8 +7,17 @@ class ScheduleProvider with ChangeNotifier {
   final List<ScheduleEntry> _todos = [];
   final List<ScheduleEntry> _dones = [];
 
-  List<ScheduleEntry> get todos => List.unmodifiable(_todos);
-  List<ScheduleEntry> get dones => List.unmodifiable(_dones);
+  List<ScheduleEntry> get todos {
+    final sorted = [..._todos];
+    sorted.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return List.unmodifiable(sorted);
+  }
+
+  List<ScheduleEntry> get dones {
+    final sorted = [..._dones];
+    sorted.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    return List.unmodifiable(sorted);
+  }
 
   void addEntry(ScheduleEntry entry) {
     if (entry.type == ScheduleType.todo) {
@@ -28,15 +37,9 @@ class ScheduleProvider with ChangeNotifier {
       date: entry.date,
       type: ScheduleType.done,
       content: entry.content,
+      createdAt: entry.createdAt,
     ));
     notifyListeners();  // 상태 업데이트
-  }
-
-  // 완료한 일 목록을 최신순으로 정렬
-  List<ScheduleEntry> get sortedDones {
-    // 날짜 기준으로 내림차순 정렬
-    _dones.sort((a, b) => b.date.compareTo(a.date));
-    return _dones;
   }
 
 }
