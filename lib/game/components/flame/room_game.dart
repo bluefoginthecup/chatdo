@@ -33,20 +33,12 @@ class RoomGame extends FlameGame {
     add(bg);
 
     // 아가씨
-    girl = GirlSprite(position: Vector2(100, 150));
+    girl = GirlSprite(position: Vector2(0, 400));
     add(girl);
 
     // 죠르디
-    jordy = JordySprite(position: Vector2(200, 150));
+    jordy = JordySprite(position: Vector2(250, 400));
     add(jordy);
   }
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    final paint = Paint()..color = const Color(0x55FF0000);
-    canvas.drawRect(size.toRect(), paint); // ✅ 게임 화면 전체 빨간 박스로
-  }
-
 }
 

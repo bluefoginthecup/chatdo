@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class JordySprite extends SpriteComponent with HasGameRef {
   JordySprite({required Vector2 position})
       : super(
-    size: Vector2.all(64),
+    size: Vector2.all(128),
     position: position,
   );
 
@@ -17,13 +17,13 @@ class JordySprite extends SpriteComponent with HasGameRef {
 
     speechBubble = TextComponent(
       text: '어서 오세요, 아가씨!',
-      position: Vector2(position.x, position.y - 20),
+      position: Vector2(position.x - 200, position.y - 400),
       anchor: Anchor.bottomCenter,
       textRenderer: TextPaint(
         style: const TextStyle(
           color: Colors.white,
           backgroundColor: Colors.black87,
-          fontSize: 12,
+          fontSize: 20,
         ),
       ),
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../auth_service.dart';// AuthService 임포트
+import '/chatdo/services/auth_service.dart';// AuthService 임포트
 import 'home_chat_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
