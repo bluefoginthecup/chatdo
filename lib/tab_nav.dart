@@ -5,6 +5,7 @@ import 'chatdo/screens/todo_list_screen.dart';
 import 'chatdo/screens/done_list_screen.dart';
 import 'chatdo/screens/room_screen.dart';
 
+
 class MainTabController extends StatefulWidget {
   const MainTabController({super.key});
 
@@ -16,7 +17,7 @@ class _MainTabControllerState extends State<MainTabController> with WidgetsBindi
   int _selectedIndex = 0;
 
   final List<Widget> _pages = const [
-    HomeChatScreen(),
+    HomeChatScreen(gameController: gameController),
     CalendarScreen(),
     TodoListScreen(),
     DoneListScreen(),

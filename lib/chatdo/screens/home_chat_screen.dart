@@ -12,9 +12,11 @@ import '../services/message_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 import '../services/sync_service.dart';
+import '/game/core/game_controller.dart';
 
 class HomeChatScreen extends StatefulWidget {
-  const HomeChatScreen({super.key});
+  final GameController gameController;
+  const HomeChatScreen({super.key, required this.gameController});
 
   @override
   State<HomeChatScreen> createState() => _HomeChatScreenState();
@@ -96,22 +98,22 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
     );
-    Provider.of<ScheduleProvider>(context, listen: false).addEntry(entry);
+
+    final provider = context.read<ScheduleProvider>();
+    if (entry.type == ScheduleType.done) {
+      await provider.completeTodoEntry(
+        entry: entry,
+        gameController: widget.gameController,
+        firestore: FirebaseFirestore.instance,
+        userId: _userId!,
+      );
+    } else {
+      provider.addEntry(entry);
+    }
+
     _controller.clear();
-
-    _focusNode.unfocus(); // 메시지 전송 시 포커스 해제
-    _shouldRefocusOnResume = true; // 다시 앱 열면 포커스 재개
-
-    await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(_userId)
-        .collection('logs')
-        .add({
-      'content': text,
-      'mode': mode.name,
-      'date': date.toIso8601String().substring(0, 10),
-      'timestamp': now.toIso8601String(),
-    });
+    _focusNode.unfocus();
+    _shouldRefocusOnResume = true;
 
     await _loadMessagesFromHive();
   }

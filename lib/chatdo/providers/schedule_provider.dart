@@ -1,8 +1,11 @@
-// lib/providers/schedule_provider.dart
+// schedule_provider.dart
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/schedule_entry.dart';
 import '../models/game_sync_data.dart';
+import '../../game/core/game_controller.dart';
 
 class ScheduleProvider with ChangeNotifier {
   final List<ScheduleEntry> _todos = [];
@@ -38,9 +41,7 @@ class ScheduleProvider with ChangeNotifier {
 
   // 할일에서 한일로 이동
   void moveToDone(ScheduleEntry entry) {
-    // 할일 목록에서 제거
     _todos.remove(entry);
-    // 한일 목록에 추가
     _dones.add(ScheduleEntry(
       date: entry.date,
       type: ScheduleType.done,
@@ -51,6 +52,39 @@ class ScheduleProvider with ChangeNotifier {
     _previousLevel = level;
     level = 1 + (point ~/ 100);
     notifyListeners();
+  }
+
+  Future<void> completeTodoEntry({
+    required ScheduleEntry entry,
+    required GameController gameController,
+    required FirebaseFirestore firestore,
+    required String userId,
+  }) async {
+    _todos.remove(entry);
+    final doneEntry = ScheduleEntry(
+      content: entry.content,
+      date: entry.date,
+      createdAt: entry.createdAt,
+      type: ScheduleType.done,
+    );
+    _dones.add(doneEntry);
+    point += 10;
+    _previousLevel = level;
+    level = 1 + (point ~/ 100);
+    notifyListeners();
+
+    gameController.sync(getGameSyncData());
+
+    await firestore
+        .collection('messages')
+        .doc(userId)
+        .collection('logs')
+        .add({
+      'content': doneEntry.content,
+      'mode': 'done',
+      'date': doneEntry.date.toIso8601String().substring(0, 10),
+      'timestamp': doneEntry.createdAt.toIso8601String(),
+    });
   }
 
   int calculateStreak() {
