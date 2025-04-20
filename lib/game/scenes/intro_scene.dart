@@ -10,6 +10,7 @@ import '../story/dialogue_chapter0.dart';
 class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGame> {
   int _dialogueIndex = 0;
   late TextBoxComponent _textBox;
+  late TextComponent _speakerName;
   late RectangleComponent _textBackground;
   late RectangleComponent _overlayDim;
   late TimerComponent _blinkTimer;
@@ -35,6 +36,18 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     final textBoxHeight = 100.0;
     final textBoxPosition = Vector2(5, gameRef.size.y - textBoxHeight - 60);
 
+    final current = dialogueChapter0[_dialogueIndex];
+
+    _speakerName = TextComponent(
+      text: current["speaker"]!,
+      position: textBoxPosition + Vector2(10, -24),
+      anchor: Anchor.topLeft,
+      priority: 101,
+      textRenderer: TextPaint(
+        style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 14),
+      ),
+    );
+
     _textBackground = RectangleComponent(
       position: textBoxPosition,
       size: Vector2(textBoxWidth, textBoxHeight),
@@ -42,9 +55,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       priority: 99,
     );
 
-    final current = dialogueChapter0[_dialogueIndex];
     _textBox = TextBoxComponent(
-      text: '${current["speaker"]}: ${current["line"]}',
+      text: current["line"]!,
       boxConfig: TextBoxConfig(
         maxWidth: textBoxWidth - 32,
         timePerChar: 0.0,
@@ -82,6 +94,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       _overlayDim,
       _jordyCloseup,
       _textBackground,
+      _speakerName,
       _textBox,
       _blinkTimer,
     ]);
@@ -94,7 +107,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     if (_dialogueIndex < dialogueChapter0.length - 1) {
       _dialogueIndex++;
       final current = dialogueChapter0[_dialogueIndex];
-      _textBox.text = '${current["speaker"]}: ${current["line"]}';
+      _speakerName.text = current["speaker"]!;
+      _textBox.text = current["line"]!;
       final prefs = await SharedPreferences.getInstance();
       prefs.setInt('intro_dialogue_index', _dialogueIndex);
     } else {
@@ -110,7 +124,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     if (_dialogueIndex > 0) {
       _dialogueIndex--;
       final current = dialogueChapter0[_dialogueIndex];
-      _textBox.text = '${current["speaker"]}: ${current["line"]}';
+      _speakerName.text = current["speaker"]!;
+      _textBox.text = current["line"]!;
       final prefs = await SharedPreferences.getInstance();
       prefs.setInt('intro_dialogue_index', _dialogueIndex);
       _updateCharacterVisuals();
