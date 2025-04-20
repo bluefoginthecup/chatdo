@@ -1,23 +1,26 @@
+
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
+import 'package:flame/input.dart';
+import '../../scenes/intro_scene.dart';
 import 'girl_sprite.dart';
 import 'jordy_sprite.dart';
-import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
+import 'dart:ui'; // ✅ Color를 위한 올바른 import
 
-class RoomGame extends FlameGame {
+class RoomGame extends FlameGame with HasCollisionDetection {
   late GirlSprite girl;
   late JordySprite jordy;
+  late IntroScene _introScene;
 
   @override
-  Color backgroundColor() => const Color(0xFF111111); // 진한 회색
+  Color backgroundColor() => const Color(0xFF111111);
 
   @override
   Future<void> onLoad() async {
-    print("🧱 RoomGame size = $size");
-    print("📱 canvasSize = $canvasSize");
-    print("📐 gameRef.size: $size");
-    print("🔍 devicePixelRatio = ${ui.window.devicePixelRatio}");
+    print("🧱 RoomGame size = \$size");
+    print("📱 canvasSize = \$canvasSize");
+    print("📐 gameRef.size: \$size");
+    print("🔍 devicePixelRatio = \${window.devicePixelRatio}");
 
     await images.loadAll([
       'background.png',
@@ -39,6 +42,9 @@ class RoomGame extends FlameGame {
     // 죠르디
     jordy = JordySprite(position: Vector2(250, 400));
     add(jordy);
+
+    // 인트로 대사
+    _introScene = IntroScene();
+    await add(_introScene);
   }
 }
-

@@ -1,0 +1,36 @@
+name: Flutter CI
+
+# main 브랜치에 push되거나 pull request가 열릴 때 실행
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) 코드를 checkout
+      - uses: actions/checkout@v3
+
+      # 2) Flutter 설치
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      # 3) 의존성 가져오기
+      - run: flutter pub get
+
+      # 4) 정적 분석
+      - run: flutter analyze
+
+      # 5) 테스트 실행
+      - run: flutter test --coverage
+
+      # 6) APK(안드로이드) 빌드 (샘플)
+      - run: flutter build apk --release
+
+      # 7) IPA(iOS) 빌드 (샘플, macOS 러너가 필요)
+      # - run: flutter build ios --no-codesign
