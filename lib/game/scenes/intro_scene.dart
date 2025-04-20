@@ -43,7 +43,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     );
 
     _textBox = TextBoxComponent(
-      text: dialogueChapter0[_dialogueIndex],
+      text: dialogueChapter0[_dialogueIndex]["line"]!,
       boxConfig: TextBoxConfig(
         maxWidth: textBoxWidth - 32,
         timePerChar: 0.0,
@@ -92,7 +92,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   void _nextDialogue() async {
     if (_dialogueIndex < dialogueChapter0.length - 1) {
       _dialogueIndex++;
-      _textBox.text = dialogueChapter0[_dialogueIndex];
+      _textBox.text = dialogueChapter0[_dialogueIndex]["line"]!;
       final prefs = await SharedPreferences.getInstance();
       prefs.setInt('intro_dialogue_index', _dialogueIndex);
     } else {
@@ -107,7 +107,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   void _previousDialogue() async {
     if (_dialogueIndex > 0) {
       _dialogueIndex--;
-      _textBox.text = dialogueChapter0[_dialogueIndex];
+      _textBox.text = dialogueChapter0[_dialogueIndex]["line"]!;
       final prefs = await SharedPreferences.getInstance();
       prefs.setInt('intro_dialogue_index', _dialogueIndex);
       _updateCharacterVisuals();
@@ -115,7 +115,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   }
 
   void _updateCharacterVisuals() {
-    _jordyCloseup.opacity = (_dialogueIndex == 0 || _dialogueIndex == 2 || _dialogueIndex == 3) ? 1.0 : 0.0;
+    _jordyCloseup.opacity = dialogueChapter0[_dialogueIndex]["speaker"] == "조르디" ? 1.0 : 0.0;
+
   }
 
   @override

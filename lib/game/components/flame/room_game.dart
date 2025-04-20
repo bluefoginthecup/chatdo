@@ -40,6 +40,8 @@ class RoomGame extends FlameGame with HasCollisionDetection {
     add(jordy);
 
     final prefs = await SharedPreferences.getInstance();
+    const bool resetIntro = true; //출시 때는 false로
+    if (resetIntro) await prefs.remove('intro_dialogue_index');
     final introIndex = prefs.getInt('intro_dialogue_index') ?? 0;
     if (introIndex < 9999) {
       add(IntroScene());

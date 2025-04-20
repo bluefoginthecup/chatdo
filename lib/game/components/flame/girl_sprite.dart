@@ -18,7 +18,7 @@ class GirlSprite extends SpriteAnimationComponent with HasGameRef {
   bool _isFlipped = false;
 
   GirlSprite({required Vector2 position})
-      : super(position: position, size: Vector2(128, 256), priority: 1);
+      : super(position: position, size: Vector2(128, 256));
 
   @override
   Future<void> onLoad() async {
