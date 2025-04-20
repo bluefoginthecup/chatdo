@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/painting.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../story/dialogue_chapter0.dart';
 
 class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGame> {
@@ -21,15 +22,18 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     size = gameRef.size;
     position = Vector2.zero();
 
+    final prefs = await SharedPreferences.getInstance();
+    _dialogueIndex = prefs.getInt('intro_dialogue_index') ?? 0;
+
     _overlayDim = RectangleComponent(
       size: size,
       paint: Paint()..color = const Color(0x88000000),
       priority: 90,
     );
 
-    final textBoxWidth = gameRef.size.x - 80;
+    final textBoxWidth = gameRef.size.x - 10;
     final textBoxHeight = 100.0;
-    final textBoxPosition = Vector2(40, gameRef.size.y - textBoxHeight - 60);
+    final textBoxPosition = Vector2(5, gameRef.size.y - textBoxHeight - 60);
 
     _textBackground = RectangleComponent(
       position: textBoxPosition,
@@ -63,7 +67,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     _jordyCloseup = SpriteComponent(
       sprite: jordySprite,
       size: Vector2(320, 320),
-      position: Vector2((gameRef.size.x - 320) / 2, gameRef.size.y - 360),
+      position: Vector2((gameRef.size.x - 400) / 2, gameRef.size.y - 450),
       priority: 95,
     );
 
@@ -85,21 +89,27 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     _updateCharacterVisuals();
   }
 
-  void _nextDialogue() {
+  void _nextDialogue() async {
     if (_dialogueIndex < dialogueChapter0.length - 1) {
       _dialogueIndex++;
       _textBox.text = dialogueChapter0[_dialogueIndex];
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setInt('intro_dialogue_index', _dialogueIndex);
     } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('intro_dialogue_index', 9999); // 끝났음을 의미
       removeFromParent();
       return;
     }
     _updateCharacterVisuals();
   }
 
-  void _previousDialogue() {
+  void _previousDialogue() async {
     if (_dialogueIndex > 0) {
       _dialogueIndex--;
       _textBox.text = dialogueChapter0[_dialogueIndex];
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setInt('intro_dialogue_index', _dialogueIndex);
       _updateCharacterVisuals();
     }
   }
