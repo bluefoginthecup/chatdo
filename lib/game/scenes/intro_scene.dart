@@ -28,9 +28,9 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       priority: 90,
     );
 
-    final textBoxWidth = gameRef.size.x - 80;
+    final textBoxWidth = gameRef.size.x - 10;
     final textBoxHeight = 100.0;
-    final textBoxPosition = Vector2(40, gameRef.size.y - textBoxHeight - 60);
+    final textBoxPosition = Vector2(5, gameRef.size.y - textBoxHeight - 60);
 
     _textBackground = RectangleComponent(
       position: textBoxPosition,
@@ -82,7 +82,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     _jordyCloseup = SpriteComponent(
       sprite: jordySprite,
       size: Vector2(320, 320),
-      position: Vector2((gameRef.size.x - 320) / 2, gameRef.size.y - 360),
+      position: Vector2((gameRef.size.x - 400) / 2, gameRef.size.y - 450),
       priority: 95,
       // 'visible' 속성이 없으므로 대신 isHud 또는 opacity 활용 예정
     );
