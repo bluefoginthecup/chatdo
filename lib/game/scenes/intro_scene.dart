@@ -11,9 +11,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   late TextBoxComponent _textBox;
   late RectangleComponent _textBackground;
   late RectangleComponent _overlayDim;
-  late TextComponent _nextHint;
-  late TextComponent _prevHint;
   late TimerComponent _blinkTimer;
+  late TimerComponent _autoAdvanceTimer;
   late SpriteComponent _jordyCloseup;
   bool _hintVisible = true;
 
@@ -28,9 +27,9 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       priority: 90,
     );
 
-    final textBoxWidth = gameRef.size.x - 10;
+    final textBoxWidth = gameRef.size.x - 80;
     final textBoxHeight = 100.0;
-    final textBoxPosition = Vector2(5, gameRef.size.y - textBoxHeight - 60);
+    final textBoxPosition = Vector2(40, gameRef.size.y - textBoxHeight - 60);
 
     _textBackground = RectangleComponent(
       position: textBoxPosition,
@@ -52,29 +51,11 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       priority: 100,
     );
 
-    _nextHint = TextComponent(
-      text: '▶︎',
-      position: textBoxPosition + Vector2(textBoxWidth - 32, textBoxHeight - 24),
-      anchor: Anchor.topLeft,
-      priority: 101,
-      textRenderer: TextPaint(style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 16)),
-    );
-
-    _prevHint = TextComponent(
-      text: '◀︎',
-      position: textBoxPosition + Vector2(8, textBoxHeight - 24),
-      anchor: Anchor.topLeft,
-      priority: 101,
-      textRenderer: TextPaint(style: const TextStyle(color: Color(0xFFFFFFFF), fontSize: 16)),
-    );
-
     _blinkTimer = TimerComponent(
       period: 0.6,
       repeat: true,
       onTick: () {
         _hintVisible = !_hintVisible;
-        _nextHint.text = _hintVisible ? '▶︎' : '';
-        _prevHint.text = _hintVisible ? '◀︎' : '';
       },
     );
 
@@ -82,9 +63,14 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     _jordyCloseup = SpriteComponent(
       sprite: jordySprite,
       size: Vector2(320, 320),
-      position: Vector2((gameRef.size.x - 400) / 2, gameRef.size.y - 450),
+      position: Vector2((gameRef.size.x - 320) / 2, gameRef.size.y - 360),
       priority: 95,
-      // 'visible' 속성이 없으므로 대신 isHud 또는 opacity 활용 예정
+    );
+
+    _autoAdvanceTimer = TimerComponent(
+      period: 4.0,
+      repeat: true,
+      onTick: _nextDialogue,
     );
 
     addAll([
@@ -92,30 +78,46 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       _jordyCloseup,
       _textBackground,
       _textBox,
-      _nextHint,
-      _prevHint,
-      _blinkTimer
+      _blinkTimer,
     ]);
+
+    add(_autoAdvanceTimer);
+    _updateCharacterVisuals();
+  }
+
+  void _nextDialogue() {
+    if (_dialogueIndex < dialogueChapter0.length - 1) {
+      _dialogueIndex++;
+      _textBox.text = dialogueChapter0[_dialogueIndex];
+    } else {
+      removeFromParent();
+      return;
+    }
+    _updateCharacterVisuals();
+  }
+
+  void _previousDialogue() {
+    if (_dialogueIndex > 0) {
+      _dialogueIndex--;
+      _textBox.text = dialogueChapter0[_dialogueIndex];
+      _updateCharacterVisuals();
+    }
+  }
+
+  void _updateCharacterVisuals() {
+    _jordyCloseup.opacity = (_dialogueIndex == 0 || _dialogueIndex == 2 || _dialogueIndex == 3) ? 1.0 : 0.0;
   }
 
   @override
   void onTapDown(TapDownEvent event) {
     final tapPos = event.localPosition;
-    if (_nextHint.containsPoint(tapPos)) {
-      if (_dialogueIndex < dialogueChapter0.length - 1) {
-        _dialogueIndex++;
-        _textBox.text = dialogueChapter0[_dialogueIndex];
-      } else {
-        removeFromParent();
-      }
-    } else if (_prevHint.containsPoint(tapPos)) {
-      if (_dialogueIndex > 0) {
-        _dialogueIndex--;
-        _textBox.text = dialogueChapter0[_dialogueIndex];
-      }
-    }
+    final boxLeft = _textBox.position.x;
+    final boxRight = _textBox.position.x + _textBox.width;
 
-    // 조르디 클로즈업 표시 여부
-    _jordyCloseup.opacity = (_dialogueIndex == 0 || _dialogueIndex == 2 || _dialogueIndex == 3) ? 1.0 : 0.0;
+    if (tapPos.x < (boxLeft + boxRight) / 2) {
+      _previousDialogue();
+    } else {
+      _nextDialogue();
+    }
   }
 }
