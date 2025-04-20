@@ -42,8 +42,9 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
       priority: 99,
     );
 
+    final current = dialogueChapter0[_dialogueIndex];
     _textBox = TextBoxComponent(
-      text: dialogueChapter0[_dialogueIndex]["line"]!,
+      text: '${current["speaker"]}: ${current["line"]}',
       boxConfig: TextBoxConfig(
         maxWidth: textBoxWidth - 32,
         timePerChar: 0.0,
@@ -92,7 +93,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   void _nextDialogue() async {
     if (_dialogueIndex < dialogueChapter0.length - 1) {
       _dialogueIndex++;
-      _textBox.text = dialogueChapter0[_dialogueIndex]["line"]!;
+      final current = dialogueChapter0[_dialogueIndex];
+      _textBox.text = '${current["speaker"]}: ${current["line"]}';
       final prefs = await SharedPreferences.getInstance();
       prefs.setInt('intro_dialogue_index', _dialogueIndex);
     } else {
@@ -107,7 +109,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   void _previousDialogue() async {
     if (_dialogueIndex > 0) {
       _dialogueIndex--;
-      _textBox.text = dialogueChapter0[_dialogueIndex]["line"]!;
+      final current = dialogueChapter0[_dialogueIndex];
+      _textBox.text = '${current["speaker"]}: ${current["line"]}';
       final prefs = await SharedPreferences.getInstance();
       prefs.setInt('intro_dialogue_index', _dialogueIndex);
       _updateCharacterVisuals();
@@ -115,8 +118,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   }
 
   void _updateCharacterVisuals() {
-    _jordyCloseup.opacity = dialogueChapter0[_dialogueIndex]["speaker"] == "조르디" ? 1.0 : 0.0;
-
+    final speaker = dialogueChapter0[_dialogueIndex]["speaker"];
+    _jordyCloseup.opacity = speaker == "조르디" ? 1.0 : 0.0;
   }
 
   @override
