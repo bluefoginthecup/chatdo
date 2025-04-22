@@ -61,7 +61,7 @@ class _DoneListScreenState extends State<DoneListScreen> {
     final formattedDate = DateFormat('yyyy년 M월 d일').format(_currentDate);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('한일 목록')),
+      appBar: AppBar(),
       body: Column(
         children: [
           const SizedBox(height: 16),

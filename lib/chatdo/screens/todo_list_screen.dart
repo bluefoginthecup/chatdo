@@ -5,6 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../game/core/game_controller.dart';
 import '../utils/schedule_actions.dart'; // ✅ 공통 액션 가져오기
+import 'schedule_detail_screen.dart';
+
 
 class TodoListScreen extends StatefulWidget {
   final GameController gameController;
@@ -84,7 +86,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
     final formattedDate = DateFormat('yyyy년 M월 d일').format(_currentDate);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('할일 목록')),
+      appBar: AppBar(),
       body: Column(
         children: [
           const SizedBox(height: 16),
