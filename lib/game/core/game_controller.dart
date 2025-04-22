@@ -1,7 +1,6 @@
 // game_controller.dart
 import 'package:flutter/material.dart';
 import '/chatdo/models/game_sync_data.dart';
-
 class GameController {
   int _point = 0;
   int _level = 1;
@@ -29,17 +28,38 @@ class GameController {
     }
   }
 
+  void addPoints(int value) {
+    _point += value;
+    print('🎯 포인트 추가: $value → 총 $_point');
+    _checkLevelUp();
+  }
+
+  void subtractPoints(int value) {
+    _point = (_point - value).clamp(0, _point);
+    print('🔻 포인트 감소: $value → 총 $_point');
+  }
+
+  void _checkLevelUp() {
+    while (_point >= _pointsToLevelUp(_level)) {
+      _point -= _pointsToLevelUp(_level);
+      _level++;
+      print('🚀 레벨업! 현재 레벨: $_level');
+    }
+  }
+
+  int _pointsToLevelUp(int currentLevel) {
+    return 300 + (currentLevel - 1) * 50;
+  }
+
   void triggerLevelUpAnimation() {
     debugPrint('✨ 레벨업 애니메이션 발동');
-    // TODO: Flame 애니메이션 실행 로직 연결
   }
 
   void playJordyReaction() {
     debugPrint('🧚 조르디 반응 연출: 오늘 할일 완료!');
-    // TODO: 조르디 감정 반응 처리
   }
 
-  // getter (필요시)
+  // getter
   int get point => _point;
   int get level => _level;
   int get completedCount => _completedCount;

@@ -1,6 +1,5 @@
 // game/story/dialogue_chapter0_structured.dart
 
-import 'package:flutter/foundation.dart';
 
 final List<Map<String, String>> dialogueChapter0 = [
   {"speaker": "조르디", "line": "주인님… 깨어나셨군요."},

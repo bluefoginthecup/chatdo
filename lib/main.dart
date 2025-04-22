@@ -40,7 +40,7 @@ class ChatDoApp extends StatelessWidget {
         primarySwatch: Colors.teal,
         useMaterial3: true,
       ),
-      home: user == null ? const LoginScreen() : const MainTabController(),
+      home: user == null ? const LoginScreen() : const TabNav(),
     );
   }
 }

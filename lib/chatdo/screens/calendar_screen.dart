@@ -1,143 +1,114 @@
-// calendar_screen.dart
+// calendar_screen.dart (달력 UI 포함)
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:table_calendar/table_calendar.dart';
+import '../models/schedule_entry.dart';
+import '../providers/schedule_provider.dart';
+import '../../game/core/game_controller.dart';
+import '../utils/schedule_actions.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  final GameController gameController;
+  const CalendarScreen({super.key, required this.gameController});
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
-  Map<String, List<Map<String, dynamic>>> _messagesByDate = {};
+  DateTime _focusedDate = DateTime.now();
+  DateTime? _selectedDate;
+  List<Map<String, dynamic>> _entries = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchMessages();
+    _selectedDate = _focusedDate;
+    _fetchCalendarEntries(_selectedDate!);
   }
 
-  Future<void> _fetchMessages() async {
+  Future<void> _fetchCalendarEntries(DateTime date) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
+    final dateString = DateFormat('yyyy-MM-dd').format(date);
     final snapshot = await FirebaseFirestore.instance
         .collection('messages')
         .doc(uid)
         .collection('logs')
+        .where('date', isEqualTo: dateString)
+        .orderBy('timestamp')
         .get();
 
-    final Map<String, List<Map<String, dynamic>>> grouped = {};
-
-    for (var doc in snapshot.docs) {
-      final data = doc.data();
-      final date = (data['date'] ?? '').toString();
-      if (date.isEmpty) continue;
-      grouped.putIfAbsent(date, () => []).add({
-        'content': data['content'] ?? '',
-        'mode': data['mode'] ?? '',
-      });
-    }
+    final list = snapshot.docs.map((doc) => {
+      'id': doc.id,
+      'content': doc['content'] as String,
+      'mode': doc['mode'] as String,
+    }).toList();
 
     setState(() {
-      _messagesByDate = grouped;
+      _entries = list;
     });
-  }
-
-  List<Map<String, dynamic>> _getMessagesForDay(DateTime day) {
-    final dateString = DateFormat('yyyy-MM-dd').format(day);
-    return _messagesByDate[dateString] ?? [];
-  }
-
-  Widget _buildDot(Color color) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 1),
-      width: 6,
-      height: 6,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedMessages = _getMessagesForDay(_selectedDay ?? _focusedDay);
-
     return Scaffold(
       appBar: AppBar(title: const Text('캘린더')),
       body: Column(
         children: [
           TableCalendar(
-            firstDay: DateTime.utc(2020, 1, 1),
-            lastDay: DateTime.utc(2030, 12, 31),
-            focusedDay: _focusedDay,
-            selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
+            focusedDay: _focusedDate,
+            firstDay: DateTime(2020),
+            lastDay: DateTime(2030),
+            calendarFormat: CalendarFormat.month,
+            selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
+            onDaySelected: (selected, focused) {
               setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
+                _selectedDate = selected;
+                _focusedDate = focused;
               });
+              _fetchCalendarEntries(selected);
             },
-            calendarStyle: const CalendarStyle(
-              todayDecoration: BoxDecoration(
-                color: Colors.teal,
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: BoxDecoration(
-                color: Colors.orange,
-                shape: BoxShape.circle,
-              ),
-            ),
-            calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, date, events) {
-                final messages = _getMessagesForDay(date);
-                final hasTodo = messages.any((m) => m['mode'] == 'todo');
-                final hasDone = messages.any((m) => m['mode'] == 'done');
-
-                List<Widget> markers = [];
-                if (hasTodo) markers.add(_buildDot(Colors.red));
-                if (hasDone) markers.add(_buildDot(Colors.grey));
-
-                if (markers.isEmpty) return null;
-
-                return Positioned(
-                  bottom: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: markers,
-                  ),
-                );
-              },
-            ),
+            headerStyle: const HeaderStyle(formatButtonVisible: false),
           ),
-          const SizedBox(height: 12),
+          const Divider(),
           Expanded(
-            child: selectedMessages.isEmpty
-                ? const Center(child: Text('기록이 없습니다.'))
+            child: _entries.isEmpty
+                ? const Center(child: Text('해당 날짜에 일정이 없습니다.'))
                 : ListView.builder(
-              itemCount: selectedMessages.length,
+              itemCount: _entries.length,
               itemBuilder: (context, index) {
-                final message = selectedMessages[index];
-                final isTodo = message['mode'] == 'todo';
+                final entry = _entries[index];
                 return ListTile(
-                  leading: Icon(
-                    isTodo ? Icons.circle_outlined : Icons.check_circle_outline,
-                    color: isTodo ? Colors.red : Colors.grey,
-                  ),
-                  title: Text(
-                    message['content'],
-                    style: TextStyle(
-                      color: isTodo ? Colors.red : Colors.grey,
-                      fontWeight: FontWeight.w500,
+                  leading: GestureDetector(
+                    onTap: () => markAsOtherType(
+                      docId: entry['id'],
+                      currentMode: entry['mode'],
+                      gameController: widget.gameController,
+                      currentDate: _selectedDate!,
+                      onRefresh: () => _fetchCalendarEntries(_selectedDate!),
+                      context: context,
                     ),
+                    child: Icon(
+                      entry['mode'] == 'done'
+                          ? Icons.check_circle_outline
+                          : Icons.circle_outlined,
+                    ),
+                  ),
+                  title: GestureDetector(
+                    onDoubleTap: () => showEditOrDeleteDialog(
+                      context: context,
+                      docId: entry['id'],
+                      originalText: entry['content'],
+                      mode: entry['mode'],
+                      currentDate: _selectedDate!,
+                      onRefresh: () => _fetchCalendarEntries(_selectedDate!),
+                    ),
+                    child: Text(entry['content'] ?? ''),
                   ),
                 );
               },
@@ -148,5 +119,3 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 }
-
-class Event {}

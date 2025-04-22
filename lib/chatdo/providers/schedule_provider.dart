@@ -1,11 +1,8 @@
-// schedule_provider.dart
+// schedule_provider.dart (수정된 버전)
 
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/schedule_entry.dart';
 import '../models/game_sync_data.dart';
-import '../../game/core/game_controller.dart';
 
 class ScheduleProvider with ChangeNotifier {
   final List<ScheduleEntry> _todos = [];
@@ -27,64 +24,17 @@ class ScheduleProvider with ChangeNotifier {
     return List.unmodifiable(sorted);
   }
 
-  void addEntry(ScheduleEntry entry) {
-    if (entry.type == ScheduleType.todo) {
-      _todos.add(entry);
+  void replaceEntry(ScheduleEntry oldEntry, ScheduleEntry newEntry) {
+    // id 기반 필터링
+    _todos.removeWhere((e) => e.docId == oldEntry.docId);
+    _dones.removeWhere((e) => e.docId == oldEntry.docId);
+
+    if (newEntry.type == ScheduleType.todo) {
+      _todos.add(newEntry);
     } else {
-      _dones.add(entry);
-      point += 10;
-      _previousLevel = level;
-      level = 1 + (point ~/ 100);
+      _dones.add(newEntry);
     }
     notifyListeners();
-  }
-
-  // 할일에서 한일로 이동
-  void moveToDone(ScheduleEntry entry) {
-    _todos.remove(entry);
-    _dones.add(ScheduleEntry(
-      date: entry.date,
-      type: ScheduleType.done,
-      content: entry.content,
-      createdAt: entry.createdAt,
-    ));
-    point += 10;
-    _previousLevel = level;
-    level = 1 + (point ~/ 100);
-    notifyListeners();
-  }
-
-  Future<void> completeTodoEntry({
-    required ScheduleEntry entry,
-    required GameController gameController,
-    required FirebaseFirestore firestore,
-    required String userId,
-  }) async {
-    _todos.remove(entry);
-    final doneEntry = ScheduleEntry(
-      content: entry.content,
-      date: entry.date,
-      createdAt: entry.createdAt,
-      type: ScheduleType.done,
-    );
-    _dones.add(doneEntry);
-    point += 10;
-    _previousLevel = level;
-    level = 1 + (point ~/ 100);
-    notifyListeners();
-
-    gameController.sync(getGameSyncData());
-
-    await firestore
-        .collection('messages')
-        .doc(userId)
-        .collection('logs')
-        .add({
-      'content': doneEntry.content,
-      'mode': 'done',
-      'date': doneEntry.date.toIso8601String().substring(0, 10),
-      'timestamp': doneEntry.createdAt.toIso8601String(),
-    });
   }
 
   int calculateStreak() {

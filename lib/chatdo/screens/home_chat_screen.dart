@@ -8,11 +8,12 @@ import '../models/schedule_entry.dart';
 import '../providers/schedule_provider.dart';
 import '../widgets/chat_input_box.dart';
 import '../models/message.dart';
-import '../services/message_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 import '../services/sync_service.dart';
 import '/game/core/game_controller.dart';
+import '../usecases/schedule_usecase.dart';
+
 
 class HomeChatScreen extends StatefulWidget {
   final GameController gameController;
@@ -99,23 +100,25 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       createdAt: now,
     );
 
-    final provider = context.read<ScheduleProvider>();
-    if (entry.type == ScheduleType.done) {
-      await provider.completeTodoEntry(
-        entry: entry,
-        gameController: widget.gameController,
-        firestore: FirebaseFirestore.instance,
-        userId: _userId!,
-      );
-    } else {
-      provider.addEntry(entry);
-    }
+    print('🚀 updateEntry 호출 직전: ${entry.content}, ${entry.type}');
+
+    await ScheduleUseCase.updateEntry(
+
+      entry: entry,
+      newType: entry.type,
+      provider: context.read<ScheduleProvider>(),
+      gameController: widget.gameController,
+      firestore: FirebaseFirestore.instance,
+      userId: _userId!,
+
+    );
 
     _controller.clear();
     _focusNode.unfocus();
     _shouldRefocusOnResume = true;
 
     await _loadMessagesFromHive();
+
   }
 
   void _scrollToBottom() {

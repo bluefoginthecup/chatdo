@@ -60,6 +60,9 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
 
     widget.onSubmitted(text, _selectedMode!, resolveDate(_selectedDateTag!));
+    print('🟢 _handleSendMessage 호출됨. 모드: $_selectedMode');
+
+
     widget.controller.clear();
   }
 

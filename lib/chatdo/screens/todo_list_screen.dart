@@ -1,12 +1,14 @@
-// todo_list_screen.dart
+// todo_list_screen.dart (자동 새로고침 + 공통 액션 적용)
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
+import '../../game/core/game_controller.dart';
+import '../utils/schedule_actions.dart'; // ✅ 공통 액션 가져오기
 
 class TodoListScreen extends StatefulWidget {
-  const TodoListScreen({super.key});
+  final GameController gameController;
+  const TodoListScreen({super.key, required this.gameController});
 
   @override
   State<TodoListScreen> createState() => _TodoListScreenState();
@@ -14,10 +16,6 @@ class TodoListScreen extends StatefulWidget {
 
 class _TodoListScreenState extends State<TodoListScreen> {
   DateTime _currentDate = DateTime.now();
-  List<Map<String, dynamic>> _todoList = [];
-  Set<int> _editingIndices = {};
-  Map<int, TextEditingController> _editingControllers = {};
-
   final List<String> _celebrationMessages = [
     '🎉 할일 완료! 수고하셨습니다!',
     '👏 잘했어요! 하나 끝!',
@@ -32,24 +30,44 @@ class _TodoListScreenState extends State<TodoListScreen> {
   ];
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _fetchTodosForDate(_currentDate);
   }
 
+  void _changeDateBy(int days) {
+    setState(() {
+      _currentDate = _currentDate.add(Duration(days: days));
+    });
+    _fetchTodosForDate(_currentDate);
+  }
+
+  List<Map<String, dynamic>> _todosForDate = [];
   Future<void> _fetchTodosForDate(DateTime date) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
     final dateString = DateFormat('yyyy-MM-dd').format(date);
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(uid)
-        .collection('logs')
-        .where('mode', isEqualTo: 'todo')
-        .where('date', isEqualTo: dateString)
-        .get();
+    QuerySnapshot<Map<String, dynamic>>? snapshot;
+
+    try {
+      snapshot = await FirebaseFirestore.instance
+          .collection('messages')
+          .doc(uid)
+          .collection('logs')
+          .where('mode', isEqualTo: 'todo')
+          .where('date', isEqualTo: dateString)
+          .orderBy('timestamp')
+          .get();
+    } catch (e) {
+      print('🔥 쿼리 에러: $e');
+      return;
+    }
+
+    print('📥 받아온 문서 수: ${snapshot.docs.length}');
+    print('📥 각 mode: ${snapshot.docs.map((doc) => doc['mode']).toList()}');
+
 
     final todos = snapshot.docs.map((doc) => {
       'id': doc.id,
@@ -57,92 +75,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
     }).toList();
 
     setState(() {
-      _todoList = todos;
-      _editingIndices.clear();
-      _editingControllers.clear();
-    });
-  }
-
-  void _changeDateBy(int days) {
-    final newDate = _currentDate.add(Duration(days: days));
-    setState(() {
-      _currentDate = newDate;
-    });
-    _fetchTodosForDate(newDate);
-  }
-
-  Future<void> _markAsDone(String docId) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(uid)
-        .collection('logs')
-        .doc(docId)
-        .update({'mode': 'done'});
-
-    final random = Random();
-    final message = _celebrationMessages[random.nextInt(_celebrationMessages.length)];
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.green.shade200,
-          content: Text(
-            message,
-            style: TextStyle(
-              color: Colors.black, // 🖤 글자색: 블랙
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      );
-    }
-
-    _fetchTodosForDate(_currentDate);
-  }
-
-  Future<void> _updateTodo(String docId, String newText) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(uid)
-        .collection('logs')
-        .doc(docId)
-        .update({'content': newText});
-
-    _fetchTodosForDate(_currentDate);
-  }
-
-  Future<void> _deleteTodo(String docId) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(uid)
-        .collection('logs')
-        .doc(docId)
-        .delete();
-
-    _fetchTodosForDate(_currentDate);
-  }
-
-  void _enterEditMode(int index, String currentText) {
-    setState(() {
-      _editingIndices.add(index);
-      _editingControllers[index] = TextEditingController(text: currentText);
-    });
-  }
-
-  void _exitEditMode(int index) {
-    setState(() {
-      _editingIndices.remove(index);
-      _editingControllers.remove(index);
+      _todosForDate = todos;
     });
   }
 
@@ -163,7 +96,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 onPressed: () => _changeDateBy(-1),
               ),
               Text(
-                '$formattedDate',
+                formattedDate,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               IconButton(
@@ -174,39 +107,35 @@ class _TodoListScreenState extends State<TodoListScreen> {
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: _todoList.isEmpty
+            child: _todosForDate.isEmpty
                 ? const Center(child: Text('할일이 없습니다.'))
                 : ListView.builder(
-              itemCount: _todoList.length,
+              itemCount: _todosForDate.length,
               itemBuilder: (context, index) {
-                final todo = _todoList[index];
-                final isEditing = _editingIndices.contains(index);
+                final todo = _todosForDate[index];
                 return ListTile(
                   leading: GestureDetector(
-                    onTap: () => _markAsDone(todo['id']),
+                    onTap: () => markAsOtherType(
+                      docId: todo['id'],
+                      currentMode: 'todo',
+                      gameController: widget.gameController,
+                      currentDate: _currentDate,
+                      onRefresh: () => _fetchTodosForDate(_currentDate),
+                      context: context,
+                    ),
                     child: const Icon(Icons.circle_outlined),
                   ),
                   title: GestureDetector(
-                    onDoubleTap: () => _enterEditMode(index, todo['content']),
-                    child: isEditing
-                        ? TextField(
-                      controller: _editingControllers[index],
-                      autofocus: true,
-                      onSubmitted: (value) {
-                        if (value.trim().isNotEmpty) {
-                          _updateTodo(todo['id'], value.trim());
-                        }
-                        _exitEditMode(index);
-                      },
-                    )
-                        : Text(todo['content']),
+                    onDoubleTap: () => showEditOrDeleteDialog(
+                      context: context,
+                      docId: todo['id'],
+                      originalText: todo['content'],
+                      mode: 'todo',
+                      currentDate: _currentDate,
+                      onRefresh: () => _fetchTodosForDate(_currentDate),
+                    ),
+                    child: Text(todo['content'] ?? ''),
                   ),
-                  trailing: isEditing
-                      ? IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteTodo(todo['id']),
-                  )
-                      : null,
                 );
               },
             ),

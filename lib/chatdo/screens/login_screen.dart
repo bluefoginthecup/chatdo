@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../../tab_nav.dart';
+import '/tab_nav.dart';
 
 
 
@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
               if (!mounted) return;
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const MainTabController()),
+                MaterialPageRoute(builder: (context) => const TabNav()),
               );
               debugPrint('로그인 성공: ${userCredential.user?.displayName}');
             } else {
