@@ -46,6 +46,7 @@ class ScheduleUseCase {
         'timestamp': updated.createdAt.toIso8601String(),
         'docId': updated.docId,
         'order': 0, // 기본 order. 나중에 지정 가능
+        if (entry.imageUrl != null) 'imageUrl': entry.imageUrl,
       });
 
       print('✅ Firestore 문서 생성 또는 업데이트 완료: ${updated.content}');

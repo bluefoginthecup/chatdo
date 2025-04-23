@@ -1,19 +1,21 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:hive/hive.dart';
 import '../models/schedule_entry.dart';
-import '../providers/schedule_provider.dart';
-import '../widgets/chat_input_box.dart';
 import '../models/message.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'dart:async';
+import '../providers/schedule_provider.dart';
 import '../services/sync_service.dart';
-import '/game/core/game_controller.dart';
 import '../usecases/schedule_usecase.dart';
-
+import '../widgets/chat_input_box.dart';
+import '/game/core/game_controller.dart';
 
 class HomeChatScreen extends StatefulWidget {
   final GameController gameController;
@@ -42,12 +44,9 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
     _loadMessagesFromHive();
     SyncService.uploadAllIfConnected();
-
-    // 자동 포커스 (앱 처음 실행 시)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
-
     _connectivity = Connectivity();
     _connectivityStream = _connectivity.onConnectivityChanged;
     _subscription = _connectivityStream.listen((result) {
@@ -76,32 +75,22 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     final box = Hive.box<Message>('messages');
     final loaded = box.values.toList();
     loaded.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-
     final newLog = loaded.map((m) => {
       'content': m.text,
       'date': m.date.toString(),
-
-
+      if (m.imageUrl != null) 'imageUrl': m.imageUrl!,
     }).toList();
-
     setState(() {
-      _messageLog = newLog;
+      _messageLog = List<Map<String, String>>.from(newLog);
     });
-
     await Future.delayed(const Duration(milliseconds: 100));
     _scrollToBottom();
   }
 
   Future<void> _handleSendMessage(String text, Mode mode, DateTime date) async {
     if (text.trim().isEmpty || _userId == null) return;
-
     final now = DateTime.now();
-    final docRef = FirebaseFirestore.instance
-        .collection('messages')
-        .doc(_userId)
-        .collection('logs')
-        .doc();
-
+    final docRef = FirebaseFirestore.instance.collection('messages').doc(_userId).collection('logs').doc();
     final entry = ScheduleEntry(
       content: text,
       date: date,
@@ -109,8 +98,50 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       createdAt: now,
       docId: docRef.id,
     );
+    await ScheduleUseCase.updateEntry(
+      entry: entry,
+      newType: entry.type,
+      provider: context.read<ScheduleProvider>(),
+      gameController: widget.gameController,
+      firestore: FirebaseFirestore.instance,
+      userId: _userId!,
+    );
+    setState(() {
+      _messages.add(entry);
+      _messageLog.add({
+        'content': entry.content,
+        'date': entry.date.toIso8601String(),
+      });
+    });
+    final box = await Hive.openBox('chat_messages');
+    await box.put('messages', _messages.map((e) => e.toJson()).toList());
+    _controller.clear();
+    _focusNode.unfocus();
+    _shouldRefocusOnResume = true;
+    _scrollToBottom();
+  }
 
-    print('🚀 updateEntry 호출 직전: ${entry.content}, ${entry.type}');
+  Future<void> _handleSendImage(File imageFile, Mode mode, DateTime date) async {
+    if (_userId == null) return;
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final ref = FirebaseStorage.instance.ref().child('chat_images').child(_userId!).child(fileName);
+    print('📤 업로드 위치: ${ref.fullPath}');
+
+    try {
+      await ref.putFile(imageFile);
+      final downloadUrl = await ref.getDownloadURL();
+      print('✅ 업로드 완료: $downloadUrl');
+
+      final now = DateTime.now();
+      final docRef = FirebaseFirestore.instance.collection('messages').doc(_userId).collection('logs').doc();
+      final entry = ScheduleEntry(
+        content: '[IMAGE]',
+        date: date,
+        type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
+        createdAt: now,
+        docId: docRef.id,
+        imageUrl: downloadUrl,
+        );
 
     await ScheduleUseCase.updateEntry(
       entry: entry,
@@ -122,19 +153,19 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     );
 
     setState(() {
-      _messages.add(entry); // 전체 메시지 리스트에 추가
+      _messages.add(entry);
       _messageLog.add({
-        'content': entry.content,
-        'date': entry.date.toIso8601String(), // String으로 확실하게 변환
+        'content': '[IMAGE]',
+        'date': entry.date.toIso8601String(),
+        'imageUrl': downloadUrl,
       });
     });
+    } catch (e) {
+      print('❌ 이미지 업로드 실패: $e');
+    }
 
     final box = await Hive.openBox('chat_messages');
     await box.put('messages', _messages.map((e) => e.toJson()).toList());
-
-    _controller.clear();
-    _focusNode.unfocus();
-    _shouldRefocusOnResume = true;
     _scrollToBottom();
   }
 
@@ -153,33 +184,34 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   List<Widget> _buildMessageWidgets() {
     List<Widget> widgets = [];
     String? lastDate;
-
     for (var msg in _messageLog) {
       final String content = msg['content'] ?? '';
       final String dateStr = msg['date'] ?? '';
-
       final parsedDate = DateTime.tryParse(dateStr);
-
       if (lastDate != dateStr) {
         lastDate = dateStr;
-
         if (parsedDate != null) {
-          widgets.add(
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Center(
-                child: Text(
-                  DateFormat('yyyy년 M월 d일').format(parsedDate), // ✅ 이제 안전
-                  style: const TextStyle(color: Colors.grey),
-                ),
+          widgets.add(Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Center(
+              child: Text(
+                DateFormat('yyyy년 M월 d일').format(parsedDate),
+                style: const TextStyle(color: Colors.grey),
               ),
             ),
-          );
+          ));
         }
       }
-
-        widgets.add(
-        Align(
+      if (msg['imageUrl'] != null) {
+        widgets.add(Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            child: Image.network(msg['imageUrl']!, width: 200),
+          ),
+        ));
+      } else {
+        widgets.add(Align(
           alignment: Alignment.centerRight,
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 2),
@@ -190,10 +222,9 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
             ),
             child: Text(content),
           ),
-        ),
-      );
+        ));
+      }
     }
-
     return widgets;
   }
 
@@ -204,18 +235,11 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         title: const Text('로그아웃'),
         content: const Text('정말 로그아웃하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('로그아웃'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('로그아웃')),
         ],
       ),
     );
-
     if (shouldLogout == true) {
       await FirebaseAuth.instance.signOut();
     }
@@ -229,10 +253,16 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         title: const Text('ChatDo'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: '로그아웃',
-            onPressed: _confirmAndLogout,
+            icon: const Icon(Icons.image),
+            tooltip: '이미지 전송',
+            onPressed: () async {
+              final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+              if (picked != null) {
+                await _handleSendImage(File(picked.path), Mode.todo, DateTime.now());
+              }
+            },
           ),
+          IconButton(icon: const Icon(Icons.logout), tooltip: '로그아웃', onPressed: _confirmAndLogout),
         ],
       ),
       body: SafeArea(

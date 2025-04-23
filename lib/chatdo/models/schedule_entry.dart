@@ -6,6 +6,7 @@ class ScheduleEntry {
   final String content;
   final DateTime createdAt;
   final String? docId; // ✅ Firestore 문서 ID 추가
+  final String? imageUrl; // ✅ 이미지 메시지용 URL
 
   ScheduleEntry({
     required this.date,
@@ -13,7 +14,9 @@ class ScheduleEntry {
     required this.content,
     this.docId,
     DateTime? createdAt,
+    this.imageUrl,
   }) : createdAt = createdAt ?? DateTime.now();
+
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
     return ScheduleEntry(
       content: json['content'] as String,
@@ -21,14 +24,15 @@ class ScheduleEntry {
       type: json['mode'] == 'done' ? ScheduleType.done : ScheduleType.todo,
       createdAt: DateTime.parse(json['timestamp'] as String),
       docId: json['docId'] as String?,
+      imageUrl: json['imageUrl'] as String?,
     );
   }
 
-  // 파싱 결과를 ScheduleEntry로 바로 반환하도록 수정
   static ScheduleEntry fromParsedEntry(DateTime date, ScheduleType type, String content) {
     return ScheduleEntry(date: date, type: type, content: content, createdAt: DateTime.now());
   }
 }
+
 extension ScheduleEntryJson on ScheduleEntry {
   Map<String, dynamic> toJson() {
     return {
@@ -37,7 +41,7 @@ extension ScheduleEntryJson on ScheduleEntry {
       'timestamp': createdAt.toIso8601String(),
       'mode': type.name,
       'docId': docId,
+      if (imageUrl != null) 'imageUrl': imageUrl,
     };
   }
 }
-

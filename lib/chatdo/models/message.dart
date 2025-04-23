@@ -19,11 +19,15 @@ class Message extends HiveObject {
   @HiveField(4)
   int timestamp;
 
+  @HiveField(5)
+  String? imageUrl; // ✅ 이미지 메시지용 필드 추가
+
   Message({
     required this.id,
     required this.text,
     required this.type,
     required this.date,
     required this.timestamp,
+    this.imageUrl,
   });
 }
