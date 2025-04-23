@@ -27,7 +27,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
-  List<Map<String, dynamic>> _messageLog = [];
+  List<ScheduleEntry> _messages = [];
+  List<Map<String, String>> _messageLog = [];
   String? _userId;
   late final Connectivity _connectivity;
   late final Stream<ConnectivityResult> _connectivityStream;
@@ -78,7 +79,9 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
 
     final newLog = loaded.map((m) => {
       'content': m.text,
-      'date': m.date,
+      'date': m.date.toString(),
+
+
     }).toList();
 
     setState(() {
@@ -104,28 +107,35 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       date: date,
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
-
+      docId: docRef.id,
     );
 
     print('🚀 updateEntry 호출 직전: ${entry.content}, ${entry.type}');
 
     await ScheduleUseCase.updateEntry(
-
       entry: entry,
       newType: entry.type,
       provider: context.read<ScheduleProvider>(),
       gameController: widget.gameController,
       firestore: FirebaseFirestore.instance,
       userId: _userId!,
-
     );
+
+    setState(() {
+      _messages.add(entry); // 전체 메시지 리스트에 추가
+      _messageLog.add({
+        'content': entry.content,
+        'date': entry.date.toIso8601String(), // String으로 확실하게 변환
+      });
+    });
+
+    final box = await Hive.openBox('chat_messages');
+    await box.put('messages', _messages.map((e) => e.toJson()).toList());
 
     _controller.clear();
     _focusNode.unfocus();
     _shouldRefocusOnResume = true;
-
-    await _loadMessagesFromHive();
-
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
@@ -148,16 +158,18 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       final String content = msg['content'] ?? '';
       final String dateStr = msg['date'] ?? '';
 
+      final parsedDate = DateTime.tryParse(dateStr);
+
       if (lastDate != dateStr) {
         lastDate = dateStr;
-        final parsed = DateTime.tryParse(dateStr);
-        if (parsed != null) {
+
+        if (parsedDate != null) {
           widgets.add(
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Center(
                 child: Text(
-                  DateFormat('yyyy년 M월 d일').format(parsed),
+                  DateFormat('yyyy년 M월 d일').format(parsedDate), // ✅ 이제 안전
                   style: const TextStyle(color: Colors.grey),
                 ),
               ),
@@ -166,7 +178,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         }
       }
 
-      widgets.add(
+        widgets.add(
         Align(
           alignment: Alignment.centerRight,
           child: Container(

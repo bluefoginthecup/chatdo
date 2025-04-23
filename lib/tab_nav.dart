@@ -15,15 +15,15 @@ class TabNav extends StatefulWidget {
   State<TabNav> createState() => _TabNavState();
 }
 
-class _TabNavState extends State<TabNav> {
+class _TabNavState extends State<TabNav> with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  late List<Widget> _pages;
   late GameController _gameController;
-
-  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _gameController = GameController();
     _pages = [
       HomeChatScreen(gameController: _gameController),
@@ -33,28 +33,49 @@ class _TabNavState extends State<TabNav> {
     ];
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() => _selectedIndex = 0);
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ScheduleProvider(),
-      child: Scaffold(
-        body: _pages[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.chat), label: '홈'),
-            BottomNavigationBarItem(icon: Icon(Icons.view_agenda), label: '일정'),
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: '방'),
-            BottomNavigationBarItem(icon: Icon(Icons.menu), label: '메뉴'),
-          ],
-          currentIndex: _selectedIndex,
-          selectedItemColor: Colors.teal,
-          onTap: _onItemTapped,
-        ),
+    return Scaffold(
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: '채팅',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.today),
+            label: '일정',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.meeting_room_outlined),
+            label: '방',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.more_horiz),
+            label: '더보기',
+          ),
+        ],
       ),
     );
   }

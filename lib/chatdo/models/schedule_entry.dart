@@ -29,3 +29,15 @@ class ScheduleEntry {
     return ScheduleEntry(date: date, type: type, content: content, createdAt: DateTime.now());
   }
 }
+extension ScheduleEntryJson on ScheduleEntry {
+  Map<String, dynamic> toJson() {
+    return {
+      'content': content,
+      'date': date.toIso8601String(),
+      'timestamp': createdAt.toIso8601String(),
+      'mode': type.name,
+      'docId': docId,
+    };
+  }
+}
+
