@@ -31,26 +31,26 @@ class ScheduleUseCase {
     } else if (oldType == ScheduleType.done && newType == ScheduleType.todo) {
       gameController.subtractPoints(10);
     }
-    // Firestore 업데이트
-    if (entry.docId != null) {
-      try {
-        await firestore
-            .collection('messages')
-            .doc(userId)
-            .collection('logs')
-            .doc(entry.docId)
-            .update({
-          'content': updated.content,
-          'date': updated.date.toIso8601String().substring(0, 10),
-          'mode': updated.type.name,
-          'timestamp': updated.createdAt.toIso8601String(),
-        });
-        print('✅ Firestore 업데이트 성공: ${updated.content}');
-      } catch (e) {
-        print('🔥 Firestore 업데이트 실패: $e');
-      }
-    } else {
-      print('⚠️ Firestore 업데이트 실패: docId가 null임');
+
+    try {
+      final docRef = firestore
+          .collection('messages')
+          .doc(userId)
+          .collection('logs')
+          .doc(entry.docId);
+
+      await docRef.set({
+        'content': updated.content,
+        'date': updated.date.toIso8601String().substring(0, 10),
+        'mode': updated.type.name,
+        'timestamp': updated.createdAt.toIso8601String(),
+        'docId': updated.docId,
+        'order': 0, // 기본 order. 나중에 지정 가능
+      });
+
+      print('✅ Firestore 문서 생성 또는 업데이트 완료: ${updated.content}');
+    } catch (e) {
+      print('🔥 Firestore 업데이트 실패: $e');
     }
   }
 }

@@ -11,7 +11,7 @@ import '../usecases/schedule_usecase.dart';
 import '../providers/schedule_provider.dart';
 import '../../game/core/game_controller.dart';
 
-class ScheduleDetailScreen extends StatelessWidget {
+class ScheduleDetailScreen extends StatefulWidget {
   final ScheduleEntry entry;
   final GameController gameController;
   final VoidCallback onUpdate;
@@ -24,53 +24,63 @@ class ScheduleDetailScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<ScheduleDetailScreen> createState() => _ScheduleDetailScreenState();
+}
+
+class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
+  late DateTime _date;
+  late String _content;
+  bool _editingContent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _date = widget.entry.date;
+    _content = widget.entry.content;
+  }
+
+  Future<void> _updateDate(DateTime newDate) async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    await FirebaseFirestore.instance
+        .collection('messages')
+        .doc(userId)
+        .collection('logs')
+        .doc(widget.entry.docId)
+        .update({'date': DateFormat('yyyy-MM-dd').format(newDate)});
+    setState(() => _date = newDate);
+    widget.onUpdate();
+  }
+
+  Future<void> _updateContent(String newContent) async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    await FirebaseFirestore.instance
+        .collection('messages')
+        .doc(userId)
+        .collection('logs')
+        .doc(widget.entry.docId)
+        .update({'content': newContent});
+    setState(() => _content = newContent);
+    widget.onUpdate();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('yyyy년 M월 d일').format(entry.date);
+    final dateStr = DateFormat('yyyy년 M월 d일').format(_date);
     return Scaffold(
       appBar: AppBar(
-        title: Text(entry.content),
+        title: GestureDetector(
+          onDoubleTap: () async {
+            final newTitle = await _showTextEditDialog('제목 편집', _content);
+            if (newTitle != null && newTitle.trim().isNotEmpty) {
+              await _updateContent(newTitle.trim());
+            }
+          },
+          child: Text(
+            _content,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: '편집',
-            onPressed: () {
-              showEditOrDeleteDialog(
-                context: context,
-                docId: entry.docId!,
-                originalText: entry.content,
-                mode: entry.type.name,
-                currentDate: entry.date,
-                onRefresh: () {
-                  onUpdate();
-                  Navigator.of(context).pop();
-                },
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_today),
-            tooltip: '날짜 변경',
-            onPressed: () async {
-              final newDate = await showDatePicker(
-                context: context,
-                initialDate: entry.date,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2030),
-              );
-              if (newDate != null) {
-                await ScheduleUseCase.updateEntry(
-                  entry: entry,
-                  newType: entry.type,
-                  provider: Provider.of<ScheduleProvider>(context, listen: false),
-                  gameController: gameController,
-                  firestore: FirebaseFirestore.instance,
-                  userId: FirebaseAuth.instance.currentUser!.uid,
-                );
-                onUpdate();
-                Navigator.of(context).pop();
-              }
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.delete),
             tooltip: '삭제',
@@ -90,35 +100,77 @@ class ScheduleDetailScreen extends StatelessWidget {
                     .collection('messages')
                     .doc(FirebaseAuth.instance.currentUser!.uid)
                     .collection('logs')
-                    .doc(entry.docId)
+                    .doc(widget.entry.docId)
                     .delete();
-                onUpdate();
+                widget.onUpdate();
                 Navigator.of(context).pop();
               }
             },
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('+ 이미지 추가 기능은 추후 구현 예정')),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '날짜: $dateStr',
-              style: Theme.of(context).textTheme.titleMedium,
+            GestureDetector(
+              onDoubleTap: () async {
+                final newDate = await showDatePicker(
+                  context: context,
+                  initialDate: _date,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2030),
+                );
+                if (newDate != null) await _updateDate(newDate);
+              },
+              child: Text(
+                '날짜: $dateStr (더블탭해서 변경)',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
-              '내용:',
+              '내용 (더블탭해서 수정):',
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 4),
-            Text(entry.content),
+            GestureDetector(
+              onDoubleTap: () async {
+                final newText = await _showTextEditDialog('내용 수정', _content);
+                if (newText != null && newText.trim().isNotEmpty) {
+                  await _updateContent(newText.trim());
+                }
+              },
+              child: Text(_content),
+            ),
             const SizedBox(height: 16),
-            // TODO: 메모나 이미지 등 추가 구현
+            // TODO: 이미지 추가 시 여기에 뿌려줄 수 있음
           ],
         ),
+      ),
+    );
+  }
+
+  Future<String?> _showTextEditDialog(String title, String initialText) async {
+    final controller = TextEditingController(text: initialText);
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('저장')),
+        ],
       ),
     );
   }

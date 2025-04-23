@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../game/core/game_controller.dart';
-import '../utils/schedule_actions.dart'; // ✅ 공통 액션 가져오기
-import 'schedule_detail_screen.dart';
+import 'schedule_list_screen.dart';
+import '../models/schedule_entry.dart';
 
 
 class TodoListScreen extends StatefulWidget {
@@ -45,6 +45,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
   }
 
   List<Map<String, dynamic>> _todosForDate = [];
+
   Future<void> _fetchTodosForDate(DateTime date) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -71,7 +72,8 @@ class _TodoListScreenState extends State<TodoListScreen> {
     print('📥 각 mode: ${snapshot.docs.map((doc) => doc['mode']).toList()}');
 
 
-    final todos = snapshot.docs.map((doc) => {
+    final todos = snapshot.docs.map((doc) =>
+    {
       'id': doc.id,
       'content': doc['content'] as String,
     }).toList();
@@ -83,67 +85,10 @@ class _TodoListScreenState extends State<TodoListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('yyyy년 M월 d일').format(_currentDate);
-
-    return Scaffold(
-      appBar: AppBar(),
-      body: Column(
-        children: [
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_left),
-                onPressed: () => _changeDateBy(-1),
-              ),
-              Text(
-                formattedDate,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                icon: const Icon(Icons.arrow_right),
-                onPressed: () => _changeDateBy(1),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: _todosForDate.isEmpty
-                ? const Center(child: Text('할일이 없습니다.'))
-                : ListView.builder(
-              itemCount: _todosForDate.length,
-              itemBuilder: (context, index) {
-                final todo = _todosForDate[index];
-                return ListTile(
-                  leading: GestureDetector(
-                    onTap: () => markAsOtherType(
-                      docId: todo['id'],
-                      currentMode: 'todo',
-                      gameController: widget.gameController,
-                      currentDate: _currentDate,
-                      onRefresh: () => _fetchTodosForDate(_currentDate),
-                      context: context,
-                    ),
-                    child: const Icon(Icons.circle_outlined),
-                  ),
-                  title: GestureDetector(
-                    onDoubleTap: () => showEditOrDeleteDialog(
-                      context: context,
-                      docId: todo['id'],
-                      originalText: todo['content'],
-                      mode: 'todo',
-                      currentDate: _currentDate,
-                      onRefresh: () => _fetchTodosForDate(_currentDate),
-                    ),
-                    child: Text(todo['content'] ?? ''),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+    return ScheduleListScreen(
+      type: ScheduleType.todo,
+      initialDate: DateTime.now(),
+      gameController: widget.gameController,
     );
   }
 }

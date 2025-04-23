@@ -1,16 +1,16 @@
 // lib/chatdo/widgets/schedule_entry_tile.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/schedule_entry.dart';
 import '../screens/schedule_detail_screen.dart';
 import '../../game/core/game_controller.dart';
 import '../utils/schedule_actions.dart';
 
-
-/// Reusable tile widget for a schedule entry (todo or done)
+/// 일정 항목 하나를 표시하는 재사용 가능한 타일 위젯
 class ScheduleEntryTile extends StatelessWidget {
   final ScheduleEntry entry;
   final GameController gameController;
-  final VoidCallback onRefresh;
+  final Future<void> Function() onRefresh;
 
   const ScheduleEntryTile({
     Key? key,
@@ -22,11 +22,12 @@ class ScheduleEntryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDone = entry.type == ScheduleType.done;
+    final dateStr = DateFormat('yyyy-MM-dd').format(entry.date);
+
     return ListTile(
       leading: GestureDetector(
-        onTap: () {
-          // Toggle status (todo <-> done)
-          markAsOtherType(
+        onTap: () async {
+          await markAsOtherType(
             docId: entry.docId!,
             currentMode: entry.type.name,
             gameController: gameController,
@@ -40,26 +41,30 @@ class ScheduleEntryTile extends StatelessWidget {
           color: isDone ? Colors.grey : Colors.red,
         ),
       ),
-      title: GestureDetector(
-        onTap: () {
-          // Navigate to detail screen
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ScheduleDetailScreen(
-                entry: entry,
-                gameController: gameController,
-                onUpdate: onRefresh,
-              ),
-            ),
-          );
-        },
-        child: Text(
-          entry.content,
-          style: TextStyle(
-            color: isDone ? Colors.grey : Colors.red,
-          ),
+      title: Text(
+        entry.content,
+        style: TextStyle(
+          color: isDone ? Colors.grey : Colors.red,
+          fontSize: 16,
         ),
       ),
+      subtitle: Text(
+        dateStr,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      ),
+      onTap: () {
+        Navigator.of(context)
+            .push(
+          MaterialPageRoute(
+            builder: (_) => ScheduleDetailScreen(
+              entry: entry,
+              gameController: gameController,
+              onUpdate: onRefresh,
+            ),
+          ),
+        )
+            .then((_) => onRefresh());
+      },
     );
   }
 }

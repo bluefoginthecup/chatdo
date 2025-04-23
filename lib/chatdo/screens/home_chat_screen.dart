@@ -93,11 +93,18 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     if (text.trim().isEmpty || _userId == null) return;
 
     final now = DateTime.now();
+    final docRef = FirebaseFirestore.instance
+        .collection('messages')
+        .doc(_userId)
+        .collection('logs')
+        .doc();
+
     final entry = ScheduleEntry(
       content: text,
       date: date,
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
+
     );
 
     print('🚀 updateEntry 호출 직전: ${entry.content}, ${entry.type}');

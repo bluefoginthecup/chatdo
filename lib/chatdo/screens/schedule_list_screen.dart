@@ -1,67 +1,173 @@
 // lib/chatdo/screens/schedule_list_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 import '../models/schedule_entry.dart';
-import '../providers/schedule_provider.dart';
-import '../../game/core/game_controller.dart';
 import '../widgets/schedule_entry_tile.dart';
+import '../../game/core/game_controller.dart';
 
-/// Generic list screen for todo/done entries on a given date.
-class ScheduleListScreen extends StatelessWidget {
+class ScheduleListScreen extends StatefulWidget {
   final ScheduleType type;
-  final DateTime date;
+  final DateTime initialDate;
   final GameController gameController;
-  final Future<void> Function() onRefresh;
 
   const ScheduleListScreen({
     Key? key,
     required this.type,
-    required this.date,
+    required this.initialDate,
     required this.gameController,
-    required this.onRefresh,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<ScheduleProvider>();
-    final entries = provider.getEntriesForDate(date, type);
-
-    if (entries.isEmpty) {
-      return Center(
-        child: Text(
-          type == ScheduleType.todo ? '할일이 없습니다.' : '완료된 일이 없습니다.',
-          style: const TextStyle(fontSize: 16),
-        ),
-      );
-    }
-    return ListView.builder(
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        return ScheduleEntryTile(
-          entry: entry,
-          gameController: gameController,
-          onRefresh: onRefresh,
-        );
-      },
-    );
-  }
+  _ScheduleListScreenState createState() => _ScheduleListScreenState();
 }
 
-// lib/chatdo/providers/schedule_provider.dart (add method)
-extension ScheduleProviderExtensions on ScheduleProvider {
-  List<ScheduleEntry> getEntriesForDate(DateTime date, ScheduleType type) {
-    final key = DateTime(date.year, date.month, date.day);
-    final all = type == ScheduleType.todo ? todos : dones;
-    return all.where((e) {
-      final d = e.date;
-      return d.year == key.year && d.month == key.month && d.day == key.day;
-    }).toList();
+class _ScheduleListScreenState extends State<ScheduleListScreen> {
+  late DateTime _currentDate;
+  List<ScheduleEntry> _entries = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentDate = widget.initialDate;
+    _loadEntries();
   }
 
-  /// Example reload trigger; you can implement to re-fetch from Firestore
-  Future<void> reload() async {
-    notifyListeners();
+  Future<void> _loadEntries() async {
+    setState(() => _isLoading = true);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      setState(() {
+        _entries = [];
+        _isLoading = false;
+      });
+      return;
+    }
+    final dateString = DateFormat('yyyy-MM-dd').format(_currentDate);
+    late QuerySnapshot<Map<String, dynamic>> snapshot;
+    try {
+      snapshot = await FirebaseFirestore.instance
+          .collection('messages')
+          .doc(uid)
+          .collection('logs')
+          .where('mode', isEqualTo: widget.type.name)
+          .where('date', isEqualTo: dateString)
+          .orderBy('timestamp')
+          .get();
+    } catch (_) {
+      setState(() {
+        _entries = [];
+        _isLoading = false;
+      });
+      return;
+    }
+    final list = snapshot.docs.map((doc) {
+      final data = doc.data();
+      final content = data['content']?.toString() ?? '';
+      final date = DateTime.parse(data['date'] as String);
+      final ts = data['timestamp'];
+      DateTime createdAt;
+      if (ts is String) createdAt = DateTime.parse(ts);
+      else if (ts is int) createdAt = DateTime.fromMillisecondsSinceEpoch(ts);
+      else if (ts is Timestamp) createdAt = ts.toDate();
+      else createdAt = date;
+      return ScheduleEntry(
+        content: content,
+        date: date,
+        createdAt: createdAt,
+        type: widget.type,
+        docId: doc.id,
+      );
+    }).toList();
+    setState(() {
+      _entries = list;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _changeDate(int days) async {
+    setState(() {
+      _currentDate = _currentDate.add(Duration(days: days));
+    });
+    await _loadEntries();
+  }
+
+  Widget _buildDateHeader() {
+    final formatted = DateFormat('yyyy년 M월 d일').format(_currentDate);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_left),
+          onPressed: () => _changeDate(-1),
+        ),
+        Text(
+          formatted,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_right),
+          onPressed: () => _changeDate(1),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_entries.isEmpty) {
+      return Column(
+        children: [
+          const SizedBox(height: 16),
+          _buildDateHeader(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Center(
+              child: Text(
+                widget.type == ScheduleType.todo
+                    ? '할일이 없습니다.'
+                    : '완료된 일이 없습니다.',
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 16),
+        _buildDateHeader(),
+        const SizedBox(height: 8),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadEntries,
+            child: ListView.builder(
+              itemCount: _entries.length,
+              itemBuilder: (context, index) {
+                final entry = _entries[index];
+                return ScheduleEntryTile(
+                  entry: entry,
+                  gameController: widget.gameController,
+                  onRefresh: _loadEntries,
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
