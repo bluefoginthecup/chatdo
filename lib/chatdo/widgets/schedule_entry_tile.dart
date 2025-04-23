@@ -51,16 +51,19 @@ class ScheduleEntryTile extends StatelessWidget {
           color: isDone ? Colors.grey : Colors.red,
         ),
       ),
-      title: entry.imageUrl != null
-          ? const Text('[사진]', style: TextStyle(color: Colors.grey))
-          : Text(
+      title: Text(
         entry.content,
         style: TextStyle(
           color: isDone ? Colors.grey : Colors.red,
           fontSize: 16,
         ),
       ),
-      subtitle: Text(
+      subtitle: entry.imageUrl != null && entry.body != null
+          ? Text(
+        entry.body!,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      )
+          : Text(
         dateStr,
         style: const TextStyle(fontSize: 12, color: Colors.grey),
       ),

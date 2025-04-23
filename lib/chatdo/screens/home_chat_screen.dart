@@ -121,6 +121,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     _scrollToBottom();
   }
 
+  // ... 생략된 import 및 클래스 선언 부분
+
   Future<void> _handleSendImage(File imageFile, Mode mode, DateTime date) async {
     if (_userId == null) return;
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -132,42 +134,73 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       final downloadUrl = await ref.getDownloadURL();
       print('✅ 업로드 완료: $downloadUrl');
 
+      // 제목 + 내용 입력받기
+      final titleController = TextEditingController();
+      final bodyController = TextEditingController();
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('제목과 내용을 입력하세요'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: titleController, decoration: const InputDecoration(labelText: '제목')),
+              TextField(controller: bodyController, decoration: const InputDecoration(labelText: '내용')),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('확인')),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      final title = titleController.text.trim();
+      final body = bodyController.text.trim();
+
       final now = DateTime.now();
       final docRef = FirebaseFirestore.instance.collection('messages').doc(_userId).collection('logs').doc();
+
       final entry = ScheduleEntry(
-        content: '[IMAGE]',
+        content: title.isNotEmpty ? title : '[IMAGE]',
         date: date,
         type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
         createdAt: now,
         docId: docRef.id,
         imageUrl: downloadUrl,
-        );
+        body: body.isNotEmpty ? body : null,
+      );
 
-    await ScheduleUseCase.updateEntry(
-      entry: entry,
-      newType: entry.type,
-      provider: context.read<ScheduleProvider>(),
-      gameController: widget.gameController,
-      firestore: FirebaseFirestore.instance,
-      userId: _userId!,
-    );
+      await ScheduleUseCase.updateEntry(
+        entry: entry,
+        newType: entry.type,
+        provider: context.read<ScheduleProvider>(),
+        gameController: widget.gameController,
+        firestore: FirebaseFirestore.instance,
+        userId: _userId!,
+      );
+      if (mounted) {
+        setState(() {
+          _messages.add(entry);
+          _messageLog.add({
+            'content': entry.content,
+            'date': entry.date.toIso8601String(),
+            'imageUrl': downloadUrl,
+          });
+        });
+      }
 
-    setState(() {
-      _messages.add(entry);
-      _messageLog.add({
-        'content': '[IMAGE]',
-        'date': entry.date.toIso8601String(),
-        'imageUrl': downloadUrl,
-      });
-    });
+      final box = await Hive.openBox('chat_messages');
+      await box.put('messages', _messages.map((e) => e.toJson()).toList());
+      _scrollToBottom();
     } catch (e) {
       print('❌ 이미지 업로드 실패: $e');
     }
-
-    final box = await Hive.openBox('chat_messages');
-    await box.put('messages', _messages.map((e) => e.toJson()).toList());
-    _scrollToBottom();
   }
+
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
