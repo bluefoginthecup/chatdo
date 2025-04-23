@@ -80,6 +80,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         createdAt: createdAt,
         type: widget.type,
         docId: doc.id,
+        imageUrl: data['imageUrl'] as String?,
       );
     }).toList();
     setState(() {

@@ -25,7 +25,17 @@ class ScheduleEntryTile extends StatelessWidget {
     final dateStr = DateFormat('yyyy-MM-dd').format(entry.date);
 
     return ListTile(
-      leading: GestureDetector(
+      leading: entry.imageUrl != null
+          ? ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.network(
+          entry.imageUrl!,
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+        ),
+      )
+          : GestureDetector(
         onTap: () async {
           await markAsOtherType(
             docId: entry.docId!,
@@ -41,7 +51,9 @@ class ScheduleEntryTile extends StatelessWidget {
           color: isDone ? Colors.grey : Colors.red,
         ),
       ),
-      title: Text(
+      title: entry.imageUrl != null
+          ? const Text('[사진]', style: TextStyle(color: Colors.grey))
+          : Text(
         entry.content,
         style: TextStyle(
           color: isDone ? Colors.grey : Colors.red,

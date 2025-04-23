@@ -122,6 +122,18 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.entry.imageUrl != null) ...[
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    widget.entry.imageUrl!,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             GestureDetector(
               onDoubleTap: () async {
                 final newDate = await showDatePicker(
