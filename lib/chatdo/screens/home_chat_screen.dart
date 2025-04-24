@@ -88,6 +88,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   }
 
   Future<void> _handleSendMessage(String text, Mode mode, DateTime date) async {
+
     if (text.trim().isEmpty || _userId == null) return;
     final now = DateTime.now();
     final docRef = FirebaseFirestore.instance.collection('messages').doc(_userId).collection('logs').doc();
@@ -106,6 +107,17 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       firestore: FirebaseFirestore.instance,
       userId: _userId!,
     );
+    final box = await Hive.openBox<Message>('messages');
+    await box.add(Message(
+      id: entry.docId ?? UniqueKey().toString(),
+      text: entry.content,
+      type: entry.type.name,
+      date: DateFormat('yyyy-MM-dd').format(entry.date),
+      timestamp: now.millisecondsSinceEpoch,
+      imageUrl: entry.imageUrl,
+    ));
+
+
     setState(() {
       _messages.add(entry);
       _messageLog.add({
@@ -113,8 +125,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         'date': entry.date.toIso8601String(),
       });
     });
-    final box = await Hive.openBox('chat_messages');
-    await box.put('messages', _messages.map((e) => e.toJson()).toList());
     _controller.clear();
     _focusNode.unfocus();
     _shouldRefocusOnResume = true;
@@ -182,6 +192,16 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         firestore: FirebaseFirestore.instance,
         userId: _userId!,
       );
+      final box = await Hive.openBox<Message>('messages');
+      await box.add(Message(
+        id: entry.docId ?? UniqueKey().toString(),
+        text: entry.content,
+        type: entry.type.name,
+        date: DateFormat('yyyy-MM-dd').format(entry.date),
+        timestamp: now.millisecondsSinceEpoch,
+        imageUrl: entry.imageUrl,
+      ));
+
       if (mounted) {
         setState(() {
           _messages.add(entry);
@@ -193,8 +213,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         });
       }
 
-      final box = await Hive.openBox('chat_messages');
-      await box.put('messages', _messages.map((e) => e.toJson()).toList());
       _scrollToBottom();
     } catch (e) {
       print('❌ 이미지 업로드 실패: $e');

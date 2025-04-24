@@ -8,6 +8,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../story/dialogue_chapter0.dart';
 
 class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGame> {
+  final void Function(String) onMusicChange;
+
+  IntroScene({required this.onMusicChange});
+
   int _dialogueIndex = 0;
   late TextBoxComponent _textBox;
   late TextComponent _speakerName;
@@ -20,6 +24,9 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
 
   @override
   Future<void> onLoad() async {
+    await super.onLoad();
+
+
     size = gameRef.size;
     position = Vector2.zero();
 
@@ -101,6 +108,10 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
 
     add(_autoAdvanceTimer);
     _updateCharacterVisuals();
+
+
+    onMusicChange('assets/sounds/intro_theme.m4a');
+
   }
 
   void _nextDialogue() async {
