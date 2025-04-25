@@ -1,4 +1,4 @@
-// dialogue_scene_base.dart
+// dialogue_scene_base.dart (디버그 로그 포함)
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -13,42 +13,98 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
   DialogueSceneBase({this.onCompleted});
 
   int _dialogueIndex = 0;
-  late final TextComponent _textBox;
-  late final TextComponent _speakerName;
+  late final RectangleComponent _overlayDim;
   late final SpriteComponent _jordyCloseup;
-  late final TimerComponent _dialogueTimer;
+  late final SpriteComponent _textBackground;
+  late final TextComponent _speakerName;
+  late final TextComponent _textBox;
+  late final TimerComponent _autoAdvanceTimer;
+  late final TextComponent _prevButton;
+  late final TextComponent _nextButton;
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    print("🟢 DialogueSceneBase.onLoad 시작");
+    print("🧩 dialogueData 길이: ${dialogueData.length}");
+    print("🧩 첫 줄: ${dialogueData[0]["line"]}");
+
+    size = gameRef.size;
+    position = Vector2.zero();
+    print("📐 사이즈 설정됨: $size");
 
     await AudioManager.instance.stop();
     AudioManager.instance.play(bgmPath, volume: 0.1);
+    print("🎧 음악 재생 시작: $bgmPath");
 
-    _textBox = TextComponent(
-      text: dialogueData[_dialogueIndex]["line"] ?? "",
-      position: Vector2(30, 360),
-      size: Vector2(300, 200),
-      textRenderer: TextPaint(style: const TextStyle(fontSize: 20)),
+    _overlayDim = RectangleComponent(
+      size: size,
+      paint: Paint()..color = const Color(0xCC000000),
+      priority: -1,
     );
-
-    _speakerName = TextComponent(
-      text: dialogueData[_dialogueIndex]["speaker"] ?? "",
-      position: Vector2(30, 320),
-      textRenderer: TextPaint(style: const TextStyle(fontSize: 16)),
-    );
+    print("🟫 overlayDim 준비 완료");
 
     _jordyCloseup = SpriteComponent()
       ..sprite = await gameRef.loadSprite('jordy_closeup.png')
-      ..size = Vector2(128, 128)
-      ..position = Vector2(180, 180)
+      ..size = Vector2(200, 200)
+      ..position = Vector2(size.x / 2 - 170, 360)
       ..opacity = 0.0;
+    print("🧍 jordyCloseup 준비 완료");
+
+    _textBackground = SpriteComponent()
+      ..sprite = await gameRef.loadSprite('text_bg.png')
+      ..size = Vector2(375, 160)
+      ..position = Vector2(0, size.y - 180);
+    print("📝 텍스트 배경 준비 완료");
+
+    _speakerName = TextComponent(
+      text: dialogueData[_dialogueIndex]["speaker"] ?? "",
+      position: Vector2(40, size.y - 160),
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 16, color: Colors.red)),
+    );
+    print("🗣️ 화자 이름 준비 완료: ${_speakerName.text}");
+
+    _textBox = TextComponent(
+      text: dialogueData[_dialogueIndex]["line"] ?? "",
+      position: Vector2(40, size.y - 120),
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 20, color: Colors.black)),
+    );
+    print("💬 첫 대사 준비 완료: ${_textBox.text}");
+
+    _prevButton = TextComponent(
+      text: "<",
+      position: Vector2(30, size.y + 0),
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 28, color: Colors.black)),
+      priority: 1,
+    );
+
+    _nextButton = TextComponent(
+      text: ">",
+      position: Vector2(size.x - 50, size.y + 0),
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 28, color: Colors.black)),
+      priority: 1,
+    );
+
+    _autoAdvanceTimer = TimerComponent(
+      period: 4,
+      repeat: true,
+      onTick: _nextDialogue,
+    );
+
+    addAll([
+      _overlayDim,
+      _jordyCloseup,
+      _textBackground,
+      _speakerName,
+      _textBox,
+      _prevButton,
+      _nextButton,
+      _autoAdvanceTimer,
+    ]);
+    print("✅ 모든 컴포넌트 addAll 완료");
 
     _updateCharacterVisuals();
-
-    _dialogueTimer = TimerComponent(period: 4, repeat: true, onTick: _nextDialogue);
-
-    addAll([_textBox, _speakerName, _jordyCloseup, _dialogueTimer]);
+    print("🎬 대사 씬 초기화 완료");
   }
 
   void _nextDialogue() {
@@ -79,5 +135,13 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
   }
 
   @override
-  void onTapDown(TapDownEvent event) => _nextDialogue();
+  void onTapDown(TapDownEvent event) {
+    final x = event.canvasPosition.x;
+    final screenWidth = gameRef.size.x;
+    if (x < screenWidth / 2) {
+      _previousDialogue();
+    } else {
+      _nextDialogue();
+    }
+  }
 }

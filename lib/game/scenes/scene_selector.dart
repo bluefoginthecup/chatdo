@@ -13,10 +13,13 @@ class SceneSelector extends Component with HasGameReference<RoomGame> {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    print("🚀 SceneSelector onLoad 진입");
 
     if (showSick) {
+      print("🚀 SickScene 추가 시도");
       game.add(SickScene());
     } else {
+      print("🚀 IntroScene 추가 시도");
       game.add(IntroScene(
         onCompleted: () => game.add(SickScene()),
       ));

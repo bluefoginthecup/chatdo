@@ -9,6 +9,7 @@ import '../../scenes/intro_scene.dart';
 import 'girl_sprite.dart';
 import 'jordy_sprite.dart';
 import '/game/scenes/sick_scene.dart';
+import '/game/scenes/scene_selector.dart';
 
 class RoomGame extends FlameGame with HasCollisionDetection {
   late GirlSprite girl;
@@ -56,12 +57,9 @@ class RoomGame extends FlameGame with HasCollisionDetection {
 
     // 🔽 인트로 씬 실행 (🎵 콜백으로 음악 요청 넘김)
     if (introIndex < 9999) {
-      add(IntroScene(onCompleted: () {
-        add(SickScene());
-      }
-      )
-      );
+      add(SceneSelector(showSick: false));
     }
+
 
 
     // 🎵 씬에서 호출하는 음악 재생 함수
