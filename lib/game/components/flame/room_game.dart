@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../scenes/intro_scene.dart';
 import 'girl_sprite.dart';
 import 'jordy_sprite.dart';
+import '/game/scenes/sick_scene.dart';
 
 class RoomGame extends FlameGame with HasCollisionDetection {
   late GirlSprite girl;
@@ -53,46 +54,45 @@ class RoomGame extends FlameGame with HasCollisionDetection {
     final introIndex = prefs.getInt('intro_dialogue_index') ?? 0;
 
 
-
     // 🔽 인트로 씬 실행 (🎵 콜백으로 음악 요청 넘김)
     if (introIndex < 9999) {
-      add(IntroScene());
-
-    }
-  }
-
-
-
-  // 🎵 씬에서 호출하는 음악 재생 함수
-  Future<void> playMusic(String assetPath) async {
-    try {
-      await bgmPlayer?.dispose();
-      bgmPlayer = AudioPlayer();
-      await bgmPlayer!.setAudioSource(AudioSource.asset(assetPath));
-      await bgmPlayer!.setVolume(0.02);
-      await bgmPlayer!.load();  // 음악 로드 명시적으로 호출
-      await bgmPlayer!.play();
-
-      print("🎵 음악 재생 성공: $assetPath");
-    } catch (e, stackTrace) {
-      print("🎵 음악 로드 실패: $e");
-      print("📍 발생 위치:\n$stackTrace");
-    }
-  }
-
-
-
-
-  @override
-  Future<void> onDetach() async {
-    try {
-      if (bgmPlayer?.playing ?? false) {
-        await bgmPlayer?.stop();
+      add(IntroScene(onCompleted: () {
+        add(SickScene());
       }
-      await bgmPlayer?.dispose();
-    } catch (e) {
-      print("🎵 음악 정리 중 에러: $e");
+      )
+      );
     }
-    super.onDetach();
+
+
+    // 🎵 씬에서 호출하는 음악 재생 함수
+    Future<void> playMusic(String assetPath) async {
+      try {
+        await bgmPlayer?.dispose();
+        bgmPlayer = AudioPlayer();
+        await bgmPlayer!.setAudioSource(AudioSource.asset(assetPath));
+        await bgmPlayer!.setVolume(0.02);
+        await bgmPlayer!.load(); // 음악 로드 명시적으로 호출
+        await bgmPlayer!.play();
+
+        print("🎵 음악 재생 성공: $assetPath");
+      } catch (e, stackTrace) {
+        print("🎵 음악 로드 실패: $e");
+        print("📍 발생 위치:\n$stackTrace");
+      }
+    }
+
+
+    @override
+    Future<void> onDetach() async {
+      try {
+        if (bgmPlayer?.playing ?? false) {
+          await bgmPlayer?.stop();
+        }
+        await bgmPlayer?.dispose();
+      } catch (e) {
+        print("🎵 음악 정리 중 에러: $e");
+      }
+      super.onDetach();
+    }
   }
 }

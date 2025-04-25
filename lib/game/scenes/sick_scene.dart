@@ -1,22 +1,18 @@
-// game/scenes/intro_scene.dart
+// game/scenes/sick_scene.dart
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/painting.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../story/dialogue_chapter0.dart';
-import 'package:provider/provider.dart';
+import '../story/dialogue_sick.dart';
 import 'package:chatdo/chatdo/providers/audio_manager.dart';
-import '/game/scenes/sick_scene.dart';
 
 
 
-class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGame> {
-  final void Function()? onCompleted;
+class SickScene extends PositionComponent with HasGameRef<FlameGame> {
 
-  IntroScene({this.onCompleted});
-
+  SickScene();
   int _dialogueIndex = 0;
   late TextBoxComponent _textBox;
   late TextComponent _speakerName;
@@ -35,8 +31,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     size = gameRef.size;
     position = Vector2.zero();
 
-    final prefs = await SharedPreferences.getInstance();
-    _dialogueIndex = prefs.getInt('intro_dialogue_index') ?? 0;
+    _dialogueIndex = 0; // 무조건 처음부터 시작
 
     _overlayDim = RectangleComponent(
       size: size,
@@ -48,7 +43,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     final textBoxHeight = 100.0;
     final textBoxPosition = Vector2(5, gameRef.size.y - textBoxHeight - 60);
 
-    final current = dialogueChapter0[_dialogueIndex];
+    final current = dialogueSick[_dialogueIndex];
 
     _speakerName = TextComponent(
       text: current["speaker"]!,
@@ -115,13 +110,14 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     _updateCharacterVisuals();
 
     await Future.delayed(Duration(milliseconds: 300));
-    AudioManager.instance.play('assets/sounds/intro_theme.m4a', volume: 0.1);
+    await AudioManager.instance.stop();
+    AudioManager.instance.play('assets/sounds/sick_theme.m4a', volume: 0.1);
   }
 
   void _nextDialogue() async {
-    if (_dialogueIndex < dialogueChapter0.length - 1) {
+    if (_dialogueIndex < dialogueSick.length - 1) {
       _dialogueIndex++;
-      final current = dialogueChapter0[_dialogueIndex];
+      final current = dialogueSick[_dialogueIndex];
       _speakerName.text = current["speaker"]!;
       _textBox.text = current["line"]!;
       final prefs = await SharedPreferences.getInstance();
@@ -129,7 +125,6 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     } else {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('intro_dialogue_index', 9999); // 끝났음을 의미
-      onCompleted?.call();
       removeFromParent();
       return;
     }
@@ -139,7 +134,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   void _previousDialogue() async {
     if (_dialogueIndex > 0) {
       _dialogueIndex--;
-      final current = dialogueChapter0[_dialogueIndex];
+      final current = dialogueSick[_dialogueIndex];
       _speakerName.text = current["speaker"]!;
       _textBox.text = current["line"]!;
       final prefs = await SharedPreferences.getInstance();
@@ -149,7 +144,7 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
   }
 
   void _updateCharacterVisuals() {
-    final speaker = dialogueChapter0[_dialogueIndex]["speaker"];
+    final speaker = dialogueSick[_dialogueIndex]["speaker"];
     _jordyCloseup.opacity = speaker == "조르디" ? 1.0 : 0.0;
   }
 
