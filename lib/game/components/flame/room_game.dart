@@ -56,7 +56,8 @@ class RoomGame extends FlameGame with HasCollisionDetection {
 
     // 🔽 인트로 씬 실행 (🎵 콜백으로 음악 요청 넘김)
     if (introIndex < 9999) {
-      add(IntroScene(onMusicChange: playMusic));
+      add(IntroScene());
+
     }
   }
 

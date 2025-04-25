@@ -6,12 +6,14 @@ import 'package:flame/events.dart';
 import 'package:flutter/painting.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../story/dialogue_chapter0.dart';
+import 'package:provider/provider.dart';
+import 'package:chatdo/chatdo/providers/audio_manager.dart';
+
+
 
 class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGame> {
-  final void Function(String) onMusicChange;
 
-  IntroScene({required this.onMusicChange});
-
+  IntroScene();
   int _dialogueIndex = 0;
   late TextBoxComponent _textBox;
   late TextComponent _speakerName;
@@ -109,9 +111,8 @@ class IntroScene extends PositionComponent with TapCallbacks, HasGameRef<FlameGa
     add(_autoAdvanceTimer);
     _updateCharacterVisuals();
 
-
-    onMusicChange('assets/sounds/intro_theme.m4a');
-
+    await Future.delayed(Duration(milliseconds: 300));
+    AudioManager.instance.play('assets/sounds/intro_theme.m4a', volume: 0.1);
   }
 
   void _nextDialogue() async {

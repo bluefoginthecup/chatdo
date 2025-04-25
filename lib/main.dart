@@ -8,6 +8,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'chatdo/models/message.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'chatdo/providers/audio_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,12 +20,16 @@ void main() async {
   await Hive.openBox<Message>('messages');
   await Hive.openBox<Map>('syncQueue');
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ScheduleProvider(),
-      child: const ChatDoApp(),
-    ),
-  );
+
+runApp(
+MultiProvider(
+providers: [
+ChangeNotifierProvider(create: (_) => ScheduleProvider()),
+Provider<AudioManager>(create: (_) => AudioManager()), // 🔥 추가된 줄
+],
+child: const ChatDoApp(),
+),
+);
 }
 
 class ChatDoApp extends StatelessWidget {

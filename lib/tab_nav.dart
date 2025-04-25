@@ -7,6 +7,7 @@ import 'chatdo/screens/schedule_overview_screen.dart';
 import 'chatdo/screens/menu_screen.dart';
 import '../../game/core/game_controller.dart';
 import 'chatdo/providers/schedule_provider.dart';
+import 'chatdo/providers/audio_manager.dart';
 
 class TabNav extends StatefulWidget {
   const TabNav({super.key});
@@ -46,9 +47,15 @@ class _TabNavState extends State<TabNav> with WidgetsBindingObserver {
     }
   }
 
+
   void _onItemTapped(int index) {
+    // 방 탭(2)에서 나갈 때 음악 정지
+    if (_selectedIndex == 2 && index != 2) {
+      AudioManager.instance.stop();
+    }
     setState(() => _selectedIndex = index);
   }
+
 
   @override
   Widget build(BuildContext context) {
