@@ -8,6 +8,8 @@ class ScheduleEntry {
   final String? docId;
   final String? imageUrl;
   final String? body;
+  final Map<String, dynamic>? routineInfo;
+
 
   ScheduleEntry({
     required this.date,
@@ -17,6 +19,7 @@ class ScheduleEntry {
     this.docId,
     this.imageUrl,
     this.body,
+    this.routineInfo,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
@@ -28,6 +31,7 @@ class ScheduleEntry {
       docId: json['docId'] as String?,
       imageUrl: json['imageUrl'] as String?,
       body: json['body'] as String?,
+      routineInfo: json['routineInfo'] as Map<String, dynamic>?,
 
     );
   }
@@ -45,6 +49,7 @@ class ScheduleEntry {
       'docId': docId,
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (body != null) 'body': body,
+      if (routineInfo != null) 'routineInfo': routineInfo,
     };
   }
 
@@ -56,6 +61,7 @@ class ScheduleEntry {
     String? docId,
     String? imageUrl,
     String? body,
+    Map<String, dynamic>? routineInfo,
   }) {
     return ScheduleEntry(
       date: date ?? this.date,
@@ -65,6 +71,7 @@ class ScheduleEntry {
       docId: docId ?? this.docId,
       imageUrl: imageUrl ?? this.imageUrl,
       body: body ?? this.body,
+      routineInfo: routineInfo ?? this.routineInfo,
     );
   }
 }
