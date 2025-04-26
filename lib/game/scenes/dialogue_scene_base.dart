@@ -8,6 +8,7 @@ import 'package:chatdo/chatdo/providers/audio_manager.dart';
 abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, HasGameRef {
   List<Map<String, String>> get dialogueData;
   String get bgmPath;
+  String get characterImagePath;
   final void Function()? onCompleted;
 
   DialogueSceneBase({this.onCompleted});
@@ -45,7 +46,7 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
     print("🟫 overlayDim 준비 완료");
 
     _jordyCloseup = SpriteComponent()
-      ..sprite = await gameRef.loadSprite('jordy_closeup.png')
+      ..sprite = await gameRef.loadSprite(characterImagePath)
       ..size = Vector2(200, 200)
       ..position = Vector2(size.x / 2 - 170, 360)
       ..opacity = 0.0;

@@ -5,6 +5,7 @@ import 'package:vector_math/vector_math.dart';
 class IntroScene extends DialogueSceneBase {
   IntroScene({super.onCompleted});
 
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
@@ -12,9 +13,13 @@ class IntroScene extends DialogueSceneBase {
 
   }
 
+
   @override
   List<Map<String, String>> get dialogueData => dialogueChapter0;
 
   @override
   String get bgmPath => 'assets/sounds/intro_theme.m4a';
+  @override
+  String get characterImagePath => 'jordy_closeup.png';
+
 }

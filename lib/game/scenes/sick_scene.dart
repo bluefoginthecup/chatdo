@@ -9,4 +9,8 @@ class SickScene extends DialogueSceneBase {
 
   @override
   String get bgmPath => 'assets/sounds/sick_theme.mp3';
+
+  @override
+  String get characterImagePath => 'jordy_shocked.png'; // 아픈 조르디 그림
+
 }
