@@ -26,6 +26,11 @@ class RoutineListScreen extends StatelessWidget {
             .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
+          print('✅ 루틴 스냅샷 상태: hasData=${snapshot.hasData}, hasError=${snapshot.hasError}, connectionState=${snapshot.connectionState}');
+          if (snapshot.hasError) {
+            print('❌ 루틴 Stream 에러 발생: ${snapshot.error}');
+            return Center(child: Text('에러 발생: ${snapshot.error}'));
+          }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }

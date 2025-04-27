@@ -8,10 +8,12 @@ class RoutineService {
   static final _collection = _firestore.collection('daily_routines');
 
   // 루틴 저장
-  static Future<void> saveRoutine(Routine routine) async {
-    await _collection.doc(routine.docId).set(routine.toJson());
-  }
 
+  static Future<void> saveRoutine(Routine routine) async {
+    final data = routine.toJson();
+    data['createdAt'] = FieldValue.serverTimestamp(); // ✅ 서버 시간으로 createdAt 덮어쓰기
+    await _collection.doc(routine.docId).set(data);
+  }
   // 루틴 수정
   static Future<void> updateRoutine(Routine routine) async {
     await _collection.doc(routine.docId).update(routine.toJson());
