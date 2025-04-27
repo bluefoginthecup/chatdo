@@ -43,7 +43,7 @@ class ScheduleUseCase {
         'content': updated.content,
         'date': updated.date.toIso8601String().substring(0, 10),
         'mode': updated.type.name,
-        'timestamp': updated.createdAt.toIso8601String(),
+        'timestamp': Timestamp.fromDate(updated.createdAt),
         'docId': updated.docId,
         'order': 0, // 기본 order. 나중에 지정 가능
         if (entry.imageUrl != null) 'imageUrl': entry.imageUrl,

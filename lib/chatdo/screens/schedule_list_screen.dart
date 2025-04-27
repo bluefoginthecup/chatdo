@@ -66,6 +66,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
     }
     final list = snapshot.docs.map((doc) {
       final data = doc.data();
+      print('✅ 불러온 문서 데이터: $data');
       final content = data['content']?.toString() ?? '';
       final date = DateTime.parse(data['date'] as String);
       final ts = data['timestamp'];

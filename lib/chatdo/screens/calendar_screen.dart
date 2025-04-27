@@ -54,7 +54,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     for (final doc in snapshot.docs) {
       final data = doc.data();
-      final date = DateTime.parse(data['date']);
+      final dateRaw = data['date'];
+
+      DateTime date;
+      if (dateRaw is Timestamp) {
+        date = dateRaw.toDate();
+      } else if (dateRaw is String) {
+        date = DateTime.parse(dateRaw);
+      } else {
+        throw Exception('Unknown date format');
+      }
+
       final ts = data['timestamp'];
       DateTime createdAt;
       if (ts is String) createdAt = DateTime.parse(ts);
@@ -64,6 +74,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
       final entry = ScheduleEntry(
         content: data['content']?.toString() ?? '',
+        body: data['body'],
         date: date,
         createdAt: createdAt,
         type: (data['mode'] ?? 'todo') == 'done' ? ScheduleType.done : ScheduleType.todo,
