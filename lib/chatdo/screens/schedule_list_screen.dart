@@ -64,27 +64,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
       });
       return;
     }
-    final list = snapshot.docs.map((doc) {
-      final data = doc.data();
-      print('✅ 불러온 문서 데이터: $data');
-      final content = data['content']?.toString() ?? '';
-      final date = DateTime.parse(data['date'] as String);
-      final ts = data['timestamp'];
-      DateTime createdAt;
-      if (ts is String) createdAt = DateTime.parse(ts);
-      else if (ts is int) createdAt = DateTime.fromMillisecondsSinceEpoch(ts);
-      else if (ts is Timestamp) createdAt = ts.toDate();
-      else createdAt = date;
-      return ScheduleEntry(
-        content: content,
-        date: date,
-        createdAt: createdAt,
-        type: widget.type,
-        docId: doc.id,
-        imageUrl: data['imageUrl'] as String?,
-        body: data['body'] as String?,
-      );
-    }).toList();
+    final list = snapshot.docs.map(
+            (doc) => ScheduleEntry.fromFirestore(doc)).toList();
     setState(() {
       _entries = list;
       _isLoading = false;

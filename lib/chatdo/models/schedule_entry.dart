@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // ✅ Firestore 관련 클래스 (DocumentSnapshot, Timestamp)
+
+
 enum ScheduleType { todo, done }
 
 class ScheduleEntry {
@@ -35,6 +38,36 @@ class ScheduleEntry {
 
     );
   }
+
+  factory ScheduleEntry.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    final rawDate = data['date'];
+    DateTime parsedDate;
+
+    if (rawDate is Timestamp) {
+      parsedDate = rawDate.toDate();
+    } else if (rawDate is String) {
+      parsedDate = DateTime.parse(rawDate);
+    } else {
+      throw Exception('Unknown date format');
+    }
+
+    return ScheduleEntry(
+      content: data['content'] ?? '',
+      body: data['body'],
+      date: parsedDate,
+      type: data['mode'] == 'done' ? ScheduleType.done : ScheduleType.todo,
+      createdAt: (data['timestamp'] is Timestamp)
+          ? (data['timestamp'] as Timestamp).toDate()
+          : (data['timestamp'] is String)
+          ? DateTime.parse(data['timestamp'])
+          : DateTime.now(),
+      docId: data['docId'],
+      imageUrl: data['imageUrl'],
+      routineInfo: data['routineInfo'],
+    );
+  }
+
 
   static ScheduleEntry fromParsedEntry(DateTime date, ScheduleType type, String content) {
     return ScheduleEntry(date: date, type: type, content: content, createdAt: DateTime.now());

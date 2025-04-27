@@ -184,7 +184,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('할일 상세'),
+        title: const Text('일정 상세'),
         actions: [
           IconButton(icon: const Icon(Icons.delete), onPressed: _deleteEntry),
         ],

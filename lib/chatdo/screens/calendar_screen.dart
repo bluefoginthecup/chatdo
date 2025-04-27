@@ -46,8 +46,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         .collection('messages')
         .doc(uid)
         .collection('logs')
-        .where('timestamp', isGreaterThanOrEqualTo: firstDay.toIso8601String())
-        .where('timestamp', isLessThanOrEqualTo: lastDay.toIso8601String())
+        .where('date', isGreaterThanOrEqualTo: DateFormat('yyyy-MM-dd').format(firstDay))
+        .where('date', isLessThanOrEqualTo: DateFormat('yyyy-MM-dd').format(lastDay))
         .get();
 
     final Map<DateTime, List<ScheduleEntry>> grouped = {};
@@ -65,23 +65,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
         throw Exception('Unknown date format');
       }
 
-      final ts = data['timestamp'];
-      DateTime createdAt;
-      if (ts is String) createdAt = DateTime.parse(ts);
-      else if (ts is int) createdAt = DateTime.fromMillisecondsSinceEpoch(ts);
-      else if (ts is Timestamp) createdAt = ts.toDate();
-      else createdAt = date;
-
-      final entry = ScheduleEntry(
-        content: data['content']?.toString() ?? '',
-        body: data['body'],
-        date: date,
-        createdAt: createdAt,
-        type: (data['mode'] ?? 'todo') == 'done' ? ScheduleType.done : ScheduleType.todo,
-        docId: doc.id,
-      );
-      final key = DateTime(date.year, date.month, date.day);
-      grouped.putIfAbsent(key, () => []).add(entry);
+      if (date.year == monthDate.year && date.month == monthDate.month) {
+        final entry = ScheduleEntry.fromFirestore(doc);
+        final key = DateTime(date.year, date.month, date.day);
+        grouped.update(key, (list) => list..add(entry), ifAbsent: () => [entry]);
+      }
     }
 
     setState(() {
