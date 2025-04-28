@@ -1206,6 +1206,7 @@ PODS:
   - BoringSSL-GRPC/Implementation (0.0.37):
     - BoringSSL-GRPC/Interface (= 0.0.37)
   - BoringSSL-GRPC/Interface (0.0.37)
+  - BSImagePicker (3.3.3)
   - cloud_firestore (5.6.6):
     - Firebase/Firestore (= 11.10.0)
     - firebase_core
@@ -1424,6 +1425,9 @@ PODS:
     - Flutter
     - FlutterMacOS
   - leveldb-library (1.22.6)
+  - multi_image_picker_plus (0.0.1):
+    - BSImagePicker (~> 3.1)
+    - Flutter
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
@@ -1452,6 +1456,7 @@ DEPENDENCIES:
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - just_audio (from `.symlinks/plugins/just_audio/darwin`)
+  - multi_image_picker_plus (from `.symlinks/plugins/multi_image_picker_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
@@ -1462,6 +1467,7 @@ SPEC REPOS:
     - AppAuth
     - AppCheckCore
     - BoringSSL-GRPC
+    - BSImagePicker
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -1506,6 +1512,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/image_picker_ios/ios"
   just_audio:
     :path: ".symlinks/plugins/just_audio/darwin"
+  multi_image_picker_plus:
+    :path: ".symlinks/plugins/multi_image_picker_plus/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   shared_preferences_foundation:
@@ -1519,6 +1527,7 @@ SPEC CHECKSUMS:
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   audio_session: 19e9480dbdd4e5f6c4543826b2e8b0e4ab6145fe
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
+  BSImagePicker: 57900b323f951711608acaf97d52e9183530cb6d
   cloud_firestore: aef3217af294cd35afda47e63112d306f4c9a2e2
   connectivity_plus: bf0076dd84a130856aa636df1c71ccaff908fa1d
   Firebase: 1fe1c0a7d9aaea32efe01fbea5f0ebd8d70e53a2
@@ -1546,6 +1555,7 @@ SPEC CHECKSUMS:
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   just_audio: a42c63806f16995daf5b219ae1d679deb76e6a79
   leveldb-library: cc8b8f8e013647a295ad3f8cd2ddf49a6f19be19
+  multi_image_picker_plus: b95d83279b5019ce4637ef17ca3aa14a557ffea6
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
