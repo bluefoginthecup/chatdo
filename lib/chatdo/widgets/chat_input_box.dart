@@ -14,6 +14,9 @@ import '../providers/schedule_provider.dart';
 import '../usecases/schedule_usecase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '/game/core/game_controller.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+
+
 
 enum Mode { todo, done }
 enum DateTag { today, tomorrow, yesterday }
@@ -189,11 +192,10 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         _isSending = false;
       });
 
-      final mbSize = (totalBytes / (1024 * 1024)).toStringAsFixed(2);
       // ✅ 여기 스낵바 추가
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('메시지 전송 완료(총 ${mbSize}MB)'),
+          content: Text('메시지 전송 완료'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -236,14 +238,17 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     }
   }
 
+
   void _pickImageFromCamera() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.camera);
+    final XFile? picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked != null) {
+      final File file = File(picked.path); // XFile → File 변환
       setState(() {
-        _pendingImages.add(File(picked.path));
+        _pendingImages.add(file); // File을 리스트에 저장
       });
     }
   }
+
 
   Future<void> _handleSendImages(List<File> images, String title) async {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
@@ -251,22 +256,40 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
     int totalBytes = 0;
     for (var imageFile in images) {
-      final fileSize = await imageFile.length();
-      totalBytes += fileSize;
 
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = '$timestamp.webp';  // 무조건 .jpg
+
       final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
 
       final tempDir = Directory.systemTemp;
-      final compressedFile = await FlutterImageCompress.compressAndGetFile(
+
+      final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
         imageFile.absolute.path,
-        '${tempDir.path}/compressed_${fileName}',
-        quality: 70, // 70% 퀄리티
+        '${tempDir.path}/compressed_$fileName',
+        quality: 70,
+        minWidth: 720,
+        minHeight: 720,
+        format: CompressFormat.webp,
       );
 
-      final fileToUpload = compressedFile ?? imageFile;
+      final File? compressedFile = compressedXFile != null ? File(compressedXFile.path) : null;
 
-      UploadTask uploadTask = ref.putFile(imageFile);
+
+      // 📢 추가: 압축 전후 용량 출력
+      final int originalSize = await imageFile.length();
+      final int compressedSize = compressedFile != null ? await compressedFile.length() : originalSize;
+
+      print('📦 원본 크기: ${(originalSize / 1024 / 1024).toStringAsFixed(2)}MB');
+      print('📦 압축 후 크기: ${(compressedSize / 1024 / 1024).toStringAsFixed(2)}MB');
+
+
+      final File fileToUpload = compressedFile ?? imageFile;
+      final fileSize = await fileToUpload.length(); // 📢 압축된 파일 사이즈를 합산
+      totalBytes += fileSize;
+
+      final metadata = SettableMetadata(contentType: 'image/webp');
+      UploadTask uploadTask = ref.putFile(fileToUpload, metadata);
       uploadTask.snapshotEvents.listen((event) {
         setState(() {
           _uploadProgress = event.bytesTransferred / event.totalBytes;
@@ -277,6 +300,25 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       final downloadUrl = await ref.getDownloadURL();
       downloadUrls.add(downloadUrl);
     }
+
+    String readableSize(int bytes) {
+      if (bytes < 1024) {
+        return '$bytes B';
+      } else if (bytes < 1024 * 1024) {
+        return '${(bytes / 1024).toStringAsFixed(1)} KB';
+      } else {
+        return '${(bytes / 1024 / 1024).toStringAsFixed(2)} MB';
+      }
+    }
+
+// 그리고 사용
+    final readable = readableSize(totalBytes);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('메시지 전송 완료 (총 $readable)'), duration: Duration(seconds: 2)),
+    );
+
+
+
     final now = DateTime.now();
     final docRef = FirebaseFirestore.instance.collection('messages').doc(userId).collection('logs').doc();
 

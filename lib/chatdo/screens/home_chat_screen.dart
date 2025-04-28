@@ -131,7 +131,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   }
 
   void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -141,6 +141,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       }
     });
   }
+
 
   List<Widget> _buildMessageWidgets() {
     List<Widget> widgets = [];
