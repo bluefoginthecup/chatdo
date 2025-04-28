@@ -245,8 +245,17 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                 ? TextField(controller: _bodyController, decoration: const InputDecoration(labelText: '본문'), maxLines: null)
                 : Text(_entry.body ?? '', style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 24),
-            if (_entry.imageUrl != null)
-              Image.network(_entry.imageUrl!, fit: BoxFit.cover),
+            if (_entry.imageUrls != null && _entry.imageUrls!.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _entry.imageUrls!.map((imageUrl) =>
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Image.network(imageUrl, fit: BoxFit.cover),
+                    )
+                ).toList(),
+              ),
+
             const SizedBox(height: 24),
 
             ElevatedButton.icon(

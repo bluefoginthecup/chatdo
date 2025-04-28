@@ -1,4 +1,4 @@
-// chat_input_box.dart (multi_image_picker_plus 적용 최종 완성본)
+// chat_input_box.dart (모드/날짜 복구 + 여러장 이미지 저장 최종본)
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -16,7 +16,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '/game/core/game_controller.dart';
 
 enum Mode { todo, done }
-
+enum DateTag { today, tomorrow, yesterday }
 
 class ChatInputBox extends StatefulWidget {
   final TextEditingController controller;
@@ -38,12 +38,25 @@ class ChatInputBox extends StatefulWidget {
 
 class _ChatInputBoxState extends State<ChatInputBox> {
   List<File> _pendingImages = [];
+  Mode _selectedMode = Mode.todo;
+  DateTag _selectedDateTag = DateTag.today;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Row(
+          children: [
+            _buildModeButton(Mode.todo, '할일'),
+            const SizedBox(width: 8),
+            _buildModeButton(Mode.done, '한일'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: _buildDateButtons(),
+        ),
         if (_pendingImages.isNotEmpty)
           SizedBox(
             height: 80,
@@ -106,9 +119,51 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     );
   }
 
+  Widget _buildModeButton(Mode mode, String label) {
+    final isSelected = _selectedMode == mode;
+    return OutlinedButton(
+      onPressed: () => setState(() => _selectedMode = mode),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: isSelected ? Colors.teal.shade100 : null,
+      ),
+      child: Text(label),
+    );
+  }
+
+  List<Widget> _buildDateButtons() {
+    final options = _selectedMode == Mode.todo
+        ? [DateTag.today, DateTag.tomorrow]
+        : [DateTag.today, DateTag.yesterday];
+
+    return options.map((tag) {
+      final isSelected = _selectedDateTag == tag;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: OutlinedButton(
+          onPressed: () => setState(() => _selectedDateTag = tag),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: isSelected ? Colors.teal.shade100 : null,
+          ),
+          child: Text(_getDateLabel(tag)),
+        ),
+      );
+    }).toList();
+  }
+
+  String _getDateLabel(DateTag tag) {
+    switch (tag) {
+      case DateTag.today:
+        return '오늘';
+      case DateTag.tomorrow:
+        return '내일';
+      case DateTag.yesterday:
+        return '어제';
+    }
+  }
+
   void _handleSubmit() async {
     if (_pendingImages.isNotEmpty) {
-      await _handleSendImages(_pendingImages, widget.controller.text.trim());
+      await _handleSendImages(List<File>.from(_pendingImages), widget.controller.text.trim());
       setState(() {
         _pendingImages.clear();
         widget.controller.clear();
@@ -118,8 +173,20 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     final text = widget.controller.text.trim();
     if (text.isEmpty) return;
     FocusScope.of(context).unfocus();
-    widget.onSubmitted(text, Mode.todo, DateTime.now());
+    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag));
     widget.controller.clear();
+  }
+
+  DateTime _resolveDate(DateTag tag) {
+    final now = DateTime.now();
+    switch (tag) {
+      case DateTag.today:
+        return now;
+      case DateTag.tomorrow:
+        return now.add(const Duration(days: 1));
+      case DateTag.yesterday:
+        return now.subtract(const Duration(days: 1));
+    }
   }
 
   void _pickImagesFromGallery() async {
@@ -160,11 +227,12 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
     final entry = ScheduleEntry(
       content: title.isNotEmpty ? title : '[IMAGES]',
-      date: now,
-      type: ScheduleType.todo,
+      date: _resolveDate(_selectedDateTag),
+      type: _selectedMode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
       docId: docRef.id,
-      imageUrl: downloadUrls.first, // 대표 이미지만 사용
+      imageUrl: downloadUrls.isNotEmpty ? downloadUrls.first : null,
+      imageUrls: downloadUrls,
       body: null,
     );
 

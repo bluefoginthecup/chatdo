@@ -12,6 +12,8 @@ class ScheduleEntry {
   final String? imageUrl;
   final String? body;
   final Map<String, dynamic>? routineInfo;
+  final List<String>? imageUrls;
+
 
 
   ScheduleEntry({
@@ -23,6 +25,7 @@ class ScheduleEntry {
     this.imageUrl,
     this.body,
     this.routineInfo,
+    this.imageUrls,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
@@ -35,6 +38,8 @@ class ScheduleEntry {
       imageUrl: json['imageUrl'] as String?,
       body: json['body'] as String?,
       routineInfo: json['routineInfo'] as Map<String, dynamic>?,
+      imageUrls: (json['imageUrls'] as List<dynamic>?)?.cast<String>(),
+
 
     );
   }
@@ -65,6 +70,8 @@ class ScheduleEntry {
       docId: data['docId'],
       imageUrl: data['imageUrl'],
       routineInfo: data['routineInfo'],
+      imageUrls: (data['imageUrls'] as List<dynamic>?)?.cast<String>(),
+
     );
   }
 
@@ -83,6 +90,7 @@ class ScheduleEntry {
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (body != null) 'body': body,
       if (routineInfo != null) 'routineInfo': routineInfo,
+      if (imageUrls != null) 'imageUrls': imageUrls,
     };
   }
 
@@ -95,6 +103,7 @@ class ScheduleEntry {
     String? imageUrl,
     String? body,
     Map<String, dynamic>? routineInfo,
+    List<String>? imageUrls,
   }) {
     return ScheduleEntry(
       date: date ?? this.date,
@@ -105,6 +114,7 @@ class ScheduleEntry {
       imageUrl: imageUrl ?? this.imageUrl,
       body: body ?? this.body,
       routineInfo: routineInfo ?? this.routineInfo,
+      imageUrls: imageUrls ?? this.imageUrls,
     );
   }
 }
