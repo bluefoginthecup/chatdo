@@ -189,10 +189,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         _isSending = false;
       });
 
+      final mbSize = (totalBytes / (1024 * 1024)).toStringAsFixed(2);
       // ✅ 여기 스낵바 추가
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('메시지 전송 완료'),
+          content: Text('메시지 전송 완료(총 ${mbSize}MB)'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -248,9 +249,22 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
     List<String> downloadUrls = [];
 
+    int totalBytes = 0;
     for (var imageFile in images) {
+      final fileSize = await imageFile.length();
+      totalBytes += fileSize;
+
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
       final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
+
+      final tempDir = Directory.systemTemp;
+      final compressedFile = await FlutterImageCompress.compressAndGetFile(
+        imageFile.absolute.path,
+        '${tempDir.path}/compressed_${fileName}',
+        quality: 70, // 70% 퀄리티
+      );
+
+      final fileToUpload = compressedFile ?? imageFile;
 
       UploadTask uploadTask = ref.putFile(imageFile);
       uploadTask.snapshotEvents.listen((event) {
