@@ -1,4 +1,4 @@
-// chat_input_box.dart (모드/날짜 복구 + 여러장 이미지 저장 최종본)
+// chat_input_box.dart (로딩 스피너 추가 최종 수정본)
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -40,6 +40,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   List<File> _pendingImages = [];
   Mode _selectedMode = Mode.todo;
   DateTag _selectedDateTag = DateTag.today;
+  bool _isSending = false;
 
   @override
   Widget build(BuildContext context) {
@@ -93,8 +94,8 @@ class _ChatInputBoxState extends State<ChatInputBox> {
           children: [
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: _pickImagesFromGallery,
-              onLongPress: _pickImageFromCamera,
+              onPressed: _pickImageFromCamera,
+              onLongPress: _pickImagesFromGallery,
             ),
             Expanded(
               child: TextField(
@@ -108,7 +109,16 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               ),
             ),
             const SizedBox(width: 8),
-            IconButton(
+            _isSending
+                ? const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+                : IconButton(
               icon: const Icon(Icons.send),
               color: Colors.teal,
               onPressed: _handleSubmit,
@@ -163,18 +173,28 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
   void _handleSubmit() async {
     if (_pendingImages.isNotEmpty) {
+      setState(() {
+        _isSending = true;
+      });
       await _handleSendImages(List<File>.from(_pendingImages), widget.controller.text.trim());
       setState(() {
         _pendingImages.clear();
         widget.controller.clear();
+        _isSending = false;
       });
       return;
     }
     final text = widget.controller.text.trim();
     if (text.isEmpty) return;
     FocusScope.of(context).unfocus();
+    setState(() {
+      _isSending = true;
+    });
     widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag));
-    widget.controller.clear();
+    setState(() {
+      widget.controller.clear();
+      _isSending = false;
+    });
   }
 
   DateTime _resolveDate(DateTag tag) {
