@@ -1,4 +1,4 @@
-// home_chat_screen.dart (최종 통합 수정본)
+// home_chat_screen.dart (최종 정리 버전)
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,7 +15,6 @@ import '../services/sync_service.dart';
 import '../usecases/schedule_usecase.dart';
 import '../widgets/chat_input_box.dart';
 import '/game/core/game_controller.dart';
-import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 
 class HomeChatScreen extends StatefulWidget {
   final GameController gameController;
@@ -122,10 +121,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     setState(() {
       _messages.add(entry);
       _messageLog.add({
-        'id': entry.docId ?? '',
         'content': entry.content,
         'date': entry.date.toIso8601String(),
-        if (entry.imageUrl != null) 'imageUrl': entry.imageUrl!,
       });
     });
     _controller.clear();
@@ -146,16 +143,14 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     });
   }
 
+
   List<Widget> _buildMessageWidgets() {
     List<Widget> widgets = [];
     String? lastDate;
-
     for (var msg in _messageLog) {
       final String content = msg['content'] ?? '';
       final String dateStr = msg['date'] ?? '';
       final parsedDate = DateTime.tryParse(dateStr);
-      final imageUrl = msg['imageUrl'];
-
       if (lastDate != dateStr) {
         lastDate = dateStr;
         if (parsedDate != null) {
@@ -170,72 +165,30 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
           ));
         }
       }
-
-      Widget messageContent;
-      if (imageUrl != null) {
-        messageContent = Image.network(imageUrl, width: 200);
-      } else {
-        messageContent = Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.teal.shade100,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(content),
-        );
-      }
-
-      widgets.add(
-        Align(
+      if (msg['imageUrl'] != null) {
+        widgets.add(Align(
           alignment: Alignment.centerRight,
-          child: InkWell(
-            onDoubleTap: () {
-              _openScheduleDetail(msg);
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  messageContent,
-                  IconButton(
-                    icon: const Icon(Icons.search, size: 20),
-                    onPressed: () {
-                      _openScheduleDetail(msg);
-                    },
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    splashRadius: 18,
-                  ),
-                ],
-              ),
-            ),
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            child: Image.network(msg['imageUrl']!, width: 200),
           ),
-        ),
-      );
+        ));
+      } else {
+        widgets.add(Align(
+          alignment: Alignment.centerRight,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 2),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.teal.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(content),
+          ),
+        ));
+      }
     }
-
     return widgets;
-  }
-
-  void _openScheduleDetail(Map<String, String> msg) {
-    final entry = ScheduleEntry(
-      docId: msg['id'],
-      content: msg['content'] ?? '',
-      date: DateTime.tryParse(msg['date'] ?? '') ?? DateTime.now(),
-      type: ScheduleType.todo,
-      createdAt: DateTime.now(),
-    );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ScheduleDetailScreen(
-          entry: entry,
-          gameController: widget.gameController,
-        ),
-      ),
-    );
   }
 
   void _confirmAndLogout() async {
@@ -245,14 +198,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         title: const Text('로그아웃'),
         content: const Text('정말 로그아웃하시겠습니까?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('로그아웃'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('로그아웃')),
         ],
       ),
     );
