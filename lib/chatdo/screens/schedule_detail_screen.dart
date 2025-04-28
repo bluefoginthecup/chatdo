@@ -186,32 +186,56 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       appBar: AppBar(
         title: const Text('일정 상세'),
         actions: [
-          IconButton(icon: const Icon(Icons.delete), onPressed: _deleteEntry),
+          if (_isEditing)
+            IconButton(
+              icon: const Icon(Icons.check, color:Colors.red),
+              onPressed: _saveChanges, // 저장하고 수정모드 끄기
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                setState(() {
+                  _isEditing = true;
+                });
+              },
+            ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _deleteEntry,
+          ),
         ],
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onDoubleTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _entry.date,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (picked != null) {
-                  await _updateDate(picked);
-                }
-              },
-              child: Text(
+          children: [Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
                 '${_entry.date.year}-${_entry.date.month.toString().padLeft(2, '0')}-${_entry.date.day.toString().padLeft(2, '0')}',
                 style: const TextStyle(fontSize: 16, color: Colors.blue),
               ),
+              if (_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _entry.date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      await _updateDate(picked);
+                    }
+                  },
+                ),
+            ],
+          ),
 
-            ),
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))
@@ -225,20 +249,6 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
               Image.network(_entry.imageUrl!, fit: BoxFit.cover),
             const SizedBox(height: 24),
 
-    ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _isEditing = !_isEditing;
-                });
-              },
-              child: Text(_isEditing ? '수정 완료' : '수정'),
-            ),
-            if (_isEditing)
-              ElevatedButton(
-                onPressed: _saveChanges,
-                child: const Text('저장'),
-              ),
-            const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
