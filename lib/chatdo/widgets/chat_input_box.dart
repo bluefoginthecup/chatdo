@@ -41,6 +41,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   Mode _selectedMode = Mode.todo;
   DateTag _selectedDateTag = DateTag.today;
   bool _isSending = false;
+  double _uploadProgress = 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -119,13 +120,9 @@ class _ChatInputBoxState extends State<ChatInputBox> {
             ),
             const SizedBox(width: 8),
             _isSending
-                ? const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+                ? Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text('${(_uploadProgress * 100).toStringAsFixed(0)}%', style: const TextStyle(fontSize: 14)),
             )
                 : IconButton(
               icon: const Icon(Icons.send),
@@ -191,6 +188,14 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         widget.controller.clear();
         _isSending = false;
       });
+
+      // ✅ 여기 스낵바 추가
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('메시지 전송 완료'),
+          duration: Duration(seconds: 2),
+        ),
+      );
       return;
     }
     final text = widget.controller.text.trim();
@@ -246,11 +251,18 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     for (var imageFile in images) {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
       final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
-      await ref.putFile(imageFile);
+
+      UploadTask uploadTask = ref.putFile(imageFile);
+      uploadTask.snapshotEvents.listen((event) {
+        setState(() {
+          _uploadProgress = event.bytesTransferred / event.totalBytes;
+        });
+      });
+
+      await uploadTask;
       final downloadUrl = await ref.getDownloadURL();
       downloadUrls.add(downloadUrl);
     }
-
     final now = DateTime.now();
     final docRef = FirebaseFirestore.instance.collection('messages').doc(userId).collection('logs').doc();
 
