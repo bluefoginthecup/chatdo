@@ -61,10 +61,18 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         if (_pendingImages.isNotEmpty)
           SizedBox(
             height: 80,
-            child: ListView.builder(
+            child: ReorderableListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _pendingImages.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (oldIndex < newIndex) newIndex -= 1;
+                  final item = _pendingImages.removeAt(oldIndex);
+                  _pendingImages.insert(newIndex, item);
+                });
+              },
               itemBuilder: (context, index) => Stack(
+                key: ValueKey(_pendingImages[index]),
                 children: [
                   Container(
                     margin: const EdgeInsets.all(4),
@@ -89,6 +97,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               ),
             ),
           ),
+
         const SizedBox(height: 4),
         Row(
           children: [
