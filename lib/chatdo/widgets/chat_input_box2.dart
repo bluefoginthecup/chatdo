@@ -24,7 +24,7 @@ enum DateTag { today, tomorrow, yesterday }
 class ChatInputBox extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
-  final void Function(String text, Mode mode, DateTime date, List<String> tags) onSubmitted;
+  final void Function(String text, Mode mode, DateTime date) onSubmitted;
   final GameController gameController;
 
   const ChatInputBox({
@@ -40,8 +40,6 @@ class ChatInputBox extends StatefulWidget {
 }
 
 class _ChatInputBoxState extends State<ChatInputBox> {
-  List<String> _selectedTags = [];
-  final List<String> _availableTags = ['운동', '공부', '일', '건강', '기타'];
   List<File> _pendingImages = [];
   Mode _selectedMode = Mode.todo;
   DateTag _selectedDateTag = DateTag.today;
@@ -103,21 +101,6 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               ),
             ),
           ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: _availableTags.map((tag) => _buildTagButton(tag)).toList(),
-        ),
-        const SizedBox(height: 4),
-        if (_selectedTags.isNotEmpty)
-          Wrap(
-            spacing: 6,
-            children: _selectedTags.map((tag) => Chip(
-              label: Text(tag),
-              onDeleted: () => setState(() => _selectedTags.remove(tag)),
-            )).toList(),
-          ),
-
 
         const SizedBox(height: 4),
         Row(
@@ -186,7 +169,6 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     }).toList();
   }
 
-
   String _getDateLabel(DateTag tag) {
     switch (tag) {
       case DateTag.today:
@@ -196,22 +178,6 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       case DateTag.yesterday:
         return '어제';
     }
-  }
-  Widget _buildTagButton(String tag) {
-    final isSelected = _selectedTags.contains(tag);
-    return FilterChip(
-      label: Text(tag),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          if (selected) {
-            _selectedTags.add(tag);
-          } else {
-            _selectedTags.remove(tag);
-          }
-        });
-      },
-    );
   }
 
   void _handleSubmit() async {
@@ -241,7 +207,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     setState(() {
       _isSending = true;
     });
-    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag), List<String>.from(_selectedTags));
+    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag));
     setState(() {
       widget.controller.clear();
       _isSending = false;

@@ -88,7 +88,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     _scrollToBottom();
   }
 
-  Future<void> _handleSendMessage(String text, Mode mode, DateTime date) async {
+  Future<void> _handleSendMessage(String text, Mode mode, DateTime date,List<String> tags) async {
     if (text.trim().isEmpty || _userId == null) return;
     final now = DateTime.now();
     final docRef = FirebaseFirestore.instance.collection('messages').doc(_userId).collection('logs').doc();
