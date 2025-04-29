@@ -31,7 +31,7 @@ class ScheduleEntryTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () async {
+            onDoubleTap: () async {
               await markAsOtherType(
                 docId: entry.docId!,
                 currentMode: entry.type.name,

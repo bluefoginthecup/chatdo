@@ -81,13 +81,19 @@ Future<void> markAsOtherType({
   final doc = await docRef.get();
   if (!doc.exists) return;
 
+
   final entry = ScheduleEntry(
     content: doc['content'],
-    date: DateTime.parse(doc['date']),
-    createdAt: DateTime.parse(doc['timestamp']),
+    date: (doc['date'] is Timestamp)
+        ? (doc['date'] as Timestamp).toDate()
+        : DateTime.parse(doc['date']),
+    createdAt: (doc['timestamp'] is Timestamp)
+        ? (doc['timestamp'] as Timestamp).toDate()
+        : DateTime.parse(doc['timestamp']),
     type: currentMode == 'todo' ? ScheduleType.todo : ScheduleType.done,
     docId: docId,
   );
+
 
   final newType = currentMode == 'todo' ? ScheduleType.done : ScheduleType.todo;
 
