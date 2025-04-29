@@ -37,6 +37,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   }
 
   Future<void> _loadEntries() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
