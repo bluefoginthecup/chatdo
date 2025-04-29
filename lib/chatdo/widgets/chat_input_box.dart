@@ -24,7 +24,7 @@ enum DateTag { today, tomorrow, yesterday }
 class ChatInputBox extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
-  final void Function(String text, Mode mode, DateTime date) onSubmitted;
+  final void Function(String text, Mode mode, DateTime, List<String>) onSubmitted;
   final GameController gameController;
 
   const ChatInputBox({
@@ -40,6 +40,7 @@ class ChatInputBox extends StatefulWidget {
 }
 
 class _ChatInputBoxState extends State<ChatInputBox> {
+  List<String> _selectedTags = [];
   List<File> _pendingImages = [];
   Mode _selectedMode = Mode.todo;
   DateTag _selectedDateTag = DateTag.today;
@@ -94,7 +95,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
             TagSelector(
               onTagSelected: (tag) {
                 setState(() {
-                  _selectedTag = tag;
+                  if (_selectedTags.contains(tag)) {
+                    _selectedTags.remove(tag); // 이미 있으면 빼고
+                  } else {
+                    _selectedTags.add(tag);    // 없으면 추가
+                  }
                 });
               },
             ),
@@ -248,7 +253,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     setState(() {
       _isSending = true;
     });
-    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag));
+    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag),_selectedTags);
     setState(() {
       widget.controller.clear();
       _isSending = false;

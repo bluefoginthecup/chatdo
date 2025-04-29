@@ -23,7 +23,8 @@ class MessageAdapter extends TypeAdapter<Message> {
       date: fields[3] as String,
       timestamp: fields[4] as int,
       imageUrl: fields[5] as String?,
-      tags: (fields[6] as List).cast<String>(),
+      tags: (fields[6] as List?)?.cast<String>() ?? [],
+
     );
   }
 
