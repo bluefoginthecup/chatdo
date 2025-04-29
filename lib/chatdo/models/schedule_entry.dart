@@ -13,6 +13,7 @@ class ScheduleEntry {
   final String? body;
   final Map<String, dynamic>? routineInfo;
   final List<String>? imageUrls;
+  final List<String> tags;
 
 
 
@@ -26,6 +27,7 @@ class ScheduleEntry {
     this.body,
     this.routineInfo,
     this.imageUrls,
+    this.tags = const [],
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {

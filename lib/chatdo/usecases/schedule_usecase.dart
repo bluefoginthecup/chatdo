@@ -20,6 +20,7 @@ class ScheduleUseCase {
       type: newType,
       createdAt: entry.createdAt,
       docId: entry.docId,
+      tags: entry.tags,
     );
 
     // 상태 교체 (replaceEntry 사용)
@@ -48,6 +49,7 @@ class ScheduleUseCase {
         'order': 0, // 기본 order. 나중에 지정 가능
         if (entry.imageUrl != null) 'imageUrl': entry.imageUrl,
         if (entry.imageUrls != null) 'imageUrls': entry.imageUrls,
+        'tags': entry.tags,
       });
 
       print('✅ Firestore 문서 생성 또는 업데이트 완료: ${updated.content}');

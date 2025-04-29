@@ -22,6 +22,9 @@ class Message extends HiveObject {
   @HiveField(5)
   String? imageUrl; // ✅ 이미지 메시지용 필드 추가
 
+  @HiveField(6)
+  List<String> tags;
+
   Message({
     required this.id,
     required this.text,
@@ -29,5 +32,6 @@ class Message extends HiveObject {
     required this.date,
     required this.timestamp,
     this.imageUrl,
+    this.tags = const [],
   });
 }

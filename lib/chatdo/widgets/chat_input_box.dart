@@ -24,7 +24,8 @@ enum DateTag { today, tomorrow, yesterday }
 class ChatInputBox extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
-  final void Function(String text, Mode mode, DateTime date) onSubmitted;
+  final void Function(String text, Mode mode, DateTime date, List<String> tags) onSubmitted;
+
   final GameController gameController;
 
   const ChatInputBox({
@@ -41,6 +42,7 @@ class ChatInputBox extends StatefulWidget {
 
 class _ChatInputBoxState extends State<ChatInputBox> {
   List<File> _pendingImages = [];
+  List<String> _selectedTags = [];
   Mode _selectedMode = Mode.todo;
   DateTag _selectedDateTag = DateTag.today;
   bool _isSending = false;
@@ -51,65 +53,48 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+
+        // 날짜 버튼
+        Wrap(
+          spacing: 8,
+          children: _buildDateButtons(),
+        ),
+
+        const SizedBox(height: 8),
+
+        // 모드 버튼
+        Wrap(
+          spacing: 8,
           children: [
             _buildModeButton(Mode.todo, '할일'),
-            const SizedBox(width: 8),
             _buildModeButton(Mode.done, '한일'),
           ],
         ),
+
         const SizedBox(height: 8),
-        Row(
-          children: _buildDateButtons(),
-        ),
-        if (_pendingImages.isNotEmpty)
-          SizedBox(
-            height: 80,
-            child: ReorderableListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _pendingImages.length,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (oldIndex < newIndex) newIndex -= 1;
-                  final item = _pendingImages.removeAt(oldIndex);
-                  _pendingImages.insert(newIndex, item);
-                });
-              },
-              itemBuilder: (context, index) => Stack(
-                key: ValueKey(_pendingImages[index]),
-                children: [
-                  Container(
-                    margin: const EdgeInsets.all(4),
-                    child: Image.file(_pendingImages[index], width: 80, height: 80, fit: BoxFit.cover),
-                  ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _pendingImages.removeAt(index);
-                        });
-                      },
-                      child: Container(
-                        color: Colors.black54,
-                        child: const Icon(Icons.close, size: 20, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+
+        // 선택된 태그 칩
+        if (_selectedTags.isNotEmpty)
+          Wrap(
+            spacing: 8,
+            children: _selectedTags.map((tag) => Chip(label: Text(tag))).toList(),
           ),
 
-        const SizedBox(height: 4),
+        // ✨ 태그 추가 버튼
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _showTagSelectionSheet, // 모달 띄우는 함수
+            icon: Icon(Icons.add),
+            label: const Text('태그 추가'),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // 메시지 입력창 + 보내기 버튼
         Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: _pickImageFromCamera,
-              onLongPress: _pickImagesFromGallery,
-            ),
             Expanded(
               child: TextField(
                 controller: widget.controller,
@@ -134,9 +119,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
             ),
           ],
         ),
+
       ],
     );
   }
+
 
   Widget _buildModeButton(Mode mode, String label) {
     final isSelected = _selectedMode == mode;
@@ -207,12 +194,90 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     setState(() {
       _isSending = true;
     });
-    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag));
+    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag), _selectedTags);
+
     setState(() {
       widget.controller.clear();
       _isSending = false;
     });
   }
+
+  void _showTagSelectionSheet() async {
+    final selected = await showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        List<String> tempSelected = List.from(_selectedTags);
+        TextEditingController tagController = TextEditingController();
+        List<String> availableTags = ['할일앱', '개발', '운동', '공부', '건강', '취미', '여행'];
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: tagController,
+                    decoration: const InputDecoration(
+                      labelText: '새 태그 입력',
+                      suffixIcon: Icon(Icons.add),
+                    ),
+                    onSubmitted: (value) {
+                      if (value.trim().isNotEmpty && !availableTags.contains(value.trim())) {
+                        setModalState(() {
+                          availableTags.add(value.trim());
+                          tempSelected.add(value.trim());
+                          tagController.clear();
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: availableTags.map((tag) {
+                        final isSelected = tempSelected.contains(tag);
+                        return ListTile(
+                          title: Text(tag),
+                          trailing: isSelected ? const Icon(Icons.check) : null,
+                          onTap: () {
+                            setModalState(() {
+                              if (isSelected) {
+                                tempSelected.remove(tag);
+                              } else {
+                                tempSelected.add(tag);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context, tempSelected);
+                    },
+                    child: const Text('완료'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() {
+        _selectedTags = selected;
+      });
+    }
+  }
+
 
   DateTime _resolveDate(DateTag tag) {
     final now = DateTime.now();
@@ -331,6 +396,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       imageUrl: downloadUrls.isNotEmpty ? downloadUrls.first : null,
       imageUrls: downloadUrls,
       body: null,
+      tags: _selectedTags,
     );
 
     await ScheduleUseCase.updateEntry(
@@ -350,6 +416,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       date: DateFormat('yyyy-MM-dd').format(entry.date),
       timestamp: now.millisecondsSinceEpoch,
       imageUrl: entry.imageUrl,
+      tags: entry.tags,
     ));
   }
 }

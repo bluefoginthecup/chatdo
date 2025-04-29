@@ -275,6 +275,24 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
               ),
             const SizedBox(height: 24),
             if (_entry.routineInfo != null) _buildRoutineInfo(),
+
+            if (_entry.tags.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '태그',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: _entry.tags.map((tag) => Chip(label: Text(tag))).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+
           ],
         ),
       ),

@@ -30,7 +30,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   List<ScheduleEntry> _messages = [];
-  List<Map<String, String>> _messageLog = [];
+  List<Map<String, dynamic>> _messageLog = [];
+
   String? _userId;
   late final Connectivity _connectivity;
   late final Stream<ConnectivityResult> _connectivityStream;
@@ -80,15 +81,18 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       'content': m.text,
       'date': m.date.toString(),
       if (m.imageUrl != null) 'imageUrl': m.imageUrl!,
+      'tags': m.tags,
     }).toList();
     setState(() {
-      _messageLog = List<Map<String, String>>.from(newLog);
+      _messageLog = List<Map<String, dynamic>>.from(newLog);
+
     });
     await Future.delayed(const Duration(milliseconds: 100));
     _scrollToBottom();
   }
+  void _handleSendMessage(String text, Mode mode, DateTime date, List<String> tags)
+ async {
 
-  Future<void> _handleSendMessage(String text, Mode mode, DateTime date) async {
     if (text.trim().isEmpty || _userId == null) return;
     final now = DateTime.now();
     final docRef = FirebaseFirestore.instance.collection('messages').doc(_userId).collection('logs').doc();
@@ -98,6 +102,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
       docId: docRef.id,
+      tags: tags,
     );
 
     await ScheduleUseCase.updateEntry(
@@ -126,6 +131,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         'content': entry.content,
         'date': entry.date.toIso8601String(),
         if (entry.imageUrl != null) 'imageUrl': entry.imageUrl!,
+        'tags': entry.tags,
       });
     });
     _controller.clear();
@@ -218,13 +224,17 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     return widgets;
   }
 
-  void _openScheduleDetail(Map<String, String> msg) {
+  void _openScheduleDetail(Map<String, dynamic> msg) {
     final entry = ScheduleEntry(
       docId: msg['id'],
       content: msg['content'] ?? '',
       date: DateTime.tryParse(msg['date'] ?? '') ?? DateTime.now(),
       type: ScheduleType.todo,
       createdAt: DateTime.now(),
+      tags: msg['tags'] != null
+          ? (msg['tags'] as List<dynamic>).map((e) => e.toString()).toList()
+          : [],
+
     );
 
     Navigator.push(

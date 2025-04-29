@@ -16,6 +16,7 @@ void main() async {
   initializeDateFormatting('ko_KR', null);
 
   await Hive.initFlutter();
+
   Hive.registerAdapter(MessageAdapter());
   await Hive.openBox<Message>('messages');
   await Hive.openBox<Map>('syncQueue');
