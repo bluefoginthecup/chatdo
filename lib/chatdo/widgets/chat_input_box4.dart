@@ -1,4 +1,5 @@
-// chat_input_box.dart (로딩 스피너 추가 최종 수정본)
+// chat_input_box.dart (기존 기능 유지 + 각 버튼 위로 세로 아코디언 펼침 반영 최종본)
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -15,8 +16,6 @@ import '../usecases/schedule_usecase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '/game/core/game_controller.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-
-
 
 enum Mode { todo, done }
 enum DateTag { today, tomorrow, yesterday }
@@ -40,30 +39,84 @@ class ChatInputBox extends StatefulWidget {
 }
 
 class _ChatInputBoxState extends State<ChatInputBox> {
+  List<File> _pendingImages = [];
   List<String> _selectedTags = [];
   final List<String> _availableTags = ['운동', '공부', '일', '건강', '기타'];
-  List<File> _pendingImages = [];
   Mode _selectedMode = Mode.todo;
-  DateTag _selectedDateTag = DateTag.today;
+  DateTag? _selectedDateTag;
   bool _isSending = false;
   double _uploadProgress = 0.0;
+  bool _isDateExpanded = false;
+  bool _isTagExpanded = false;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+    Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            _buildModeButton(Mode.todo, '할일'),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_isDateExpanded && _selectedMode == Mode.todo) ...[
+                  _buildDateButton(DateTag.today, '오늘'),
+                  _buildDateButton(DateTag.tomorrow, '내일'),
+                  _buildDateButton(DateTag.yesterday, '날짜선택'),
+                ],
+                _buildModeButton(Mode.todo, '할일'),
+              ],
+            ),
             const SizedBox(width: 8),
-            _buildModeButton(Mode.done, '한일'),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_isDateExpanded && _selectedMode == Mode.done) ...[
+                  _buildDateButton(DateTag.today, '오늘'),
+                  _buildDateButton(DateTag.yesterday, '어제'),
+                  _buildDateButton(DateTag.yesterday, '날짜선택'),
+                ],
+                _buildModeButton(Mode.done, '한일'),
+              ],
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_isTagExpanded) ..._availableTags.map((tag) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: FilterChip(
+                    label: Text(tag),
+                    selected: _selectedTags.contains(tag),
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedTags.add(tag);
+                        } else {
+                          _selectedTags.remove(tag);
+                        }
+                      });
+                    },
+                  ),
+                )),
+                OutlinedButton(
+                  onPressed: () => setState(() {
+                    _isTagExpanded = !_isTagExpanded;
+                    _isDateExpanded = false;
+                  }),
+                  child: const Text('태그'),
+                ),
+              ],
+            ),
           ],
         ),
+
         const SizedBox(height: 8),
-        Row(
-          children: _buildDateButtons(),
-        ),
+
         if (_pendingImages.isNotEmpty)
           SizedBox(
             height: 80,
@@ -103,23 +156,9 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               ),
             ),
           ),
+
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: _availableTags.map((tag) => _buildTagButton(tag)).toList(),
-        ),
-        const SizedBox(height: 4),
-        if (_selectedTags.isNotEmpty)
-          Wrap(
-            spacing: 6,
-            children: _selectedTags.map((tag) => Chip(
-              label: Text(tag),
-              onDeleted: () => setState(() => _selectedTags.remove(tag)),
-            )).toList(),
-          ),
 
-
-        const SizedBox(height: 4),
         Row(
           children: [
             IconButton(
@@ -152,13 +191,24 @@ class _ChatInputBoxState extends State<ChatInputBox> {
           ],
         ),
       ],
+    ),
+        ],
+    ),
     );
   }
 
   Widget _buildModeButton(Mode mode, String label) {
     final isSelected = _selectedMode == mode;
     return OutlinedButton(
-      onPressed: () => setState(() => _selectedMode = mode),
+      onPressed: () {
+        setState(() {
+          _selectedMode = mode;
+          _isDateExpanded = true;
+          _isTagExpanded = false;
+          _selectedDateTag = null;
+          _selectedTags.clear();
+        });
+      },
       style: OutlinedButton.styleFrom(
         backgroundColor: isSelected ? Colors.teal.shade100 : null,
       ),
@@ -166,85 +216,34 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     );
   }
 
-  List<Widget> _buildDateButtons() {
-    final options = _selectedMode == Mode.todo
-        ? [DateTag.today, DateTag.tomorrow]
-        : [DateTag.today, DateTag.yesterday];
-
-    return options.map((tag) {
-      final isSelected = _selectedDateTag == tag;
-      return Padding(
-        padding: const EdgeInsets.only(right: 8),
-        child: OutlinedButton(
-          onPressed: () => setState(() => _selectedDateTag = tag),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: isSelected ? Colors.teal.shade100 : null,
-          ),
-          child: Text(_getDateLabel(tag)),
-        ),
-      );
-    }).toList();
-  }
-
-
-  String _getDateLabel(DateTag tag) {
-    switch (tag) {
-      case DateTag.today:
-        return '오늘';
-      case DateTag.tomorrow:
-        return '내일';
-      case DateTag.yesterday:
-        return '어제';
-    }
-  }
-  Widget _buildTagButton(String tag) {
-    final isSelected = _selectedTags.contains(tag);
-    return FilterChip(
-      label: Text(tag),
-      selected: isSelected,
-      onSelected: (selected) {
+  Widget _buildDateButton(DateTag tag, String label) {
+    return OutlinedButton(
+      onPressed: () {
         setState(() {
-          if (selected) {
-            _selectedTags.add(tag);
-          } else {
-            _selectedTags.remove(tag);
-          }
+          _selectedDateTag = tag;
+          _isDateExpanded = false;
         });
       },
+      child: Text(label),
     );
   }
 
   void _handleSubmit() async {
-    if (_pendingImages.isNotEmpty) {
-      setState(() {
-        _isSending = true;
-      });
-      await _handleSendImages(List<File>.from(_pendingImages), widget.controller.text.trim());
-      setState(() {
-        _pendingImages.clear();
-        widget.controller.clear();
-        _isSending = false;
-      });
-
-      // ✅ 여기 스낵바 추가
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('메시지 전송 완료'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
     final text = widget.controller.text.trim();
-    if (text.isEmpty) return;
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _isSending = true;
-    });
-    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag), List<String>.from(_selectedTags));
+    if (text.isEmpty || _selectedDateTag == null) return;
+    final resolvedDate = _resolveDate(_selectedDateTag!);
+    if (_pendingImages.isNotEmpty) {
+      await _handleSendImages(List<File>.from(_pendingImages), text);
+    } else {
+      widget.onSubmitted(text, _selectedMode, resolvedDate, List<String>.from(_selectedTags));
+    }
     setState(() {
       widget.controller.clear();
-      _isSending = false;
+      _pendingImages.clear();
+      _selectedTags.clear();
+      _selectedDateTag = null;
+      _isDateExpanded = false;
+      _isTagExpanded = false;
     });
   }
 
@@ -272,17 +271,15 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     }
   }
 
-
   void _pickImageFromCamera() async {
     final XFile? picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked != null) {
-      final File file = File(picked.path); // XFile → File 변환
+      final File file = File(picked.path);
       setState(() {
-        _pendingImages.add(file); // File을 리스트에 저장
+        _pendingImages.add(file);
       });
     }
   }
-
 
   Future<void> _handleSendImages(List<File> images, String title) async {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
@@ -290,14 +287,10 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
     int totalBytes = 0;
     for (var imageFile in images) {
-
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = '$timestamp.webp';  // 무조건 .jpg
-
+      final fileName = '$timestamp.webp';
       final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
-
       final tempDir = Directory.systemTemp;
-
       final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
         imageFile.absolute.path,
         '${tempDir.path}/compressed_$fileName',
@@ -306,20 +299,9 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         minHeight: 720,
         format: CompressFormat.webp,
       );
-
       final File? compressedFile = compressedXFile != null ? File(compressedXFile.path) : null;
-
-
-      // 📢 추가: 압축 전후 용량 출력
-      final int originalSize = await imageFile.length();
-      final int compressedSize = compressedFile != null ? await compressedFile.length() : originalSize;
-
-      print('📦 원본 크기: ${(originalSize / 1024 / 1024).toStringAsFixed(2)}MB');
-      print('📦 압축 후 크기: ${(compressedSize / 1024 / 1024).toStringAsFixed(2)}MB');
-
-
       final File fileToUpload = compressedFile ?? imageFile;
-      final fileSize = await fileToUpload.length(); // 📢 압축된 파일 사이즈를 합산
+      final fileSize = await fileToUpload.length();
       totalBytes += fileSize;
 
       final metadata = SettableMetadata(contentType: 'image/webp');
@@ -335,30 +317,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       downloadUrls.add(downloadUrl);
     }
 
-    String readableSize(int bytes) {
-      if (bytes < 1024) {
-        return '$bytes B';
-      } else if (bytes < 1024 * 1024) {
-        return '${(bytes / 1024).toStringAsFixed(1)} KB';
-      } else {
-        return '${(bytes / 1024 / 1024).toStringAsFixed(2)} MB';
-      }
-    }
-
-// 그리고 사용
-    final readable = readableSize(totalBytes);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('메시지 전송 완료 (총 $readable)'), duration: Duration(seconds: 2)),
-    );
-
-
-
     final now = DateTime.now();
     final docRef = FirebaseFirestore.instance.collection('messages').doc(userId).collection('logs').doc();
-
     final entry = ScheduleEntry(
       content: title.isNotEmpty ? title : '[IMAGES]',
-      date: _resolveDate(_selectedDateTag),
+      date: _resolveDate(_selectedDateTag!),
       type: _selectedMode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
       docId: docRef.id,

@@ -285,14 +285,17 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
                 children: _buildMessageWidgets(),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ChatInputBox(
+            Flexible(
+              fit: FlexFit.loose,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ChatInputBox(
                 gameController: widget.gameController,
                 controller: _controller,
                 focusNode: _focusNode,
                 onSubmitted: _handleSendMessage,
               ),
+            ),
             ),
           ],
         ),
