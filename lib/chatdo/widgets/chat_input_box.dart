@@ -19,6 +19,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 enum Mode { todo, done }
 enum DateTag { today, tomorrow, yesterday }
+
 class ChatInputBox extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
@@ -36,10 +37,7 @@ class ChatInputBox extends StatefulWidget {
   @override
   State<ChatInputBox> createState() => _ChatInputBoxState();
 }
-
-
 class _ChatInputBoxState extends State<ChatInputBox> {
-
   List<File> _pendingImages = [];
   List<String> _selectedTags = [];
   final List<String> _availableTags = ['운동', '공부', '일', '건강', '기타'];
@@ -53,6 +51,29 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_selectedTags.isNotEmpty || _selectedDateTag != null || _selectedMode != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Chip(
+                  label: Text(_selectedMode == Mode.todo ? '할일' : '한일'),
+                ),
+                if (_selectedDateTag != null)
+                  Chip(
+                    label: Text(_getDateTagLabel(_selectedDateTag!)),
+                    onDeleted: () => setState(() => _selectedDateTag = null),
+                  ),
+                ..._selectedTags.map((tag) => Chip(
+                  label: Text(tag),
+                  onDeleted: () => setState(() => _selectedTags.remove(tag)),
+                )),
+              ],
+            ),
+          ),
+
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -151,6 +172,20 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       ],
     );
   }
+
+  String _getDateTagLabel(DateTag tag) {
+    switch (tag) {
+      case DateTag.today:
+        return '오늘';
+      case DateTag.tomorrow:
+        return '내일';
+      case DateTag.yesterday:
+        return '어제';
+    }
+  }
+
+  // 기존의 _showTagModal, _showDateModal, _handleSubmit 등 나머지 함수는 그대로 유지
+
 
   void _showTagModal() {
     showModalBottomSheet(
