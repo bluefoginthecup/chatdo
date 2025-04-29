@@ -77,7 +77,19 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         if (_selectedTags.isNotEmpty)
           Wrap(
             spacing: 8,
-            children: _selectedTags.map((tag) => Chip(label: Text(tag))).toList(),
+            children: _selectedTags.map((tag) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedTags.remove(tag);
+                  });
+                },
+                child: Chip(
+                  label: Text('$tag ❌'), // ❌ 붙여서 보여줌
+                  backgroundColor: Colors.teal.shade50,
+                ),
+              );
+            }).toList(),
           ),
 
         // ✨ 태그 추가 버튼
