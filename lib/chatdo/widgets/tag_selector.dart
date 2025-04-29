@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class TagSelector extends StatefulWidget {
-  final void Function(String tag) onTagSelected;
+  final void Function(List<String> selectedTags)? onTagChanged;
 
-  const TagSelector({super.key, required this.onTagSelected});
+  const TagSelector({super.key, this.onTagChanged});
 
   @override
   State<TagSelector> createState() => _TagSelectorState();
@@ -17,6 +17,7 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
   late final Animation<double> _opacityAnimation;
 
   final List<String> _tags = ['운동', '공부', '일', '건강', '기타'];
+  final List<String> _selectedTags = [];
 
   @override
   void initState() {
@@ -56,12 +57,11 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
   void _showOverlay() {
     final RenderBox button = context.findRenderObject() as RenderBox;
     final Offset position = button.localToGlobal(Offset.zero);
-    final Size size = button.size;
 
     _overlayEntry = OverlayEntry(
       builder: (context) => GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onTap: _removeOverlay, // 바깥 터치하면 닫힘
+        onTap: _removeOverlay,
         child: Stack(
           children: [
             Positioned(
@@ -74,36 +74,62 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                   child: SlideTransition(
                     position: _offsetAnimation,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                      padding: const EdgeInsets.all(4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _tags.map((tag) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+
+                          // ✅ 태그 버튼 세로 정렬
+                          ..._tags.map((tag) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (_selectedTags.contains(tag)) {
+                                    _selectedTags.remove(tag);
+                                  } else {
+                                    _selectedTags.add(tag);
+                                  }
+                                  widget.onTagChanged?.call(List.from(_selectedTags));
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[200],
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                textStyle: const TextStyle(fontSize: 12),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                              side: const BorderSide(color: Colors.teal),
+                              child: Text(tag),
                             ),
-                            onPressed: () {
-                              widget.onTagSelected(tag);
-                              _removeOverlay();
-                            },
-                            child: Text(tag),
+                          )),
+
+                          const SizedBox(height: 6),
+
+                          // ✅ 완료 버튼 (작게)
+                          ElevatedButton(
+                            onPressed: _removeOverlay,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: const TextStyle(fontSize: 12),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('완료'),
                           ),
-                        )).toList(),
+                        ],
                       ),
                     ),
                   ),
@@ -131,13 +157,15 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _toggleMenu,
-      onDoubleTap: _removeOverlay,
-      child: OutlinedButton(
-        onPressed: _toggleMenu,
-        child: const Text('태그'),
+    return OutlinedButton(
+      onPressed: _toggleMenu,
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: const TextStyle(fontSize: 12),
       ),
+      child: const Text('태그 선택하기'),
     );
   }
 }

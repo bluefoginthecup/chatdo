@@ -41,7 +41,7 @@ class ScheduleEntry {
       body: json['body'] as String?,
       routineInfo: json['routineInfo'] as Map<String, dynamic>?,
       imageUrls: (json['imageUrls'] as List<dynamic>?)?.cast<String>(),
-
+      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
 
     );
   }
@@ -73,7 +73,7 @@ class ScheduleEntry {
       imageUrl: data['imageUrl'],
       routineInfo: data['routineInfo'],
       imageUrls: (data['imageUrls'] as List<dynamic>?)?.cast<String>(),
-
+      tags: (data['tags'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -93,6 +93,7 @@ class ScheduleEntry {
       if (body != null) 'body': body,
       if (routineInfo != null) 'routineInfo': routineInfo,
       if (imageUrls != null) 'imageUrls': imageUrls,
+      if (tags.isNotEmpty) 'tags': tags,
     };
   }
 
@@ -106,6 +107,7 @@ class ScheduleEntry {
     String? body,
     Map<String, dynamic>? routineInfo,
     List<String>? imageUrls,
+    List<String>? tags,
   }) {
     return ScheduleEntry(
       date: date ?? this.date,
@@ -117,6 +119,7 @@ class ScheduleEntry {
       body: body ?? this.body,
       routineInfo: routineInfo ?? this.routineInfo,
       imageUrls: imageUrls ?? this.imageUrls,
+      tags: tags ?? this.tags,
     );
   }
 }

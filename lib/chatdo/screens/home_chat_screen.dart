@@ -16,6 +16,8 @@ import '../usecases/schedule_usecase.dart';
 import '../widgets/chat_input_box.dart';
 import '/game/core/game_controller.dart';
 import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
+import '../models/enums.dart'; // Mode, DateTag 가져오기
+
 
 class HomeChatScreen extends StatefulWidget {
   final GameController gameController;

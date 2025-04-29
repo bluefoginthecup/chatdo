@@ -51,51 +51,52 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ModeSelector(
-                  selected: _selectedMode,
-                  onChanged: (mode) => setState(() => _selectedMode = mode),
-                ),
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ Mode 선택
+              ModeSelector(
+                selected: _selectedMode,
+                onChanged: (mode) => setState(() => _selectedMode = mode),
               ),
-              const SizedBox(width: 8),
-              TagSelector(
-                onTagChanged: (selectedTags) {
-                  setState(() {
-                    _selectedTags = selectedTags;
-                  });
-                },
-              ),
-            ],
-          ),
             const SizedBox(height: 8),
-
-// 날짜 선택은 그 다음에
+            // ✅ Date 선택
             DateSelector(
               mode: _selectedMode,
               selected: _selectedDateTag,
               onChanged: (tag) => setState(() => _selectedDateTag = tag),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 8),// ✅ 선택된 태그가 있을 때만 Chip 보여주기
+            if (_selectedTags.isNotEmpty) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: _selectedTags.map((tag) => Chip(
+                  label: Text(tag),
+                  onDeleted: () {
+                    setState(() {
+                      _selectedTags.remove(tag);
+                    });
+                  },
+                )).toList(),
+              ),
+              const SizedBox(height: 8),
+            ],
 
-// ✅ 선택된 태그가 있을 때만 Chip 보여주기
-        if (_selectedTags.isNotEmpty) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: _selectedTags.map((tag) => Chip(
-              label: Text(tag),
-              onDeleted: () {
+// ✅ 태그 선택 버튼
+            TagSelector(
+              onTagChanged: (selectedTags) {
                 setState(() {
-                  _selectedTags.remove(tag);
+                  _selectedTags = selectedTags;
                 });
               },
-            )).toList(),
-          ),
-          const SizedBox(height: 8),
-        ],
+            ),
+            const SizedBox(height: 12), // 태그 선택과 입력창 사이 간격
+          ],
+        ),
+
+
         if (_pendingImages.isNotEmpty)
           SizedBox(
             height: 80,
@@ -317,7 +318,6 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       imageUrl: downloadUrls.isNotEmpty ? downloadUrls.first : null,
       imageUrls: downloadUrls,
       body: null,
-        tags: _selectedTags,
     );
 
     await ScheduleUseCase.updateEntry(
