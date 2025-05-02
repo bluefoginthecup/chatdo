@@ -1,12 +1,10 @@
 // tab_nav.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'chatdo/screens/home_chat_screen.dart';
 import 'chatdo/screens/room_screen.dart';
 import 'chatdo/screens/schedule_overview_screen.dart';
 import 'chatdo/screens/menu_screen.dart';
 import '../../game/core/game_controller.dart';
-import 'chatdo/providers/schedule_provider.dart';
 import 'chatdo/providers/audio_manager.dart';
 
 class TabNav extends StatefulWidget {

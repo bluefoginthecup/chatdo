@@ -1,7 +1,6 @@
 // room_scene.dart
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
 import '/game/components/flame/girl_sprite.dart';
 import '/game/components/flame/jordy_sprite.dart';
 import 'package:chatdo/chatdo/providers/audio_manager.dart';

@@ -194,7 +194,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         actions: [
           if (_isEditing)
             IconButton(
-              icon: const Icon(Icons.check, color: Colors.red),
+              icon: const Icon(Icons.save, color: Colors.red),
               onPressed: _saveChanges,
             )
           else
@@ -249,14 +249,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                 ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))
                 : Text(_entry.content, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            TagSelector(
-              initialSelectedTags: _selectedTags,
-              onTagChanged: (tags) {
-                setState(() {
-                  _selectedTags = tags;
-                });
-              },
-            ),
+
             _isEditing
                 ? TextField(controller: _bodyController, decoration: const InputDecoration(labelText: '본문'), maxLines: null)
                 : Text(_entry.body ?? '', style: const TextStyle(fontSize: 16)),
@@ -291,23 +284,48 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
               ),
             const SizedBox(height: 24),
             if (_entry.routineInfo != null) _buildRoutineInfo(),
-
-            if (_entry.tags.isNotEmpty)
+            if (_isEditing || _selectedTags.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '태그',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Row(
+                    children: [
+                      const Text(
+                        '태그',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 12),
+                      if (_isEditing)
+                        TagSelector(
+                          initialSelectedTags: _selectedTags,
+                          onTagChanged: (tags) {
+                            setState(() {
+                              _selectedTags = tags;
+                            });
+                          },
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
-                    children: _entry.tags.map((tag) => Chip(label: Text(tag))).toList(),
+                    runSpacing: 4,
+                    children: _selectedTags.map((tag) => Chip(
+                      label: Text(tag),
+                      onDeleted: _isEditing
+                          ? () {
+                        setState(() {
+                          _selectedTags.remove(tag);
+                        });
+                      }
+                          : null, // 편집 모드일 때만 삭제 가능
+                    )).toList(),
                   ),
+
                   const SizedBox(height: 24),
                 ],
               ),
+
 
           ],
         ),

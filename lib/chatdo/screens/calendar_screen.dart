@@ -8,7 +8,6 @@ import 'package:table_calendar/table_calendar.dart';
 import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
 import '../../game/core/game_controller.dart';
-import '../utils/schedule_actions.dart';
 
 class CalendarScreen extends StatefulWidget {
   final GameController gameController;

@@ -17,7 +17,10 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
   late final Animation<Offset> _offsetAnimation;
   late final Animation<double> _opacityAnimation;
 
-  final List<String> _tags = ['운동', '공부', '일', '건강', '기타',];
+  final List<String> _tags = [
+    '운동', '건강', '스페인어', '베이킹', '방석재고', '세금',
+    '영수증', '매장관리', '재고채우기', '자수', '챗두', '언젠가', '기타'
+  ];
   late List<String> _selectedTags;
 
   @override
@@ -48,6 +51,14 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     super.dispose();
   }
 
+  List<List<String>> _splitTags(List<String> tags, int chunkCount) {
+    final chunks = List.generate(chunkCount, (_) => <String>[]);
+    for (var i = 0; i < tags.length; i++) {
+      chunks[i % chunkCount].add(tags[i]);
+    }
+    return chunks;
+  }
+
   void _toggleMenu() {
     if (_isMenuOpen) {
       _removeOverlay();
@@ -60,6 +71,8 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     final RenderBox button = context.findRenderObject() as RenderBox;
     final Offset position = button.localToGlobal(Offset.zero);
 
+    final List<List<String>> tagRows = _splitTags(_tags, 3);
+
     _overlayEntry = OverlayEntry(
       builder: (context) => GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -67,7 +80,7 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
         child: Stack(
           children: [
             Positioned(
-              left: position.dx,
+              left: MediaQuery.of(context).size.width / 2 - 120,
               bottom: MediaQuery.of(context).size.height - position.dy + 8,
               child: Material(
                 color: Colors.transparent,
@@ -76,45 +89,50 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                   child: SlideTransition(
                     position: _offsetAnimation,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
 
-                          // ✅ 태그 버튼 세로 정렬
-                          ..._tags.map((tag) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  if (_selectedTags.contains(tag)) {
-                                    _selectedTags.remove(tag);
-                                  } else {
-                                    _selectedTags.add(tag);
-                                  }
-                                  widget.onTagChanged?.call(List.from(_selectedTags));
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[200],
-                                foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                textStyle: const TextStyle(fontSize: 12),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                          ...tagRows.map((row) => Row(
+
+                            children: row.map((tag) => Padding(
+
+                              padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    if (_selectedTags.contains(tag)) {
+                                      _selectedTags.remove(tag);
+                                    } else {
+                                      _selectedTags.add(tag);
+                                    }
+                                    widget.onTagChanged?.call(List.from(_selectedTags));
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                 backgroundColor: Colors.amber[100],
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  textStyle: const TextStyle(fontSize: 12),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
+                                child: Text(tag),
                               ),
-                              child: Text(tag),
-                            ),
+                            )).toList(),
                           )),
-
-                          const SizedBox(height: 6),
-
-                          // ✅ 완료 버튼 (작게)
+                          const SizedBox(height: 8),
                           ElevatedButton(
                             onPressed: _removeOverlay,
                             style: ElevatedButton.styleFrom(
@@ -167,7 +185,7 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontSize: 12),
       ),
-      child: const Text('태그 선택하기'),
+      child: const Text('+태그'),
     );
   }
 }

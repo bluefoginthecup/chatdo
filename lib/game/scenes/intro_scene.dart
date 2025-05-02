@@ -1,7 +1,5 @@
 import 'package:chatdo/game/scenes/dialogue_scene_base.dart';
 import 'package:chatdo/game/story/dialogue_chapter0.dart';
-import 'package:vector_math/vector_math.dart';
-
 class IntroScene extends DialogueSceneBase {
   IntroScene({super.onCompleted});
 

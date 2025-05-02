@@ -119,7 +119,7 @@ class _RoutineListScreenState extends State<RoutineListScreen> {
     docId: docId,
     title: title,
     days: newDays,
-    userId: uid!,
+    userId: uid,
     createdAt: DateTime.now(),
     );
     await RoutineService.updateRoutine(updatedRoutine);
