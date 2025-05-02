@@ -29,23 +29,44 @@ class ScheduleEntry {
     this.imageUrls,
     this.tags = const [],
   }) : createdAt = createdAt ?? DateTime.now();
-
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
+    // ✅ date 필드 안전하게 파싱
+    final dynamic dateRaw = json['date'];
+    DateTime parsedDate;
+
+    if (dateRaw is Timestamp) {
+      parsedDate = dateRaw.toDate();
+    } else if (dateRaw is String) {
+      parsedDate = DateTime.tryParse(dateRaw) ?? DateTime.now();
+    } else {
+      parsedDate = DateTime.now(); // fallback
+    }
+
+    // ✅ timestamp도 안전하게 파싱
+    final dynamic timestampRaw = json['timestamp'];
+    DateTime createdAt;
+
+    if (timestampRaw is Timestamp) {
+      createdAt = timestampRaw.toDate();
+    } else if (timestampRaw is String) {
+      createdAt = DateTime.tryParse(timestampRaw) ?? DateTime.now();
+    } else {
+      createdAt = DateTime.now();
+    }
+
     return ScheduleEntry(
       content: json['content'] as String,
-      date: DateTime.parse(json['date'] as String),
+      date: parsedDate,
       type: json['mode'] == 'done' ? ScheduleType.done : ScheduleType.todo,
-      createdAt: DateTime.parse(json['timestamp'] as String),
+      createdAt: createdAt,
       docId: json['docId'] as String?,
       imageUrl: json['imageUrl'] as String?,
       body: json['body'] as String?,
       routineInfo: json['routineInfo'] as Map<String, dynamic>?,
       imageUrls: (json['imageUrls'] as List<dynamic>?)?.cast<String>(),
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
-
     );
   }
-
   factory ScheduleEntry.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     final rawDate = data['date'];

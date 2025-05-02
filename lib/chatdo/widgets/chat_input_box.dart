@@ -62,6 +62,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               ),
               const SizedBox(width: 8),
               TagSelector(
+                initialSelectedTags: [],
                 onTagChanged: (selectedTags) {
                   setState(() {
                     _selectedTags = selectedTags;

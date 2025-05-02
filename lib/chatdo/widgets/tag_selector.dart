@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class TagSelector extends StatefulWidget {
+  final List<String>? initialSelectedTags;
   final void Function(List<String> selectedTags)? onTagChanged;
 
-  const TagSelector({super.key, this.onTagChanged});
+  const TagSelector({super.key, required this.initialSelectedTags, this.onTagChanged});
 
   @override
   State<TagSelector> createState() => _TagSelectorState();
@@ -16,8 +17,12 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
   late final Animation<Offset> _offsetAnimation;
   late final Animation<double> _opacityAnimation;
 
-  final List<String> _tags = ['운동', '공부', '일', '건강', '기타'];
-  final List<String> _selectedTags = [];
+  final List<String> _tags = [
+    '운동', '스페인어', '건강', '방석재고', '세금',
+    '영수증', '매장관리', '재고채우기', '자수', '챗두','언젠가'
+  ];
+
+  late List<String> _selectedTags;
 
   @override
   void initState() {
@@ -37,6 +42,7 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
       parent: _controller,
       curve: Curves.easeInOut,
     );
+    _selectedTags = List.from(widget.initialSelectedTags ?? []);
   }
 
   @override

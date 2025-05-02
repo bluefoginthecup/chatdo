@@ -108,25 +108,33 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
     print("🎬 대사 씬 초기화 완료");
   }
 
-  void _nextDialogue() {
-    _dialogueIndex++;
-    if (_dialogueIndex >= dialogueData.length) {
-      onCompleted?.call();
-      removeFromParent();
-      return;
-    }
 
+    bool _hasCompleted = false;
+  void _updateDialogueText() {
     _textBox.text = dialogueData[_dialogueIndex]["line"] ?? "";
     _speakerName.text = dialogueData[_dialogueIndex]["speaker"] ?? "";
     _updateCharacterVisuals();
   }
 
+
+  void _nextDialogue() {
+      _dialogueIndex++;
+      if (_dialogueIndex >= dialogueData.length) {
+        if (!_hasCompleted) {
+          _hasCompleted = true;
+          onCompleted?.call();
+          removeFromParent();
+        }
+        return;
+      }
+      _updateDialogueText();
+
+  }
+
   void _previousDialogue() {
     if (_dialogueIndex > 0) {
       _dialogueIndex--;
-      _textBox.text = dialogueData[_dialogueIndex]["line"] ?? "";
-      _speakerName.text = dialogueData[_dialogueIndex]["speaker"] ?? "";
-      _updateCharacterVisuals();
+      _updateDialogueText();
     }
   }
 

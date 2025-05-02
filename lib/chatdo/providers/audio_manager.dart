@@ -39,6 +39,23 @@ class AudioManager {
     await _player!.stop();
   }
 
+  Future<void> fadeOutAndPlay(String assetPath, {double volume = 1.0}) async {
+    if (_player != null) {
+      await _fadeOut();
+      await _player!.stop();
+      await _player!.dispose();
+    }
+
+    _player = AudioPlayer();
+    await _player!.setAudioSource(AudioSource.asset(assetPath));
+    await _player!.setLoopMode(LoopMode.one);
+    await _player!.setVolume(volume); // 시작은 0으로 시작해서
+    await _player!.load();
+    await _player!.play();
+
+  }
+
+
   Future<void> _fadeOut({Duration duration = const Duration(seconds: 2)}) async {
     if (_player == null) return;
     const steps = 20;

@@ -6,6 +6,8 @@ import '../models/schedule_entry.dart';
 import '../services/routine_service.dart';
 import '../widgets/routine_edit_form.dart';
 import '../../game/core/game_controller.dart';
+import '../widgets/tag_selector.dart';
+
 
 class ScheduleDetailScreen extends StatefulWidget {
   final ScheduleEntry entry;
@@ -30,12 +32,15 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   bool _isEditing = false;
   bool _isRoutineFormOpen = false;
 
+  List<String> _selectedTags = [];
+
   @override
   void initState() {
     super.initState();
     _entry = widget.entry;
     _titleController = TextEditingController(text: _entry.content);
     _bodyController = TextEditingController(text: _entry.body ?? '');
+    _selectedTags = List.from(_entry.tags); // 기존 태그 복사
   }
 
   @override
@@ -57,6 +62,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         .update({
       'content': _titleController.text.trim(),
       'body': _bodyController.text.trim(),
+      'tags': _selectedTags, // ✅ 태그 저장
     });
 
     setState(() {
@@ -188,8 +194,8 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         actions: [
           if (_isEditing)
             IconButton(
-              icon: const Icon(Icons.check, color:Colors.red),
-              onPressed: _saveChanges, // 저장하고 수정모드 끄기
+              icon: const Icon(Icons.check, color: Colors.red),
+              onPressed: _saveChanges,
             )
           else
             IconButton(
@@ -211,7 +217,22 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [Row(
+          children: [
+            if (_isEditing)
+              TagSelector(
+                initialSelectedTags: _selectedTags,
+                onTagChanged: (tags) {
+                  setState(() {
+                    _selectedTags = tags;
+                  });
+                },
+              )
+            else
+              Wrap(
+                spacing: 8,
+                children: _entry.tags.map((tag) => Chip(label: Text(tag))).toList(),
+              ),
+            Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
