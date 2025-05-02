@@ -6,12 +6,15 @@ import 'package:intl/intl.dart';
 
 import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
+import '../widgets/tag_filter_bar.dart';
 import '../../game/core/game_controller.dart';
+
 
 class ScheduleListScreen extends StatefulWidget {
   final ScheduleType type;
   final DateTime initialDate;
   final GameController gameController;
+
 
   const ScheduleListScreen({
     Key? key,
@@ -28,6 +31,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   late DateTime _currentDate;
   List<ScheduleEntry> _entries = [];
   bool _isLoading = true;
+  String? _selectedTag;
 
   @override
   void initState() {
@@ -136,6 +140,15 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         const SizedBox(height: 16),
         _buildDateHeader(),
         const SizedBox(height: 8),
+        TagFilterBar(
+          selectedTag: _selectedTag,
+          onTagSelected: (tag) {
+            setState(() {
+              _selectedTag = tag;
+            });
+          },
+        ),
+
         Expanded(
           child: RefreshIndicator(
             onRefresh: _loadEntries,

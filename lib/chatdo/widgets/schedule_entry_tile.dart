@@ -1,15 +1,15 @@
-// lib/chatdo/widgets/schedule_entry_tile.dart
+// 수정된 버전: 체크 아이콘에 눌림 애니메이션 + 태그 Chip 스타일 (딱 맞게 조정)
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import '../models/schedule_entry.dart';
 import '../screens/schedule_detail_screen.dart';
 import '../../game/core/game_controller.dart';
 import '../utils/schedule_actions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-
-/// 일정 항목 하나를 표시하는 재사용 가능한 타일 위젯
-class ScheduleEntryTile extends StatelessWidget {
+class ScheduleEntryTile extends StatefulWidget {
   final ScheduleEntry entry;
   final GameController gameController;
   final Future<void> Function() onRefresh;
@@ -22,7 +22,62 @@ class ScheduleEntryTile extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<ScheduleEntryTile> createState() => _ScheduleEntryTileState();
+}
+
+class _ScheduleEntryTileState extends State<ScheduleEntryTile>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      lowerBound: 0.9,
+      upperBound: 1.0,
+    );
+    _scaleAnim = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onIconTap() async {
+    HapticFeedback.lightImpact();
+    await _controller.reverse();
+    await Future.delayed(const Duration(milliseconds: 80));
+
+    if (!mounted) return;
+
+    await markAsOtherType(
+      docId: widget.entry.docId!,
+      currentMode: widget.entry.type.name,
+      gameController: widget.gameController,
+      currentDate: widget.entry.date,
+      onRefresh: widget.onRefresh,
+      context: context,
+    );
+
+    if (!mounted) return;
+
+    await widget.onRefresh();
+
+    _controller.forward();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final entry = widget.entry;
     final isDone = entry.type == ScheduleType.done;
     final dateStr = DateFormat('yyyy-MM-dd').format(entry.date);
 
@@ -30,20 +85,14 @@ class ScheduleEntryTile extends StatelessWidget {
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GestureDetector(
-            onDoubleTap: () async {
-              await markAsOtherType(
-                docId: entry.docId!,
-                currentMode: entry.type.name,
-                gameController: gameController,
-                currentDate: entry.date,
-                onRefresh: onRefresh,
-                context: context,
-              );
-            },
-            child: Icon(
-              isDone ? Icons.check_circle_outline : Icons.circle_outlined,
-              color: isDone ? Colors.grey : Colors.red,
+          ScaleTransition(
+            scale: _scaleAnim,
+            child: GestureDetector(
+              onTap: _onIconTap,
+              child: Icon(
+                isDone ? Icons.check_circle_outline : Icons.circle_outlined,
+                color: isDone ? Colors.grey : Colors.red,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -63,15 +112,35 @@ class ScheduleEntryTile extends StatelessWidget {
                 errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
-
         ],
       ),
-      title: Text(
-        entry.content,
-        style: TextStyle(
-          color: isDone ? Colors.grey : Colors.red,
-          fontSize: 16,
-        ),
+      title: Row(
+        children: [
+          ...entry.tags.map((tag) => Padding(
+            padding: const EdgeInsets.only(right: 4.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.orange[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                tag,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          )),
+          Expanded(
+            child: Text(
+              entry.content,
+              style: TextStyle(
+                color: isDone ? Colors.grey : Colors.red,
+                fontSize: 16,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          )
+        ],
       ),
       subtitle: entry.imageUrl != null && entry.body != null
           ? Text(
@@ -88,12 +157,12 @@ class ScheduleEntryTile extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => ScheduleDetailScreen(
               entry: entry,
-              gameController: gameController,
-              onUpdate: onRefresh,
+              gameController: widget.gameController,
+              onUpdate: widget.onRefresh,
             ),
           ),
         )
-            .then((_) => onRefresh());
+            .then((_) => widget.onRefresh());
       },
     );
   }
