@@ -9,10 +9,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'chatdo/models/message.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'chatdo/providers/audio_manager.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try{
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  print('🔥 Firebase initialized!');
+} catch (e) {
+print('❌ Firebase init failed: $e');
+}
   initializeDateFormatting('ko_KR', null);
 
   await Hive.initFlutter();

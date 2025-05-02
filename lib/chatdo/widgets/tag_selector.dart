@@ -17,11 +17,7 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
   late final Animation<Offset> _offsetAnimation;
   late final Animation<double> _opacityAnimation;
 
-  final List<String> _tags = [
-    '운동', '스페인어', '건강', '방석재고', '세금',
-    '영수증', '매장관리', '재고채우기', '자수', '챗두','언젠가'
-  ];
-
+  final List<String> _tags = ['운동', '공부', '일', '건강', '기타',];
   late List<String> _selectedTags;
 
   @override

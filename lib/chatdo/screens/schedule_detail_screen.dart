@@ -218,20 +218,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_isEditing)
-              TagSelector(
-                initialSelectedTags: _selectedTags,
-                onTagChanged: (tags) {
-                  setState(() {
-                    _selectedTags = tags;
-                  });
-                },
-              )
-            else
-              Wrap(
-                spacing: 8,
-                children: _entry.tags.map((tag) => Chip(label: Text(tag))).toList(),
-              ),
+
             Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -262,6 +249,14 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                 ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))
                 : Text(_entry.content, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
+            TagSelector(
+              initialSelectedTags: _selectedTags,
+              onTagChanged: (tags) {
+                setState(() {
+                  _selectedTags = tags;
+                });
+              },
+            ),
             _isEditing
                 ? TextField(controller: _bodyController, decoration: const InputDecoration(labelText: '본문'), maxLines: null)
                 : Text(_entry.body ?? '', style: const TextStyle(fontSize: 16)),
