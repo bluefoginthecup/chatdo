@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../models/content_block.dart';
 
 class BlockEditor extends StatefulWidget {
@@ -20,16 +21,17 @@ class BlockEditor extends StatefulWidget {
 }
 
 class _BlockEditorState extends State<BlockEditor> {
-  late List<ContentBlock> _blocks;
-  final Map<int, TextEditingController> _controllers = {};
+  late List<MapEntry<String, ContentBlock>> _blockEntries;
+  final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
     super.initState();
-    _blocks = List.from(widget.blocks);
-    for (var i = 0; i < _blocks.length; i++) {
-      if (_blocks[i].type == 'text') {
-        _controllers[i] = TextEditingController(text: _blocks[i].data);
+    final uuid = const Uuid();
+    _blockEntries = widget.blocks.map((b) => MapEntry(uuid.v4(), b)).toList();
+    for (final entry in _blockEntries) {
+      if (entry.value.type == 'text') {
+        _controllers[entry.key] = TextEditingController(text: entry.value.data);
       }
     }
   }
@@ -44,55 +46,84 @@ class _BlockEditorState extends State<BlockEditor> {
 
   void _addTextBlock() {
     setState(() {
-      final newIndex = _blocks.length;
-      _blocks.add(ContentBlock(type: 'text', data: ''));
-      _controllers[newIndex] = TextEditingController();
-      widget.onChanged(_blocks);
+      final uuid = const Uuid().v4();
+      _blockEntries.add(MapEntry(uuid, ContentBlock(type: 'text', data: '')));
+      _controllers[uuid] = TextEditingController();
+      widget.onChanged(_blockEntries.map((e) => e.value).toList());
     });
   }
 
   void _removeBlock(int index) {
     setState(() {
-      _blocks.removeAt(index);
-      _controllers.remove(index);
-      widget.onChanged(_blocks);
+      final key = _blockEntries[index].key;
+      _blockEntries.removeAt(index);
+      _controllers.remove(key);
+      widget.onChanged(_blockEntries.map((e) => e.value).toList());
+    });
+  }
+
+  void _reorderBlock(int oldIndex, int newIndex) {
+    setState(() {
+      if (oldIndex < newIndex) newIndex -= 1;
+      final item = _blockEntries.removeAt(oldIndex);
+      _blockEntries.insert(newIndex, item);
+      widget.onChanged(_blockEntries.map((e) => e.value).toList());
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return ReorderableListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      onReorder: _reorderBlock,
+      buildDefaultDragHandles: false,
       children: [
-        ..._blocks.asMap().entries.map((entry) {
+        ..._blockEntries.asMap().entries.map((entry) {
           final i = entry.key;
-          final block = entry.value;
+          final blockEntry = entry.value;
+          final key = blockEntry.key;
+          final block = blockEntry.value;
 
           if (block.type == 'text') {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: widget.isEditing
-                  ? GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TextField(
-                    controller: _controllers[i],
-                    maxLines: null,
-                    decoration: const InputDecoration.collapsed(
-                      hintText: '내용을 입력하세요',
+            return ListTile(
+              key: ValueKey(key),
+              title: widget.isEditing
+                  ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ReorderableDragStartListener(
+                    index: i,
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 8.0, top: 12),
+                      child: Icon(Icons.drag_handle, color: Colors.grey),
                     ),
-                    style: const TextStyle(fontSize: 16),
-                    onChanged: (value) {
-                      _blocks[i] = ContentBlock(type: 'text', data: value);
-                      widget.onChanged(_blocks);
-                    },
                   ),
-                ),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: TextField(
+                        controller: _controllers[key],
+                        maxLines: null,
+                        decoration: const InputDecoration.collapsed(
+                          hintText: '내용을 입력하세요',
+                        ),
+                        style: const TextStyle(fontSize: 16),
+                        onChanged: (value) {
+                          _blockEntries[i] = MapEntry(
+                            key,
+                            ContentBlock(type: 'text', data: value),
+                          );
+                          widget.onChanged(_blockEntries.map((e) => e.value).toList());
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               )
                   : Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -103,9 +134,9 @@ class _BlockEditorState extends State<BlockEditor> {
               ),
             );
           } else if (block.type == 'image') {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Stack(
+            return ListTile(
+              key: ValueKey(key),
+              title: Stack(
                 alignment: Alignment.topRight,
                 children: [
                   Image.network(block.data),
@@ -119,23 +150,25 @@ class _BlockEditorState extends State<BlockEditor> {
             );
           }
           return const SizedBox.shrink();
-        }).toList(),
-
+        }),
         if (widget.isEditing)
-          Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed: _addTextBlock,
-                icon: const Icon(Icons.text_fields),
-                label: const Text('텍스트 추가'),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: widget.onImageAdd,
-                icon: const Icon(Icons.image),
-                label: const Text('이미지 추가'),
-              ),
-            ],
+          ListTile(
+            key: const ValueKey("block-add-buttons"),
+            title: Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _addTextBlock,
+                  icon: const Icon(Icons.text_fields),
+                  label: const Text('텍스트 추가'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: widget.onImageAdd,
+                  icon: const Icon(Icons.image),
+                  label: const Text('이미지 추가'),
+                ),
+              ],
+            ),
           )
       ],
     );

@@ -1,143 +1,133 @@
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../models/schedule_entry.dart';
 import '../models/content_block.dart';
+import '../widgets/block_editor.dart';
 
-class BlockEditor extends StatefulWidget {
-  final List<ContentBlock> blocks;
-  final bool isEditing;
-  final void Function(List<ContentBlock>) onChanged;
-  final VoidCallback onImageAdd;
+class ScheduleDetailScreen extends StatefulWidget {
+  final ScheduleEntry entry;
 
-  const BlockEditor({
-    super.key,
-    required this.blocks,
-    required this.isEditing,
-    required this.onChanged,
-    required this.onImageAdd,
-  });
+  const ScheduleDetailScreen({
+    Key? key,
+    required this.entry,
+  }) : super(key: key);
 
   @override
-  State<BlockEditor> createState() => _BlockEditorState();
+  State<ScheduleDetailScreen> createState() => _ScheduleDetailScreenState();
 }
 
-class _BlockEditorState extends State<BlockEditor> {
+class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
+  late ScheduleEntry _entry;
   late List<ContentBlock> _blocks;
-  final Map<int, TextEditingController> _controllers = {};
+  bool _isEditing = false;
 
   @override
   void initState() {
     super.initState();
-    _blocks = List.from(widget.blocks);
-    for (var i = 0; i < _blocks.length; i++) {
-      if (_blocks[i].type == 'text') {
-        _controllers[i] = TextEditingController(text: _blocks[i].data);
+    _entry = widget.entry;
+    try {
+      final decoded = jsonDecode(_entry.body ?? '[]') as List;
+      _blocks = decoded.map((e) => ContentBlock.fromJson(e)).toList();
+    } catch (_) {
+      // entry.content과 imageUrls도 block으로 흡수
+      _blocks = [];
+      if (_entry.content.trim().isNotEmpty) {
+        _blocks.add(ContentBlock(type: 'text', data: _entry.content));
+      }
+      if (_entry.imageUrls != null) {
+        _blocks.addAll(_entry.imageUrls!.map((url) => ContentBlock(type: 'image', data: url)));
       }
     }
   }
 
-  @override
-  void dispose() {
-    for (final controller in _controllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
+  void _saveChanges() async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final encodedBody = jsonEncode(_blocks.map((e) => e.toJson()).toList());
 
-  void _addTextBlock() {
+    await FirebaseFirestore.instance
+        .collection('messages')
+        .doc(userId)
+        .collection('logs')
+        .doc(_entry.docId)
+        .update({
+      'content': _blocks.isNotEmpty && _blocks.first.type == 'text' ? _blocks.first.data : '',
+      'body': encodedBody,
+    });
+
     setState(() {
-      final newIndex = _blocks.length;
-      _blocks.add(ContentBlock(type: 'text', data: ''));
-      _controllers[newIndex] = TextEditingController();
-      widget.onChanged(_blocks);
+      _entry = _entry.copyWith(
+        content: _blocks.isNotEmpty && _blocks.first.type == 'text' ? _blocks.first.data : '',
+        body: encodedBody,
+      );
+      _isEditing = false;
     });
   }
 
-  void _removeBlock(int index) {
+  void _addImageBlock() {
+    // TODO: implement actual image picking and upload
     setState(() {
-      _blocks.removeAt(index);
-      _controllers.remove(index);
-      widget.onChanged(_blocks);
+      _blocks.add(ContentBlock(type: 'image', data: 'https://via.placeholder.com/150'));
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ..._blocks.asMap().entries.map((entry) {
-          final i = entry.key;
-          final block = entry.value;
-
-          if (block.type == 'text') {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: widget.isEditing
-                  ? GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TextField(
-                    controller: _controllers[i],
-                    maxLines: null,
-                    decoration: const InputDecoration.collapsed(
-                      hintText: '내용을 입력하세요',
-                    ),
-                    style: const TextStyle(fontSize: 16),
-                    onChanged: (value) {
-                      _blocks[i] = ContentBlock(type: 'text', data: value);
-                      widget.onChanged(_blocks);
-                    },
-                  ),
-                ),
-              )
-                  : Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text(
-                  block.data,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            );
-          } else if (block.type == 'image') {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  Image.network(block.data),
-                  if (widget.isEditing)
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => _removeBlock(i),
-                    ),
-                ],
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        }).toList(),
-
-        if (widget.isEditing)
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('일정 상세'),
+        actions: [
+          IconButton(
+            icon: Icon(_isEditing ? Icons.save : Icons.edit),
+            onPressed: () {
+              if (_isEditing) {
+                _saveChanges();
+              } else {
+                setState(() => _isEditing = true);
+              }
+            },
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ElevatedButton.icon(
-                onPressed: _addTextBlock,
-                icon: const Icon(Icons.text_fields),
-                label: const Text('텍스트 추가'),
+              Text(
+                '${_entry.date.year}-${_entry.date.month.toString().padLeft(2, '0')}-${_entry.date.day.toString().padLeft(2, '0')}',
+                style: const TextStyle(fontSize: 16, color: Colors.blue),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: widget.onImageAdd,
-                icon: const Icon(Icons.image),
-                label: const Text('이미지 추가'),
-              ),
+              if (_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _entry.date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _entry = _entry.copyWith(date: picked);
+                      });
+                    }
+                  },
+                ),
             ],
-          )
-      ],
+          ),
+          const SizedBox(height: 16),
+          BlockEditor(
+            blocks: _blocks,
+            isEditing: _isEditing,
+            onChanged: (updated) => _blocks = updated,
+            onImageAdd: _addImageBlock,
+          ),
+        ],
+      ),
     );
   }
 }

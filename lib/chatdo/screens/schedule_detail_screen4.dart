@@ -241,120 +241,118 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_entry.date.year}-${_entry.date.month.toString().padLeft(2, '0')}-${_entry.date.day.toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontSize: 16, color: Colors.blue),
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${_entry.date.year}-${_entry.date.month.toString().padLeft(2, '0')}-${_entry.date.day.toString().padLeft(2, '0')}',
+                style: const TextStyle(fontSize: 16, color: Colors.blue),
+              ),
+              if (_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _entry.date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      await _updateDate(picked);
+                    }
+                  },
                 ),
-                if (_isEditing)
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _entry.date,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        await _updateDate(picked);
-                      }
-                    },
-                  ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _isEditing
+              ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))
+              : Text(_entry.content, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          BlockEditor(
+            blocks: _blocks,
+            isEditing: _isEditing,
+            onChanged: (updated) => _blocks = updated,
+            onImageAdd: _addImageBlock,
+          ),
+          const SizedBox(height: 24),
+          if (_entry.imageUrls != null && _entry.imageUrls!.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _entry.imageUrls!.map((imageUrl) =>
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Image.network(imageUrl, fit: BoxFit.cover),
+                  )
+              ).toList(),
+            ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              setState(() {
+                _isRoutineFormOpen = !_isRoutineFormOpen;
+              });
+            },
+            icon: const Icon(Icons.repeat),
+            label: const Text('루틴 등록'),
+          ),
+          const SizedBox(height: 12),
+          if (_isRoutineFormOpen)
+            RoutineEditForm(
+              initialDays: _entry.routineInfo?['days']?.cast<String, String>(),
+              onSave: _saveRoutine,
+            ),
+          const SizedBox(height: 24),
+          if (_entry.routineInfo != null) _buildRoutineInfo(),
+          if (_isEditing || _selectedTags.isNotEmpty)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      '태그',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 12),
+                    if (_isEditing)
+                      TagSelector(
+                        initialSelectedTags: _selectedTags,
+                        onTagChanged: (tags) {
+                          setState(() {
+                            _selectedTags = tags;
+                          });
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: _selectedTags.map((tag) => Chip(
+                    label: Text(tag),
+                    onDeleted: _isEditing
+                        ? () {
+                      setState(() {
+                        _selectedTags.remove(tag);
+                      });
+                    }
+                        : null,
+                  )).toList(),
+                ),
+                const SizedBox(height: 24),
               ],
             ),
-            const SizedBox(height: 16),
-            _isEditing
-                ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))
-                : Text(_entry.content, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            BlockEditor(
-              blocks: _blocks,
-              isEditing: _isEditing,
-              onChanged: (updated) => _blocks = updated,
-              onImageAdd: _addImageBlock,
-            ),
-            const SizedBox(height: 24),
-            if (_entry.imageUrls != null && _entry.imageUrls!.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _entry.imageUrls!.map((imageUrl) =>
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Image.network(imageUrl, fit: BoxFit.cover),
-                    )
-                ).toList(),
-              ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _isRoutineFormOpen = !_isRoutineFormOpen;
-                });
-              },
-              icon: const Icon(Icons.repeat),
-              label: const Text('루틴 등록'),
-            ),
-            const SizedBox(height: 12),
-            if (_isRoutineFormOpen)
-              RoutineEditForm(
-                initialDays: _entry.routineInfo?['days']?.cast<String, String>(),
-                onSave: _saveRoutine,
-              ),
-            const SizedBox(height: 24),
-            if (_entry.routineInfo != null) _buildRoutineInfo(),
-            if (_isEditing || _selectedTags.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Text(
-                        '태그',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 12),
-                      if (_isEditing)
-                        TagSelector(
-                          initialSelectedTags: _selectedTags,
-                          onTagChanged: (tags) {
-                            setState(() {
-                              _selectedTags = tags;
-                            });
-                          },
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: _selectedTags.map((tag) => Chip(
-                      label: Text(tag),
-                      onDeleted: _isEditing
-                          ? () {
-                        setState(() {
-                          _selectedTags.remove(tag);
-                        });
-                      }
-                          : null,
-                    )).toList(),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
+
 
   Widget _buildRoutineInfo() {
     final daysMap = (_entry.routineInfo!['days'] as Map).cast<String, String>();
