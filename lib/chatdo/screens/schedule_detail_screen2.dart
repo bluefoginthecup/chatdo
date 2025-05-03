@@ -1,18 +1,13 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/routine_model.dart';
 import '../models/schedule_entry.dart';
-import '../models/content_block.dart';
 import '../services/routine_service.dart';
 import '../widgets/routine_edit_form.dart';
-import '../widgets/block_editor.dart';
 import '../../game/core/game_controller.dart';
 import '../widgets/tag_selector.dart';
+
 
 class ScheduleDetailScreen extends StatefulWidget {
   final ScheduleEntry entry;
@@ -33,59 +28,31 @@ class ScheduleDetailScreen extends StatefulWidget {
 class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   late ScheduleEntry _entry;
   late TextEditingController _titleController;
+  late TextEditingController _bodyController;
   bool _isEditing = false;
   bool _isRoutineFormOpen = false;
 
-  List<ContentBlock> _blocks = [];
   List<String> _selectedTags = [];
-
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     _entry = widget.entry;
     _titleController = TextEditingController(text: _entry.content);
-    _selectedTags = List.from(_entry.tags);
-    try {
-      final decoded = jsonDecode(_entry.body ?? '[]') as List;
-      _blocks = decoded.map((e) => ContentBlock.fromJson(e)).toList();
-    } catch (e) {
-      _blocks = [ContentBlock(type: 'text', data: _entry.body ?? '')];
-    }
+    _bodyController = TextEditingController(text: _entry.body ?? '');
+    _selectedTags = List.from(_entry.tags); // 기존 태그 복사
   }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _bodyController.dispose();
     super.dispose();
-  }
-
-  Future<void> _addImageBlock() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(userId)
-        .child('block_images')
-        .child('${DateTime.now().millisecondsSinceEpoch}_${picked.name}');
-
-    await ref.putFile(File(picked.path));
-    final url = await ref.getDownloadURL();
-
-    setState(() {
-      _blocks.add(ContentBlock(type: 'image', data: url));
-    });
   }
 
   Future<void> _saveChanges() async {
     final userId = FirebaseAuth.instance.currentUser!.uid;
     if (_entry.docId == null) return;
-
-    final encodedBody = jsonEncode(_blocks.map((e) => e.toJson()).toList());
 
     await FirebaseFirestore.instance
         .collection('messages')
@@ -94,14 +61,14 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         .doc(_entry.docId)
         .update({
       'content': _titleController.text.trim(),
-      'body': encodedBody,
-      'tags': _selectedTags,
+      'body': _bodyController.text.trim(),
+      'tags': _selectedTags, // ✅ 태그 저장
     });
 
     setState(() {
       _entry = _entry.copyWith(
         content: _titleController.text.trim(),
-        body: encodedBody,
+        body: _bodyController.text.trim(),
       );
       _isEditing = false;
     });
@@ -119,7 +86,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     final userId = FirebaseAuth.instance.currentUser!.uid;
     if (_entry.docId == null) return;
 
+    // date를 yyyy-MM-dd 형식으로 저장
     final dateString = "${newDate.year.toString().padLeft(4, '0')}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}";
+
 
     await FirebaseFirestore.instance
         .collection('messages')
@@ -127,6 +96,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         .collection('logs')
         .doc(_entry.docId)
         .update({'date': dateString});
+
 
     setState(() {
       _entry = _entry.copyWith(date: newDate);
@@ -182,6 +152,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
 
     await RoutineService.saveRoutine(routine);
 
+    // 메시지 문서에도 routineInfo 업데이트
     await FirebaseFirestore.instance
         .collection('messages')
         .doc(userId)
@@ -241,53 +212,47 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
           ),
         ],
       ),
-      floatingActionButton: _isEditing
-          ? FloatingActionButton(
-        onPressed: _addImageBlock,
-        child: const Icon(Icons.image),
-        tooltip: '이미지 추가',
-      )
-          : null,
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_entry.date.year}-${_entry.date.month.toString().padLeft(2, '0')}-${_entry.date.day.toString().padLeft(2, '0')}',
-                  style: const TextStyle(fontSize: 16, color: Colors.blue),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${_entry.date.year}-${_entry.date.month.toString().padLeft(2, '0')}-${_entry.date.day.toString().padLeft(2, '0')}',
+                style: const TextStyle(fontSize: 16, color: Colors.blue),
+              ),
+              if (_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _entry.date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      await _updateDate(picked);
+                    }
+                  },
                 ),
-                if (_isEditing)
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _entry.date,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        await _updateDate(picked);
-                      }
-                    },
-                  ),
-              ],
-            ),
+            ],
+          ),
+
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))
                 : Text(_entry.content, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            BlockEditor(
-              blocks: _blocks,
-              isEditing: _isEditing,
-              onChanged: (updated) => _blocks = updated,
-              onImageAdd: _addImageBlock,
-            ),
+
+            _isEditing
+                ? TextField(controller: _bodyController, decoration: const InputDecoration(labelText: '본문'), maxLines: null)
+                : Text(_entry.body ?? '', style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 24),
             if (_entry.imageUrls != null && _entry.imageUrls!.isNotEmpty)
               Column(
@@ -299,7 +264,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                     )
                 ).toList(),
               ),
+
             const SizedBox(height: 24),
+
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
@@ -351,12 +318,15 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                           _selectedTags.remove(tag);
                         });
                       }
-                          : null,
+                          : null, // 편집 모드일 때만 삭제 가능
                     )).toList(),
                   ),
+
                   const SizedBox(height: 24),
                 ],
               ),
+
+
           ],
         ),
       ),
