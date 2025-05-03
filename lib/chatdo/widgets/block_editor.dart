@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../models/content_block.dart';
 
+
 class BlockEditor extends StatefulWidget {
   final List<ContentBlock> blocks;
   final bool isEditing;

@@ -53,6 +53,13 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     } catch (e) {
       _blocks = [ContentBlock(type: 'text', data: _entry.body ?? '')];
     }
+    if (_entry.imageUrls != null) {
+      final existing = _blocks.map((b) => b.data).toSet();
+      final newImages = _entry.imageUrls!.where((url) => !existing.contains(url));
+      _blocks.addAll(newImages.map((url) => ContentBlock(type: 'image', data: url)));
+    }
+
+
   }
 
   @override
@@ -280,19 +287,10 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
               isEditing: _isEditing,
               onChanged: (updated) => _blocks = updated,
               onImageAdd: _addImageBlock,
+
             ),
             const SizedBox(height: 24),
-            if (_entry.imageUrls != null && _entry.imageUrls!.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: _entry.imageUrls!.map((imageUrl) =>
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Image.network(imageUrl, fit: BoxFit.cover),
-                    )
-                ).toList(),
-              ),
-            const SizedBox(height: 24),
+
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
