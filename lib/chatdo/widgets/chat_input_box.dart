@@ -245,9 +245,13 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     for (var imageFile in images) {
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = '$timestamp.webp';  // 무조건 .jpg
+      final fileName = '$timestamp.jpg';  // 무조건 .jpg
 
-      final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('chat_images')
+          .child(userId)
+          .child(fileName);
 
       final tempDir = Directory.systemTemp;
 
@@ -257,7 +261,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         quality: 70,
         minWidth: 720,
         minHeight: 720,
-        format: CompressFormat.webp,
+        format: CompressFormat.jpeg,
       );
 
       final File? compressedFile = compressedXFile != null ? File(compressedXFile.path) : null;
@@ -275,7 +279,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       final fileSize = await fileToUpload.length(); // 📢 압축된 파일 사이즈를 합산
       totalBytes += fileSize;
 
-      final metadata = SettableMetadata(contentType: 'image/webp');
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
       UploadTask uploadTask = ref.putFile(fileToUpload, metadata);
       uploadTask.snapshotEvents.listen((event) {
         setState(() {

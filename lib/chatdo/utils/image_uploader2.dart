@@ -65,51 +65,46 @@ class ImageUploader {
 
     return uploadedUrls;
   }
-  static Future<String?> editAndReuploadImage(
-      BuildContext context,
-      File originalFile,
-      String logId,
-      ) async {
-    debugPrint("🧪 [1] 시작: editAndReuploadImage (간소화 버전)");
 
-    try {
-      final imageBytes = await originalFile.readAsBytes();
-      debugPrint("📥 [2] 원본 바이트 크기: ${imageBytes.length} bytes");
+  static Future<String?> editAndReuploadImage(BuildContext context, File originalFile) async {
+    checkFormat(originalFile); // ✅ 편집기 들어가기 전 포맷 확인
 
-      // 🔁 이미지 편집기 열기
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImageEditor(image: imageBytes),
-        ),
-      );
+    // 🔁 1. File → bytes → decode → re-encode (JPEG)
+    final originalBytes = await originalFile.readAsBytes();
+    final decoded = img.decodeImage(originalBytes);
+    if (decoded == null) throw Exception("디코딩 실패");
 
-      if (result == null || result is! Uint8List) return null;
-      final editedBytes = result;
+    final jpgBytes = img.encodeJpg(decoded, quality: 90);  // progressive 없이
+    final tempDir = Directory.systemTemp;
+    final safePath = '${tempDir.path}/safe_for_editor.jpg';
+    final safeFile = File(safePath)..writeAsBytesSync(jpgBytes);
 
-      // 🔁 편집 결과 저장
-      final appDocDir = await getApplicationDocumentsDirectory();
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_edited.jpg';
-      final outputPath = '${appDocDir.path}/$fileName';
-      final editedFile = await File(outputPath).writeAsBytes(editedBytes);
+    // ✅ 확인용 로그
+    checkFormat(safeFile);
 
-      // 🔁 Firebase 업로드
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final ref = FirebaseStorage.instance
-          .ref('users/$userId/images/$fileName');
+    // 🔁 2. File 기반으로 편집기 실행
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ImageEditor(image: safeFile)),
+    );
 
-      await ref.putFile(editedFile, SettableMetadata(contentType: 'image/jpeg'));
+    if (result == null || result is! Uint8List) return null;
+    final bytes = result as Uint8List;
 
-      debugPrint("✅ [3] 업로드 완료: $fileName");
-      return await ref.getDownloadURL();
+    // 🔁 3. 편집 결과를 파일로 저장
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_edited.jpg';
+    final outputPath = '${tempDir.path}/$fileName';
+    final editedFile = await File(outputPath).writeAsBytes(bytes);
 
-    } catch (e) {
-      debugPrint("❌ 에러 발생: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('에러: ${e.toString()}')),
-      );
-      return null;
-    }
+    checkFormat(editedFile); // ✅ 편집 끝나고 포맷 확인
+
+    // 🔁 4. Firebase 업로드
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final ref = FirebaseStorage.instance
+        .ref('users/$userId/images/$fileName');
+
+    await ref.putFile(editedFile, SettableMetadata(contentType: 'image/jpeg'));
+    return await ref.getDownloadURL();
   }
 
 

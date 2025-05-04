@@ -14,13 +14,13 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try{
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  print('🔥 Firebase initialized!');
-} catch (e) {
-print('❌ Firebase init failed: $e');
-}
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('🔥 Firebase initialized!');
+  } catch (e) {
+    print('❌ Firebase init failed: $e');
+  }
   initializeDateFormatting('ko_KR', null);
 
   await Hive.initFlutter();
@@ -30,15 +30,15 @@ print('❌ Firebase init failed: $e');
   await Hive.openBox<Map>('syncQueue');
 
 
-runApp(
-MultiProvider(
-providers: [
-ChangeNotifierProvider(create: (_) => ScheduleProvider()),
-Provider<AudioManager>(create: (_) => AudioManager()), // 🔥 추가된 줄
-],
-child: const ChatDoApp(),
-),
-);
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ScheduleProvider()),
+        Provider<AudioManager>(create: (_) => AudioManager()), // 🔥 추가된 줄
+      ],
+      child: const ChatDoApp(),
+    ),
+  );
 }
 
 class ChatDoApp extends StatelessWidget {

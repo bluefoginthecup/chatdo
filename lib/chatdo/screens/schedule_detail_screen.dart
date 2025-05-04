@@ -68,26 +68,6 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     super.dispose();
   }
 
-  Future<void> _addImageBlock() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(userId)
-        .child('block_images')
-        .child('${DateTime.now().millisecondsSinceEpoch}_${picked.name}');
-
-    await ref.putFile(File(picked.path));
-    final url = await ref.getDownloadURL();
-
-    setState(() {
-      _blocks.add(ContentBlock(type: 'image', data: url));
-    });
-  }
-
   Future<void> _saveChanges() async {
     final userId = FirebaseAuth.instance.currentUser!.uid;
     if (_entry.docId == null) return;
@@ -103,6 +83,10 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       'content': _titleController.text.trim(),
       'body': encodedBody,
       'tags': _selectedTags,
+      'imageUrls': _blocks
+          .where((e) => e.type == 'image')
+          .map((e) => e.data)
+          .toList(),
     });
 
     setState(() {
@@ -286,7 +270,8 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
               blocks: _blocks,
               isEditing: _isEditing,
               onChanged: (updated) => _blocks = updated,
-              onImageAdd: _addImageBlock,
+              logId: _entry.docId!,
+
 
             ),
             const SizedBox(height: 24),
