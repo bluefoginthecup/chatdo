@@ -47,19 +47,19 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     _entry = widget.entry;
     _titleController = TextEditingController(text: _entry.content);
     _selectedTags = List.from(_entry.tags);
+
+    // body에서 blocks 복원
     try {
       final decoded = jsonDecode(_entry.body ?? '[]') as List;
       _blocks = decoded.map((e) => ContentBlock.fromJson(e)).toList();
     } catch (e) {
       _blocks = [ContentBlock(type: 'text', data: _entry.body ?? '')];
     }
-    if (_entry.imageUrls != null) {
-      final existing = _blocks.map((b) => b.data).toSet();
-      final newImages = _entry.imageUrls!.where((url) => !existing.contains(url));
-      _blocks.addAll(newImages.map((url) => ContentBlock(type: 'image', data: url)));
+
+    // 예전 데이터 호환: body에 이미지 없고 imageUrls만 있을 때
+    if (_blocks.where((b) => b.type == 'image').isEmpty && _entry.imageUrls != null) {
+      _blocks.addAll(_entry.imageUrls!.map((url) => ContentBlock(type: 'image', data: url)));
     }
-
-
   }
 
   @override
@@ -269,11 +269,14 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
             BlockEditor(
               blocks: _blocks,
               isEditing: _isEditing,
-              onChanged: (updated) => _blocks = updated,
+              onChanged: (updated) {
+                setState(() {
+                  _blocks = updated;
+                });
+              },
               logId: _entry.docId!,
-
-
             ),
+
             const SizedBox(height: 24),
 
             ElevatedButton.icon(

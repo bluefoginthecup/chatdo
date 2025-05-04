@@ -118,16 +118,21 @@ class _BlockEditorState extends State<BlockEditor> {
         file,
         widget.logId,
       );
-
+      if (!mounted) return; //
       if (newUrl != null) {
         setState(() {
           _blockEntries[index] =
               MapEntry(key, ContentBlock(type: 'image', data: newUrl));
-          widget.onChanged(_blockEntries.map((e) => e.value).toList());
         });
 
-        Navigator.pop(context, true); // 편집 완료 후
+        // 🔥 반드시 상태를 상위로 반영
+        widget.onChanged(_blockEntries.map((e) => e.value).toList());
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("이미지 편집 결과가 저장되지 않았습니다.")),
+        );
       }
+
 
     } catch (e) {
       debugPrint('이미지 편집 중 에러: $e');
