@@ -9,7 +9,7 @@ class BlockEditor extends StatefulWidget {
   final bool isEditing;
   final void Function(List<ContentBlock>) onChanged;
   final String logId;
-
+  final void Function()? onRequestSave;
 
   const BlockEditor({
     super.key,
@@ -17,6 +17,9 @@ class BlockEditor extends StatefulWidget {
     required this.isEditing,
     required this.onChanged,
     required this.logId,
+    // 여기에 이 줄이 빠졌음 👇
+    this.onRequestSave,
+
   });
 
   @override
@@ -127,6 +130,10 @@ class _BlockEditorState extends State<BlockEditor> {
 
         // 🔥 반드시 상태를 상위로 반영
         widget.onChanged(_blockEntries.map((e) => e.value).toList());
+        if (widget.onRequestSave != null) {
+         // 🔥 저장 요청
+        }
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("이미지 편집 결과가 저장되지 않았습니다.")),

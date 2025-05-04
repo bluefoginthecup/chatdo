@@ -206,6 +206,23 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     );
   }
 
+  Future<void> _logAndSaveChanges() async {
+    final stopwatch = Stopwatch()..start();
+    debugPrint("⏱ 저장 시작");
+
+    await _saveChanges();
+
+    stopwatch.stop();
+    debugPrint("⏱ 저장 완료: ${stopwatch.elapsedMilliseconds}ms");
+
+    if (stopwatch.elapsedMilliseconds > 1500) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("저장 완료 (${stopwatch.elapsedMilliseconds}ms)")),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,6 +292,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                 });
               },
               logId: _entry.docId!,
+              onRequestSave: _logAndSaveChanges,
             ),
 
             const SizedBox(height: 24),
@@ -354,4 +372,6 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       ],
     );
   }
+
+
 }
