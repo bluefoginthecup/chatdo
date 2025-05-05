@@ -140,14 +140,6 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         const SizedBox(height: 16),
         _buildDateHeader(),
         const SizedBox(height: 8),
-        TagFilterBar(
-          selectedTag: _selectedTag,
-          onTagSelected: (tag) {
-            setState(() {
-              _selectedTag = tag;
-            });
-          },
-        ),
 
         Expanded(
           child: RefreshIndicator(

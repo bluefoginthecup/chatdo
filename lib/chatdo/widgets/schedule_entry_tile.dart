@@ -141,12 +141,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
           )
         ],
       ),
-      subtitle: entry.imageUrl != null && entry.body != null
-          ? Text(
-        entry.body!,
-        style: const TextStyle(fontSize: 12, color: Colors.grey),
-      )
-          : Text(
+      subtitle: Text(
         dateStr,
         style: const TextStyle(fontSize: 12, color: Colors.grey),
       ),
