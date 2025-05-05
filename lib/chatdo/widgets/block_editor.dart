@@ -17,7 +17,6 @@ class BlockEditor extends StatefulWidget {
     required this.isEditing,
     required this.onChanged,
     required this.logId,
-    // 여기에 이 줄이 빠졌음 👇
     this.onRequestSave,
 
   });
@@ -224,9 +223,23 @@ class _BlockEditorState extends State<BlockEditor> {
                 ),
               );
             } else if (block.type == 'image') {
-              return ListTile(
-                key: ValueKey(key),
-                title: Stack(
+        return ListTile(
+          key: ValueKey(key),
+          title: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 👇 드래그 핸들 추가 (텍스트 블록처럼 이미지도 이동 가능하게)
+              if (widget.isEditing)
+                ReorderableDragStartListener(
+                  index: i,
+                  child: const Padding(
+                    padding: EdgeInsets.only(right: 8.0, top: 12),
+                    child: Icon(Icons.drag_handle, color: Colors.grey),
+                  ),
+                ),
+              // 👇 이미지 영역
+              Expanded(
+                child: Stack(
                   alignment: Alignment.topRight,
                   children: [
                     Image.network(block.data),
@@ -234,11 +247,12 @@ class _BlockEditorState extends State<BlockEditor> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // 👇 이미지 편집 버튼
                           IconButton(
-                            icon: const Icon(
-                                Icons.edit, color: Colors.blueAccent),
+                            icon: const Icon(Icons.edit, color: Colors.blueAccent),
                             onPressed: () => _editImageBlock(i),
                           ),
+                          // 👇 이미지 삭제 버튼
                           IconButton(
                             icon: const Icon(Icons.close),
                             onPressed: () => _removeBlock(i),
@@ -247,9 +261,12 @@ class _BlockEditorState extends State<BlockEditor> {
                       ),
                   ],
                 ),
-              );
-            }
-            return const SizedBox.shrink();
+              ),
+            ],
+          ),
+        );
+      }
+      return const SizedBox.shrink();
           }),
           if (widget.isEditing)
             ListTile(

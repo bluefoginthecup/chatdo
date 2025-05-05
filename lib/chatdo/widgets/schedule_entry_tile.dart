@@ -1,5 +1,4 @@
-// 수정된 버전: 체크 아이콘에 눌림 애니메이션 + 태그 Chip 스타일 (딱 맞게 조정)
-
+// schedule_entry_tile.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
@@ -80,6 +79,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
     final entry = widget.entry;
     final isDone = entry.type == ScheduleType.done;
     final dateStr = DateFormat('yyyy-MM-dd').format(entry.date);
+
     return ListTile(
       leading: Row(
         mainAxisSize: MainAxisSize.min,
@@ -113,15 +113,40 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
             ),
         ],
       ),
-      title: Text(
-        entry.content,
-        style: TextStyle(
-          color: isDone ? Colors.grey : Colors.red,
-          fontSize: 16,
-        ),
-        overflow: TextOverflow.ellipsis,
+      title: Row(
+        children: [
+          ...entry.tags.map((tag) => Padding(
+            padding: const EdgeInsets.only(right: 4.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.orange[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                tag,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          )),
+          Expanded(
+            child: Text(
+              entry.content,
+              style: TextStyle(
+                color: isDone ? Colors.grey : Colors.red,
+                fontSize: 16,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          )
+        ],
       ),
-      subtitle: Text(
+      subtitle: entry.imageUrl != null && entry.body != null
+          ? Text(
+        entry.body!,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      )
+          : Text(
         dateStr,
         style: const TextStyle(fontSize: 12, color: Colors.grey),
       ),
