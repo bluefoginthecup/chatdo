@@ -82,8 +82,13 @@ Future<void> markAsOtherType({
   if (!doc.exists) return;
 
 
+
   final entry = ScheduleEntry(
-    content: doc['content'],
+    docId: docId,
+    content: doc['content'] ?? '',
+    body: doc['body'],
+    imageUrl: doc['imageUrl'],
+    tags: List<String>.from(doc['tags'] ?? []),
     date: (doc['date'] is Timestamp)
         ? (doc['date'] as Timestamp).toDate()
         : DateTime.parse(doc['date']),
@@ -91,7 +96,6 @@ Future<void> markAsOtherType({
         ? (doc['timestamp'] as Timestamp).toDate()
         : DateTime.parse(doc['timestamp']),
     type: currentMode == 'todo' ? ScheduleType.todo : ScheduleType.done,
-    docId: docId,
   );
 
 

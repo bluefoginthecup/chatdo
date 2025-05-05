@@ -13,6 +13,7 @@ class ScheduleEntryTile extends StatefulWidget {
   final GameController gameController;
   final Future<void> Function() onRefresh;
 
+
   const ScheduleEntryTile({
     Key? key,
     required this.entry,
@@ -28,6 +29,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
+  bool _isTapped = false;
 
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
 
   Future<void> _onIconTap() async {
     HapticFeedback.lightImpact();
+    setState(() => _isTapped = true);
     await _controller.reverse();
     await Future.delayed(const Duration(milliseconds: 80));
 
@@ -70,7 +73,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
     if (!mounted) return;
 
     await widget.onRefresh();
-
+    setState(() => _isTapped = true);
     _controller.forward();
   }
 
@@ -89,9 +92,15 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
             child: GestureDetector(
               onTap: _onIconTap,
               child: Icon(
-                isDone ? Icons.check_circle_outline : Icons.circle_outlined,
-                color: isDone ? Colors.grey : Colors.red,
-              ),
+                _isTapped
+                    ? Icons.check_circle
+                    : (isDone ? Icons.check_circle_outline : Icons.circle_outlined),
+                color: _isTapped
+                    ? Colors.greenAccent
+                    : (isDone ? Colors.grey : Colors.red),
+                size: 28,
+              )
+
             ),
           ),
           const SizedBox(width: 8),
