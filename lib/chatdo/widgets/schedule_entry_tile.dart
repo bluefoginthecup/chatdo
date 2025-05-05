@@ -104,11 +104,11 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
             ),
           ),
           const SizedBox(width: 8),
-          if (entry.imageUrl != null)
+          if (entry.imageUrls != null && entry.imageUrls!.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: CachedNetworkImage(
-                imageUrl: entry.imageUrl!,
+                imageUrl: entry.imageUrls!.first,
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
@@ -120,6 +120,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
                 errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
+
         ],
       ),
       title: Row(

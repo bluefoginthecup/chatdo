@@ -87,7 +87,7 @@ Future<void> markAsOtherType({
     docId: docId,
     content: doc['content'] ?? '',
     body: doc['body'],
-    imageUrl: doc['imageUrl'],
+    imageUrl: doc.data()?['imageUrl'],
     tags: List<String>.from(doc['tags'] ?? []),
     date: (doc['date'] is Timestamp)
         ? (doc['date'] as Timestamp).toDate()
@@ -109,6 +109,8 @@ Future<void> markAsOtherType({
     firestore: FirebaseFirestore.instance,
     userId: uid,
   );
+
+  await docRef.update({'mode': newType.name});
 
   await onRefresh(); // ✅ 반드시 완료 후 새로고침
 }

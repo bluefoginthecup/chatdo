@@ -18,7 +18,6 @@ class BlockEditor extends StatefulWidget {
     required this.onChanged,
     required this.logId,
     this.onRequestSave,
-
   });
 
   @override
@@ -58,12 +57,45 @@ class _BlockEditorState extends State<BlockEditor> {
     });
   }
 
-
   void _removeBlock(int index) {
     setState(() {
       _blockEntries.removeAt(index);
       widget.onChanged(_blockEntries.map((e) => e.value).toList());
     });
+  }
+
+  Widget _buildDeleteButton(int index) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("이 블록을 삭제하시겠습니까?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("취소"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _removeBlock(index);
+                },
+                child: const Text("삭제", style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black,
+        ),
+        padding: const EdgeInsets.all(4),
+        child: const Icon(Icons.close, size: 16, color: Colors.white),
+      ),
+    );
   }
 
   Future<void> _selectImageSourceAndAdd() async {
@@ -113,35 +145,28 @@ class _BlockEditorState extends State<BlockEditor> {
 
     try {
       final file = await ImageUploader.downloadImageFile(oldUrl);
-      debugPrint("편집용 이미지 파일 크기: ${await file.length()} bytes");
+      debugPrint("편집용 이미지 파일 크기: \${await file.length()} bytes");
 
       final newUrl = await ImageUploader.editAndReuploadImage(
         context,
         file,
         widget.logId,
       );
-      if (!mounted) return; //
+      if (!mounted) return;
       if (newUrl != null) {
         setState(() {
           _blockEntries[index] =
               MapEntry(key, ContentBlock(type: 'image', data: newUrl));
         });
-
-        // 🔥 반드시 상태를 상위로 반영
         widget.onChanged(_blockEntries.map((e) => e.value).toList());
-        if (widget.onRequestSave != null) {
-         // 🔥 저장 요청
-        }
-
+        widget.onRequestSave?.call();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("이미지 편집 결과가 저장되지 않았습니다.")),
         );
       }
-
-
     } catch (e) {
-      debugPrint('이미지 편집 중 에러: $e');
+      debugPrint('이미지 편집 중 에러: \$e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("이미지를 불러올 수 없습니다.")),
       );
@@ -149,37 +174,87 @@ class _BlockEditorState extends State<BlockEditor> {
   }
 
   void _reorderBlock(int oldIndex, int newIndex) {
-      setState(() {
-        if (oldIndex < newIndex) newIndex -= 1;
-        final item = _blockEntries.removeAt(oldIndex);
-        _blockEntries.insert(newIndex, item);
-        widget.onChanged(_blockEntries.map((e) => e.value).toList());
-      });
-    }
-    @override
-    Widget build(BuildContext context) {
-      return ReorderableListView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        onReorder: _reorderBlock,
-        buildDefaultDragHandles: false,
-        children: [
-          ..._blockEntries
-              .asMap()
-              .entries
-              .map((entry) {
-            final i = entry.key;
-            final blockEntry = entry.value;
-            final key = blockEntry.key;
-            final block = blockEntry.value;
+    setState(() {
+      if (oldIndex < newIndex) newIndex -= 1;
+      final item = _blockEntries.removeAt(oldIndex);
+      _blockEntries.insert(newIndex, item);
+      widget.onChanged(_blockEntries.map((e) => e.value).toList());
+    });
+  }
 
-            if (block.type == 'text') {
-              return ListTile(
-                key: ValueKey(key),
-                title: widget.isEditing
-                    ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      onReorder: _reorderBlock,
+      buildDefaultDragHandles: false,
+      children: [
+        ..._blockEntries.asMap().entries.map((entry) {
+          final i = entry.key;
+          final blockEntry = entry.value;
+          final key = blockEntry.key;
+          final block = blockEntry.value;
+
+          if (block.type == 'text') {
+            return ListTile(
+              key: ValueKey(key),
+              title: widget.isEditing
+                  ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ReorderableDragStartListener(
+                    index: i,
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 8.0, top: 12),
+                      child: Icon(Icons.drag_handle, color: Colors.grey),
+                    ),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextField(
+                            controller: _controllers[key],
+                            maxLines: null,
+                            decoration: const InputDecoration.collapsed(
+                              hintText: '내용을 입력하세요',
+                            ),
+                            style: const TextStyle(fontSize: 16),
+                            onChanged: (value) {
+                              _blockEntries[i] = MapEntry(
+                                key,
+                                ContentBlock(type: 'text', data: value),
+                              );
+                              widget.onChanged(_blockEntries.map((e) => e.value).toList());
+                            },
+                          ),
+                        ),
+                        if (widget.isEditing)
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: _buildDeleteButton(i),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+                  : null,
+            );
+          } else if (block.type == 'image') {
+            return ListTile(
+              key: ValueKey(key),
+              title: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.isEditing)
                     ReorderableDragStartListener(
                       index: i,
                       child: const Padding(
@@ -187,109 +262,53 @@ class _BlockEditorState extends State<BlockEditor> {
                         child: Icon(Icons.drag_handle, color: Colors.grey),
                       ),
                     ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: TextField(
-                          controller: _controllers[key],
-                          maxLines: null,
-                          decoration: const InputDecoration.collapsed(
-                            hintText: '내용을 입력하세요',
+                  Expanded(
+                    child: Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        Image.network(block.data),
+                        if (widget.isEditing)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                                onPressed: () => _editImageBlock(i),
+                              ),
+                              _buildDeleteButton(i),
+                            ],
                           ),
-                          style: const TextStyle(fontSize: 16),
-                          onChanged: (value) {
-                            _blockEntries[i] = MapEntry(
-                              key,
-                              ContentBlock(type: 'text', data: value),
-                            );
-                            widget.onChanged(
-                                _blockEntries.map((e) => e.value).toList());
-                          },
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
-                )
-                    : Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Text(
-                    block.data,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              );
-            } else if (block.type == 'image') {
-        return ListTile(
-          key: ValueKey(key),
-          title: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 👇 드래그 핸들 추가 (텍스트 블록처럼 이미지도 이동 가능하게)
-              if (widget.isEditing)
-                ReorderableDragStartListener(
-                  index: i,
-                  child: const Padding(
-                    padding: EdgeInsets.only(right: 8.0, top: 12),
-                    child: Icon(Icons.drag_handle, color: Colors.grey),
-                  ),
-                ),
-              // 👇 이미지 영역
-              Expanded(
-                child: Stack(
-                  alignment: Alignment.topRight,
-                  children: [
-                    Image.network(block.data),
-                    if (widget.isEditing)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 👇 이미지 편집 버튼
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blueAccent),
-                            onPressed: () => _editImageBlock(i),
-                          ),
-                          // 👇 이미지 삭제 버튼
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => _removeBlock(i),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      }
-      return const SizedBox.shrink();
-          }),
-          if (widget.isEditing)
-            ListTile(
-              key: const ValueKey("block-add-buttons"),
-              title: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: _addTextBlock,
-                    icon: const Icon(Icons.text_fields),
-                    label: const Text('텍스트 추가'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _selectImageSourceAndAdd,
-                    icon: const Icon(Icons.image),
-                    label: const Text('이미지 추가'),
                   ),
                 ],
               ),
-            )
-        ],
-      );
-    }
+            );
+          } else {
+            return const SizedBox.shrink();
+          }
+        }),
+        if (widget.isEditing)
+          ListTile(
+            key: const ValueKey("block-add-buttons"),
+            title: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _addTextBlock,
+                  icon: const Icon(Icons.text_fields),
+                  label: const Text('텍스트 추가'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _selectImageSourceAndAdd,
+                  icon: const Icon(Icons.image),
+                  label: const Text('이미지 추가'),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
-
+}

@@ -73,6 +73,16 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     if (_entry.docId == null) return;
 
     final encodedBody = jsonEncode(_blocks.map((e) => e.toJson()).toList());
+    final previousImagesEmpty = _entry.imageUrls == null || _entry.imageUrls!.isEmpty;
+    final newImages = _blocks
+        .where((e) => e.type == 'image')
+        .map((e) => e.data)
+        .toList();
+    final isFirstImageAdded = previousImagesEmpty && newImages.isNotEmpty;
+
+    final imageUrlsToSave = isFirstImageAdded
+        ? [newImages.first]
+        : newImages;
 
     await FirebaseFirestore.instance
         .collection('messages')
@@ -83,10 +93,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       'content': _titleController.text.trim(),
       'body': encodedBody,
       'tags': _selectedTags,
-      'imageUrls': _blocks
-          .where((e) => e.type == 'image')
-          .map((e) => e.data)
-          .toList(),
+      'imageUrls': imageUrlsToSave,
     });
 
     setState(() {
