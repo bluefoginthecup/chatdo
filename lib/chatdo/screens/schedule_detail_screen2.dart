@@ -40,7 +40,6 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   List<String> _selectedTags = [];
 
   final ImagePicker _picker = ImagePicker();
-  final GlobalKey<BlockEditorState> _blockEditorKey = GlobalKey<BlockEditorState>();
 
   @override
   void initState() {
@@ -49,20 +48,15 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     _titleController = TextEditingController(text: _entry.content);
     _selectedTags = List.from(_entry.tags);
 
+    // body에서 blocks 복원
     try {
-      final raw = _entry.body ?? '[]';
-      final decoded = jsonDecode(raw);
-      final list = decoded is String ? jsonDecode(decoded) : decoded;
-
-      if (list is List) {
-        _blocks = list.map((e) => ContentBlock.fromJson(e)).toList();
-      } else {
-        _blocks = [ContentBlock(type: 'text', data: _entry.body ?? '')];
-      }
+      final decoded = jsonDecode(_entry.body ?? '[]') as List;
+      _blocks = decoded.map((e) => ContentBlock.fromJson(e)).toList();
     } catch (e) {
       _blocks = [ContentBlock(type: 'text', data: _entry.body ?? '')];
     }
 
+    // 예전 데이터 호환: body에 이미지 없고 imageUrls만 있을 때
     if (_blocks.where((b) => b.type == 'image').isEmpty && _entry.imageUrls != null) {
       _blocks.addAll(_entry.imageUrls!.map((url) => ContentBlock(type: 'image', data: url)));
     }
@@ -75,22 +69,22 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   }
 
   Future<void> _saveChanges() async {
-    debugPrint("🧪 [_saveChanges] 시작");
     final userId = FirebaseAuth.instance.currentUser!.uid;
     if (_entry.docId == null) return;
 
-    final currentBlocks = _blockEditorKey.currentState?.getCurrentBlocks() ?? [];
-    debugPrint("📦 currentBlocks: $currentBlocks");
-    final encodedBody = jsonEncode(currentBlocks.map((e) => e.toJson()).toList());
-    debugPrint("📝 encodedBody: $encodedBody");
-
+    final encodedBody = jsonEncode(_blocks.map((e) => e.toJson()).toList());
     final previousImagesEmpty = _entry.imageUrls == null || _entry.imageUrls!.isEmpty;
-    final newImages = currentBlocks.where((e) => e.type == 'image').map((e) => e.data).toList();
+    final newImages = _blocks
+        .where((e) => e.type == 'image')
+        .map((e) => e.data)
+        .toList();
     final isFirstImageAdded = previousImagesEmpty && newImages.isNotEmpty;
 
-    final imageUrlsToSave = isFirstImageAdded ? [newImages.first] : newImages;
+    final imageUrlsToSave = isFirstImageAdded
+        ? [newImages.first]
+        : newImages;
 
-    debugPrint("📤 Firestore 업데이트 시작");
+
     await FirebaseFirestore.instance
         .collection('messages')
         .doc(userId)
@@ -110,7 +104,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         imageUrls: imageUrlsToSave,
         timestamp: DateTime.now(),
       );
-      _blocks = currentBlocks;
+      _blocks = jsonDecode(encodedBody)
+          .map<ContentBlock>((e) => ContentBlock.fromJson(e))
+          .toList(); // ✅ UI에 바로 반영되도록 재할당
       _isEditing = false;
     });
 
@@ -118,7 +114,6 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       await widget.onUpdate!();
     }
 
-    debugPrint("✅ 저장 완료 후 UI 업데이트 및 알림");
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('할일이 수정되었습니다!')),
     );
@@ -240,6 +235,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -249,7 +245,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
           if (_isEditing)
             IconButton(
               icon: const Icon(Icons.save, color: Colors.red),
-              onPressed: _logAndSaveChanges,
+              onPressed: _saveChanges,
             )
           else
             IconButton(
@@ -301,7 +297,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                 : Text(_entry.content, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             BlockEditor(
-              key: _blockEditorKey,
+              key: ValueKey(_blocks.hashCode),
               blocks: _blocks,
               isEditing: _isEditing,
               onChanged: (updated) {
@@ -312,7 +308,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
               logId: _entry.docId!,
               onRequestSave: _logAndSaveChanges,
             ),
+
             const SizedBox(height: 24),
+
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
@@ -356,8 +354,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,
-                    children: _selectedTags
-                        .map((tag) => Chip(
+                    children: _selectedTags.map((tag) => Chip(
                       label: Text(tag),
                       onDeleted: _isEditing
                           ? () {
@@ -366,8 +363,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                         });
                       }
                           : null,
-                    ))
-                        .toList(),
+                    )).toList(),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -390,4 +386,6 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       ],
     );
   }
+
+
 }

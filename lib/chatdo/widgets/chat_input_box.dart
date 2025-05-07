@@ -323,6 +323,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       imageUrls: downloadUrls,
       body: null,
         tags: _selectedTags,
+      timestamp: DateTime.now(),
     );
 
     await ScheduleUseCase.updateEntry(

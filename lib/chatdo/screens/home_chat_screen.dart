@@ -105,6 +105,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       createdAt: now,
       docId: docRef.id,
       tags: tags,
+      timestamp: DateTime.now(),
     );
 
     await ScheduleUseCase.updateEntry(
@@ -236,6 +237,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       tags: msg['tags'] != null
           ? (msg['tags'] as List<dynamic>).map((e) => e.toString()).toList()
           : [],
+      timestamp: DateTime.now(),
 
     );
 

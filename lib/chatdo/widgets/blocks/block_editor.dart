@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../models/content_block.dart';
-import '../utils/image_uploader.dart';
+import '../../models/content_block.dart';
+import '../../utils/image_uploader.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // listEquals 쓰려면 필요
+
 
 class BlockEditor extends StatefulWidget {
   final List<ContentBlock> blocks;
@@ -21,12 +23,24 @@ class BlockEditor extends StatefulWidget {
   });
 
   @override
-  State<BlockEditor> createState() => _BlockEditorState();
+  State<BlockEditor> createState() => BlockEditorState();
 }
 
-class _BlockEditorState extends State<BlockEditor> {
+class BlockEditorState extends State<BlockEditor> {
   late List<MapEntry<String, ContentBlock>> _blockEntries;
   final Map<String, TextEditingController> _controllers = {};
+  List<ContentBlock> getCurrentBlocks() {
+    for (int i = 0; i < _blockEntries.length; i++) {
+      final entry = _blockEntries[i];
+      if (entry.value.type == 'text') {
+        final controller = _controllers[entry.key];
+        if (controller != null) {
+          _blockEntries[i] = MapEntry(entry.key, ContentBlock(type: 'text', data: controller.text));
+        }
+      }
+    }
+    return _blockEntries.map((e) => e.value).toList();
+  }
 
   @override
   void initState() {
@@ -121,8 +135,8 @@ class _BlockEditorState extends State<BlockEditor> {
     );
 
     if (source == null) return;
-
     final urls = await ImageUploader.pickAndUploadImages(
+      context: context,
       fromCamera: source == 'camera',
     );
 
@@ -180,6 +194,28 @@ class _BlockEditorState extends State<BlockEditor> {
       _blockEntries.insert(newIndex, item);
       widget.onChanged(_blockEntries.map((e) => e.value).toList());
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant BlockEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 내용이 실제로 달라졌는지 확인
+    if (!listEquals(widget.blocks, oldWidget.blocks)) {
+      final uuid = const Uuid();
+      final newEntries = widget.blocks.map((b) => MapEntry(uuid.v4(), b)).toList();
+
+      // 기존 컨트롤러 재사용, 없는 것만 새로 만듦
+      for (final entry in newEntries) {
+        if (entry.value.type == 'text' && !_controllers.containsKey(entry.key)) {
+          _controllers[entry.key] = TextEditingController(text: entry.value.data);
+        }
+      }
+
+      setState(() {
+        _blockEntries = newEntries;
+      });
+    }
   }
 
   @override
@@ -246,9 +282,18 @@ class _BlockEditorState extends State<BlockEditor> {
                   ),
                 ],
               )
-                  : null,
+                  : Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
+                child: Text(
+                  block.data,
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
             );
-          } else if (block.type == 'image') {
+          }
+
+
+          else if (block.type == 'image') {
             return ListTile(
               key: ValueKey(key),
               title: Row(

@@ -7,6 +7,7 @@ import '../screens/schedule_detail_screen.dart';
 import '../../game/core/game_controller.dart';
 import '../utils/schedule_actions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:convert';
 
 class ScheduleEntryTile extends StatefulWidget {
   final ScheduleEntry entry;
@@ -30,6 +31,21 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
   bool _isTapped = false;
+  String extractPreviewText(String? body) {
+    try {
+      final raw = body ?? '[]';
+      final decoded = jsonDecode(raw);
+      final list = decoded is String ? jsonDecode(decoded) : decoded;
+      if (list is List) {
+        final textBlock = list.firstWhere(
+              (e) => e['type'] == 'text' && (e['data'] as String).trim().isNotEmpty,
+          orElse: () => null,
+        );
+        return textBlock?['data'] ?? '';
+      }
+    } catch (_) {}
+    return '';
+  }
 
   @override
   void initState() {
@@ -155,6 +171,9 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
         dateStr,
         style: const TextStyle(fontSize: 12, color: Colors.grey),
       ),
+
+
+
       onTap: () {
         Navigator.of(context)
             .push(

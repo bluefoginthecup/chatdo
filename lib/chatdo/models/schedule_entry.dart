@@ -14,6 +14,7 @@ class ScheduleEntry {
   final Map<String, dynamic>? routineInfo;
   final List<String>? imageUrls;
   final List<String> tags;
+  final DateTime timestamp;
 
 
 
@@ -28,7 +29,9 @@ class ScheduleEntry {
     this.routineInfo,
     this.imageUrls,
     this.tags = const [],
+    required this.timestamp,
   }) : createdAt = createdAt ?? DateTime.now();
+
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
     // ✅ date 필드 안전하게 파싱
     final dynamic dateRaw = json['date'];
@@ -59,6 +62,8 @@ class ScheduleEntry {
       date: parsedDate,
       type: json['mode'] == 'done' ? ScheduleType.done : ScheduleType.todo,
       createdAt: createdAt,
+      // 이거 추가해줘야 함
+      timestamp: createdAt,
       docId: json['docId'] as String?,
       imageUrl: json['imageUrl'] as String?,
       body: json['body'] as String?,
@@ -80,27 +85,42 @@ class ScheduleEntry {
       throw Exception('Unknown date format');
     }
 
+    // ✅ 여기서 먼저 createdAt 따로 선언
+    final createdAt = (data['timestamp'] is Timestamp)
+        ? (data['timestamp'] as Timestamp).toDate()
+        : (data['timestamp'] is String)
+        ? DateTime.parse(data['timestamp'])
+        : DateTime.now();
+
+
     return ScheduleEntry(
       content: data['content'] ?? '',
-      body: data['body'],
+      body: data.containsKey('body') ? data['body'] as String? ?? '' : '',
+
+
       date: parsedDate,
       type: data['mode'] == 'done' ? ScheduleType.done : ScheduleType.todo,
-      createdAt: (data['timestamp'] is Timestamp)
-          ? (data['timestamp'] as Timestamp).toDate()
-          : (data['timestamp'] is String)
-          ? DateTime.parse(data['timestamp'])
-          : DateTime.now(),
+      createdAt: createdAt,
+      timestamp: createdAt, // 혹은 위에서 새로 만든 timestamp 변수
       docId: data['docId'],
       imageUrl: data['imageUrl'],
       routineInfo: data['routineInfo'],
       imageUrls: (data['imageUrls'] as List<dynamic>?)?.cast<String>(),
       tags: (data['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+
+
     );
   }
 
 
   static ScheduleEntry fromParsedEntry(DateTime date, ScheduleType type, String content) {
-    return ScheduleEntry(date: date, type: type, content: content, createdAt: DateTime.now());
+    final now = DateTime.now();
+    return ScheduleEntry(
+        date: date,
+        type: type,
+        content: content,
+        createdAt: now,
+      timestamp: now,);
   }
 
   Map<String, dynamic> toJson() {
@@ -129,6 +149,7 @@ class ScheduleEntry {
     Map<String, dynamic>? routineInfo,
     List<String>? imageUrls,
     List<String>? tags,
+    DateTime? timestamp,
   }) {
     return ScheduleEntry(
       date: date ?? this.date,
@@ -141,6 +162,7 @@ class ScheduleEntry {
       routineInfo: routineInfo ?? this.routineInfo,
       imageUrls: imageUrls ?? this.imageUrls,
       tags: tags ?? this.tags,
+      timestamp: timestamp ?? this.timestamp,
     );
   }
 }

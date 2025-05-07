@@ -24,6 +24,7 @@ class ScheduleUseCase {
       imageUrl: entry.imageUrl,
       imageUrls: entry.imageUrls,
       body: entry.body,
+      timestamp: DateTime.now(),
     );
 
     // 상태 교체 (replaceEntry 사용)

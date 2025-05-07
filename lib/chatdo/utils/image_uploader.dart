@@ -15,9 +15,15 @@ import 'package:image/image.dart' as img;
 
 class ImageUploader {
   static Future<List<String>> pickAndUploadImages({
+    required BuildContext context,
     bool fromCamera = false,
     void Function(int done, int total)? onProgress,
   }) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
     final picker = ImagePicker();
     List<XFile> pickedFiles = [];
 
@@ -62,6 +68,7 @@ class ImageUploader {
         onProgress(i + 1, pickedFiles.length);
       }
     }
+    Navigator.pop(context);
 
     return uploadedUrls;
   }
