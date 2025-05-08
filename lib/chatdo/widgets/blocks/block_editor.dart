@@ -101,8 +101,8 @@ class BlockEditorState extends State<BlockEditor> {
                         feedback: Material(
                           child: Container(
                             width: MediaQuery.of(context).size.width - 32,
-                            padding: const EdgeInsets.all(8),
-                            color: Colors.amber.withOpacity(0.6),
+                            padding: const EdgeInsets.all(1),
+                            color: Colors.transparent,
                             child: _buildBlock(entry, index),
                           ),
                         ),
