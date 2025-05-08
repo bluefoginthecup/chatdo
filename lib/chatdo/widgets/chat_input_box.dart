@@ -314,6 +314,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       date: DateFormat('yyyy-MM-dd').format(entry.date),
       timestamp: now.millisecondsSinceEpoch,
       imageUrl: entry.imageUrl,
+      imageUrls: entry.imageUrls,
     ));
   }
 }

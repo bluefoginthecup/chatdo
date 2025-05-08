@@ -325,6 +325,25 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                   ),
               ],
             ),
+            if (_entry.imageUrls != null && _entry.imageUrls!.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  const Text('첨부된 이미지', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Column(
+                    children: _entry.imageUrls!.map((url) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(url, width: double.infinity, fit: BoxFit.cover),
+                      ),
+                    )).toList(),
+                  ),
+                ],
+              ),
+
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))

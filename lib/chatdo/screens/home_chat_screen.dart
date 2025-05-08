@@ -83,6 +83,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       'content': m.text,
       'date': m.date.toString(),
       if (m.imageUrl != null) 'imageUrl': m.imageUrl!,
+      if (m.imageUrls != null) 'imageUrls': m.imageUrls,
       'tags': m.tags,
     }).toList();
     setState(() {
@@ -238,6 +239,10 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
           ? (msg['tags'] as List<dynamic>).map((e) => e.toString()).toList()
           : [],
       timestamp: DateTime.now(),
+      imageUrl: msg['imageUrl'], // ✅ 추가
+      imageUrls: msg['imageUrls'] != null
+          ? List<String>.from(msg['imageUrls'])
+          : [], // ✅ 추가
 
     );
 
