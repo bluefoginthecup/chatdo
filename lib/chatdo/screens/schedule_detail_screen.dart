@@ -49,24 +49,54 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     _titleController = TextEditingController(text: _entry.content);
     _selectedTags = List.from(_entry.tags);
 
+    _fetchLatestEntry(); // 🔥 여기에 Firestore fetch 추가
+  }
+
+  Future<void> _fetchLatestEntry() async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final doc = await FirebaseFirestore.instance
+        .collection('messages')
+        .doc(userId)
+        .collection('logs')
+        .doc(widget.entry.docId)
+        .get();
+
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    final raw = data['body'] ?? '[]';
+
     try {
-      final raw = _entry.body ?? '[]';
+      List<ContentBlock> parsedBlocks = [];
+
       final decoded = jsonDecode(raw);
-      final list = decoded is String ? jsonDecode(decoded) : decoded;
 
-      if (list is List) {
-        _blocks = list.map((e) => ContentBlock.fromJson(e)).toList();
-      } else {
-        _blocks = [ContentBlock(type: 'text', data: _entry.body ?? '')];
+      if (decoded is List) {
+        parsedBlocks = decoded.map((e) => ContentBlock.fromJson(e)).toList();
+      } else if (decoded is String) {
+        final inner = jsonDecode(decoded);
+        if (inner is List) {
+          parsedBlocks = inner.map((e) => ContentBlock.fromJson(e)).toList();
+        }
       }
-    } catch (e) {
-      _blocks = [ContentBlock(type: 'text', data: _entry.body ?? '')];
-    }
 
-    if (_blocks.where((b) => b.type == 'image').isEmpty && _entry.imageUrls != null) {
-      _blocks.addAll(_entry.imageUrls!.map((url) => ContentBlock(type: 'image', data: url)));
+      setState(() {
+        _entry = _entry.copyWith(
+          content: data['content'] ?? '',
+          tags: List<String>.from(data['tags'] ?? []),
+          imageUrls: List<String>.from(data['imageUrls'] ?? []),
+          body: raw,
+        );
+        _blocks = parsedBlocks;
+      });
+    } catch (e) {
+      debugPrint('🚨 [_fetchLatestEntry] 디코딩 실패: $e');
+      setState(() {
+        _blocks = [ContentBlock(type: 'text', data: raw)];
+      });
     }
   }
+
 
   @override
   void dispose() {
@@ -305,10 +335,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
               blocks: _blocks,
               isEditing: _isEditing,
               onChanged: (updated) {
-                setState(() {
-                  _blocks = updated;
-                });
+                _blocks = updated; // setState() 제거 → rebuild 최소화
               },
+
               logId: _entry.docId!,
               onRequestSave: _logAndSaveChanges,
             ),

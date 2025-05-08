@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -12,28 +11,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:chatdo/chatdo/widgets/check_image_format.dart';
 import 'package:image/image.dart' as img;
 
-Future<File?> compressImageIsolate(Map<String, dynamic> args) async {
-  final inputPath = args['inputPath'] as String;
-  final outputPath = args['outputPath'] as String;
-
-  try {
-    final originalBytes = await File(inputPath).readAsBytes();
-
-    final compressedBytes = await FlutterImageCompress.compressWithList(
-      originalBytes,
-      minWidth: 720,
-      minHeight: 720,
-      quality: 70,
-      format: CompressFormat.jpeg,
-    );
-
-    final compressedFile = await File(outputPath).writeAsBytes(compressedBytes);
-    return compressedFile;
-  } catch (e) {
-    debugPrint('❌ [compressImageIsolate] 실패: $e');
-    return null;
-  }
-}
 
 
 class ImageUploader {
@@ -58,10 +35,7 @@ class ImageUploader {
       if (picked != null) pickedFiles = picked;
     }
 
-    if (pickedFiles.isEmpty) {
-      Navigator.pop(context);
-      return [];
-    }
+    if (pickedFiles.isEmpty) return [];
 
     final userId = FirebaseAuth.instance.currentUser!.uid;
     final tempDir = Directory.systemTemp;
@@ -72,20 +46,16 @@ class ImageUploader {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
       final compressedPath = '${tempDir.path}/$fileName';
 
-      final originalBytes = await File(file.path).readAsBytes();
-      final compressedBytes = await FlutterImageCompress.compressWithList(
-        originalBytes,
+      final compressedFile = await FlutterImageCompress.compressAndGetFile(
+        file.path,
+        compressedPath,
+        quality: 70,
         minWidth: 720,
         minHeight: 720,
-        quality: 70,
         format: CompressFormat.jpeg,
       );
-      final compressedFile = await File(compressedPath).writeAsBytes(compressedBytes);
 
-
-      final File fileToUpload = compressedFile != null
-          ? File(compressedFile.path)
-          : File((file as XFile).path);
+      final File fileToUpload = compressedFile != null ? File(compressedFile.path) : File((file as XFile).path);
 
       final ref = FirebaseStorage.instance
           .ref('users/$userId/images/$fileName');
@@ -102,7 +72,6 @@ class ImageUploader {
 
     return uploadedUrls;
   }
-
   static Future<String?> editAndReuploadImage(
       BuildContext context,
       File originalFile,
@@ -114,6 +83,7 @@ class ImageUploader {
       final imageBytes = await originalFile.readAsBytes();
       debugPrint("📥 [2] 원본 바이트 크기: ${imageBytes.length} bytes");
 
+      // 🔁 이미지 편집기 열기
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -124,11 +94,13 @@ class ImageUploader {
       if (result == null || result is! Uint8List) return null;
       final editedBytes = result;
 
+      // 🔁 편집 결과 저장
       final appDocDir = await getApplicationDocumentsDirectory();
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_edited.jpg';
       final outputPath = '${appDocDir.path}/$fileName';
       final editedFile = await File(outputPath).writeAsBytes(editedBytes);
 
+      // 🔁 Firebase 업로드
       final userId = FirebaseAuth.instance.currentUser!.uid;
       final ref = FirebaseStorage.instance
           .ref('users/$userId/images/$fileName');
@@ -147,6 +119,7 @@ class ImageUploader {
     }
   }
 
+
   static Future<File> downloadImageFile(String url) async {
     try {
       debugPrint("🟡 다운로드 시도 URL: $url");
@@ -163,7 +136,7 @@ class ImageUploader {
           throw Exception("이미지를 디코딩할 수 없습니다.");
         }
 
-        final jpgBytes = img.encodeJpg(decoded, quality: 90);
+        final jpgBytes = img.encodeJpg(decoded, quality: 90);  // progressive 없이
 
         final fixedPath = '${tempDir.path}/converted_${DateTime.now().millisecondsSinceEpoch}.jpg';
         final fixedFile = File(fixedPath)..writeAsBytesSync(jpgBytes);
@@ -179,10 +152,16 @@ class ImageUploader {
     }
   }
 
+
+// JPEG/PNG 파일인지 대략적으로 확인하는 헬퍼
   static bool _isImage(Uint8List bytes) {
     if (bytes.length < 4) return false;
+    // PNG 시그니처: 89 50 4E 47
     if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) return true;
+    // JPEG 시그니처: FF D8
     if (bytes[0] == 0xFF && bytes[1] == 0xD8) return true;
     return false;
   }
+
+
 }
