@@ -16,9 +16,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '/game/core/game_controller.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'tag_selector.dart';
-import '../models/enums.dart'; // Mode, DateTag
-import '../widgets/mode_selector.dart';
-import '../widgets/date_selector.dart';
+import '../models/enums.dart'; // Mode, Dat
+import '../widgets/mode_date_selector.dart';
 
 
 class ChatInputBox extends StatefulWidget {
@@ -43,7 +42,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   List<String> _selectedTags = [];
   List<File> _pendingImages = [];
   Mode _selectedMode = Mode.todo;
-  DateTag _selectedDateTag = DateTag.today;
+  DateTime _selectedDate = DateTime.now();
   bool _isSending = false;
   double _uploadProgress = 0.0;
 
@@ -51,35 +50,29 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ModeSelector(
-                  selected: _selectedMode,
-                  onChanged: (mode) => setState(() => _selectedMode = mode),
-                ),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: ModeDateSelector(
+                selectedMode: _selectedMode,
+                selectedDate: _selectedDate,
+                onModeChanged: (mode) => setState(() => _selectedMode = mode),
+                onDateSelected: (date) => setState(() => _selectedDate = date),
               ),
-              const SizedBox(width: 8),
-              TagSelector(
-                initialSelectedTags: [],
-                onTagChanged: (selectedTags) {
-                  setState(() {
-                    _selectedTags = selectedTags;
-                  });
-                },
-              ),
-            ],
-          ),
-            const SizedBox(height: 8),
-
-// 날짜 선택은 그 다음에
-            DateSelector(
-              mode: _selectedMode,
-              selected: _selectedDateTag,
-              onChanged: (tag) => setState(() => _selectedDateTag = tag),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(width: 8),
+            TagSelector(
+              initialSelectedTags: _selectedTags,
+              onTagChanged: (selectedTags) {
+                setState(() {
+                  _selectedTags = selectedTags;
+                });
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
 
 // ✅ 선택된 태그가 있을 때만 Chip 보여주기
         if (_selectedTags.isNotEmpty) ...[
@@ -193,7 +186,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     setState(() {
       _isSending = true;
     });
-    widget.onSubmitted(text, _selectedMode, _resolveDate(_selectedDateTag),_selectedTags);
+    widget.onSubmitted(text, _selectedMode, _selectedDate, _selectedTags);
     setState(() {
       widget.controller.clear();
       _selectedTags.clear();
@@ -229,9 +222,9 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   void _pickImageFromCamera() async {
     final XFile? picked = await ImagePicker().pickImage(source: ImageSource.camera);
     if (picked != null) {
-      final File file = File(picked.path); // XFile → File 변환
+      final File file = File(picked.path);
       setState(() {
-        _pendingImages.add(file); // File을 리스트에 저장
+        _pendingImages.add(file);
       });
     }
   }
@@ -245,16 +238,9 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     for (var imageFile in images) {
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = '$timestamp.jpg';  // 무조건 .jpg
-
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('chat_images')
-          .child(userId)
-          .child(fileName);
-
+      final fileName = '$timestamp.jpg';
+      final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
       final tempDir = Directory.systemTemp;
-
       final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
         imageFile.absolute.path,
         '${tempDir.path}/compressed_$fileName',
@@ -263,22 +249,14 @@ class _ChatInputBoxState extends State<ChatInputBox> {
         minHeight: 720,
         format: CompressFormat.jpeg,
       );
-
       final File? compressedFile = compressedXFile != null ? File(compressedXFile.path) : null;
-
-
-      // 📢 추가: 압축 전후 용량 출력
       final int originalSize = await imageFile.length();
       final int compressedSize = compressedFile != null ? await compressedFile.length() : originalSize;
-
       print('📦 원본 크기: ${(originalSize / 1024 / 1024).toStringAsFixed(2)}MB');
       print('📦 압축 후 크기: ${(compressedSize / 1024 / 1024).toStringAsFixed(2)}MB');
-
-
       final File fileToUpload = compressedFile ?? imageFile;
-      final fileSize = await fileToUpload.length(); // 📢 압축된 파일 사이즈를 합산
+      final fileSize = await fileToUpload.length();
       totalBytes += fileSize;
-
       final metadata = SettableMetadata(contentType: 'image/jpeg');
       UploadTask uploadTask = ref.putFile(fileToUpload, metadata);
       uploadTask.snapshotEvents.listen((event) {
@@ -286,24 +264,17 @@ class _ChatInputBoxState extends State<ChatInputBox> {
           _uploadProgress = event.bytesTransferred / event.totalBytes;
         });
       });
-
       await uploadTask;
       final downloadUrl = await ref.getDownloadURL();
       downloadUrls.add(downloadUrl);
     }
 
-    String readableSize(int bytes) {
-      if (bytes < 1024) {
-        return '$bytes B';
-      } else if (bytes < 1024 * 1024) {
-        return '${(bytes / 1024).toStringAsFixed(1)} KB';
-      } else {
-        return '${(bytes / 1024 / 1024).toStringAsFixed(2)} MB';
-      }
-    }
+    final readable = (totalBytes < 1024)
+        ? '$totalBytes B'
+        : (totalBytes < 1024 * 1024)
+        ? '${(totalBytes / 1024).toStringAsFixed(1)} KB'
+        : '${(totalBytes / 1024 / 1024).toStringAsFixed(2)} MB';
 
-// 그리고 사용
-    final readable = readableSize(totalBytes);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('메시지 전송 완료 (총 $readable)'), duration: Duration(seconds: 2)),
     );
@@ -315,14 +286,14 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
     final entry = ScheduleEntry(
       content: title.isNotEmpty ? title : '[IMAGES]',
-      date: _resolveDate(_selectedDateTag),
+      date: _selectedDate,
       type: _selectedMode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
       docId: docRef.id,
       imageUrl: downloadUrls.isNotEmpty ? downloadUrls.first : null,
       imageUrls: downloadUrls,
       body: null,
-        tags: _selectedTags,
+      tags: _selectedTags,
       timestamp: DateTime.now(),
     );
 

@@ -180,11 +180,12 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     return OutlinedButton(
       onPressed: _toggleMenu,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: Size.zero,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        minimumSize: const Size(80, 40),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 12),
+        textStyle: const TextStyle(fontSize: 14),
       ),
+
       child: const Text('+태그'),
     );
   }

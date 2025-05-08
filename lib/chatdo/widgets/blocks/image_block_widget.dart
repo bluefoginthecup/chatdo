@@ -1,5 +1,6 @@
 // image_block_widget.dart
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ImageBlockWidget extends StatelessWidget {
   final String imageUrl;
@@ -27,7 +28,15 @@ class ImageBlockWidget extends StatelessWidget {
           child: Stack(
             alignment: Alignment.topRight,
             children: [
-              Image.network(imageUrl),
+              CachedNetworkImage(
+                imageUrl: imageUrl,
+                placeholder: (context, url) => const SizedBox(
+                  height: 200,
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
+                fit: BoxFit.cover,
+              ),
               if (isEditing)
                 Row(
                   mainAxisSize: MainAxisSize.min,
