@@ -18,6 +18,7 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'tag_selector.dart';
 import '../models/enums.dart'; // Mode, Dat
 import '../widgets/mode_date_selector.dart';
+import '../models/content_block.dart';
 
 
 class ChatInputBox extends StatefulWidget {
@@ -283,6 +284,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
     final now = DateTime.now();
     final docRef = FirebaseFirestore.instance.collection('messages').doc(userId).collection('logs').doc();
+    final body = ContentBlock.buildJsonBody(
+      text: title,
+      imageUrls: downloadUrls,
+    );
+
 
     final entry = ScheduleEntry(
       content: title.isNotEmpty ? title : '[IMAGES]',
@@ -292,7 +298,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
       docId: docRef.id,
       imageUrl: downloadUrls.isNotEmpty ? downloadUrls.first : null,
       imageUrls: downloadUrls,
-      body: null,
+      body: body,
       tags: _selectedTags,
       timestamp: DateTime.now(),
     );

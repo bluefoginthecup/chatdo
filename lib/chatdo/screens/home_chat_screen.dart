@@ -257,42 +257,13 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     );
   }
 
-  void _confirmAndLogout() async {
-    final shouldLogout = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('로그아웃'),
-        content: const Text('정말 로그아웃하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('로그아웃'),
-          ),
-        ],
-      ),
-    );
-    if (shouldLogout == true) {
-      await FirebaseAuth.instance.signOut();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('ChatDo'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: '로그아웃',
-            onPressed: _confirmAndLogout,
-          ),
-        ],
+
       ),
       body: SafeArea(
         child: Column(

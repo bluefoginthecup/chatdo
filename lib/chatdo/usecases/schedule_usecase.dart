@@ -27,6 +27,7 @@ class ScheduleUseCase {
       timestamp: DateTime.now(),
     );
 
+    print('🧪 updated.body = ${updated.body}');
     // 상태 교체 (replaceEntry 사용)
     provider.replaceEntry(entry, updated);
 
@@ -54,6 +55,7 @@ class ScheduleUseCase {
         'tags': entry.tags,
         if (updated.imageUrl != null) 'imageUrl': updated.imageUrl,
         if (updated.imageUrls != null) 'imageUrls': updated.imageUrls,
+        if (updated.body != null) 'body': updated.body,
       }, SetOptions(merge: true));
 
 
