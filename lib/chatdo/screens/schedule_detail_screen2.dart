@@ -12,7 +12,7 @@ import '../services/routine_service.dart';
 import '../widgets/routine_edit_form.dart';
 import '../widgets/blocks/block_editor.dart';
 import '../../game/core/game_controller.dart';
-import '../widgets/tag_selector.dart';
+import '../widgets/tags/tag_selector.dart';
 
 class ScheduleDetailScreen extends StatefulWidget {
   final ScheduleEntry entry;

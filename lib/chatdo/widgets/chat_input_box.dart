@@ -15,7 +15,7 @@ import '../usecases/schedule_usecase.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '/game/core/game_controller.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'tag_selector.dart';
+import 'tags/tag_selector.dart';
 import '../models/enums.dart';
 import '../widgets/mode_date_selector.dart';
 import '../models/content_block.dart';
@@ -198,6 +198,59 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     ));
   }
 
+  void _retryUploadAtIndex(int index) async {
+    final item = _pendingUploads[index];
+    setState(() {
+      item.hasError = false;
+      item.isUploading = true;
+      item.progress = 0.0;
+    });
+
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final fileName = '$timestamp.jpg';
+    final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
+    final tempDir = Directory.systemTemp;
+
+    try {
+      final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
+        item.file.absolute.path,
+        '${tempDir.path}/compressed_$fileName',
+        quality: 70,
+        minWidth: 720,
+        minHeight: 720,
+        format: CompressFormat.jpeg,
+      );
+
+      final File fileToUpload = compressedXFile != null ? File(compressedXFile.path) : item.file;
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+
+      final uploadTask = ref.putFile(fileToUpload, metadata);
+      uploadTask.snapshotEvents.listen((event) {
+        setState(() {
+          item.progress = event.bytesTransferred / event.totalBytes;
+        });
+      });
+
+      await uploadTask;
+      final url = await ref.getDownloadURL();
+
+      // ✅ 업로드 성공 후 별도 처리 (예: 리스트에서 삭제하거나 메시지 전송 등)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('재업로드 성공')),
+      );
+    } catch (e) {
+      setState(() {
+        item.hasError = true;
+        item.isUploading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('업로드 실패!')),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -239,6 +292,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               final item = _pendingUploads.removeAt(oldIndex);
               _pendingUploads.insert(newIndex, item);
             }),
+            onRetry: _retryUploadAtIndex,
           ),
         const SizedBox(height: 4),
         Row(

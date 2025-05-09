@@ -1,20 +1,20 @@
 // lib/chatdo/widgets/image_upload_preview.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../models/upload_item.dart'; // ← 상대 경로 맞춰서 import
-
-
+import '../models/upload_item.dart';
 
 class ImageUploadPreview extends StatelessWidget {
   final List<UploadItem> items;
   final void Function(int index) onRemove;
   final void Function(int oldIndex, int newIndex) onReorder;
+  final void Function(int index)? onRetry;
 
   const ImageUploadPreview({
     super.key,
     required this.items,
     required this.onRemove,
     required this.onReorder,
+    this.onRetry,
   });
 
   @override
@@ -39,12 +39,40 @@ class ImageUploadPreview extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              if (item.isUploading)
+              if (item.hasError)
                 Positioned.fill(
                   child: Container(
                     color: Colors.black45,
                     child: Center(
-                      child: CircularProgressIndicator(value: item.progress),
+                      child: IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.redAccent),
+                        onPressed: () => onRetry?.call(index),
+                      ),
+                    ),
+                  ),
+                )
+              else if (item.isUploading)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black45,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: item.progress,
+                          strokeWidth: 4,
+                          backgroundColor: Colors.black26,
+                          color: Colors.tealAccent,
+                        ),
+                        Text(
+                          '${(item.progress * 100).toStringAsFixed(0)}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

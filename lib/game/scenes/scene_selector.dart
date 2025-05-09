@@ -1,16 +1,21 @@
-// scene_selector.dart
-
 import 'package:flame/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '/game/components/flame/room_game.dart';
-import '/game/scenes/intro_scene.dart';
-import '/game/scenes/sick_scene.dart';
-import '/game/scenes/room_scene.dart'; // ✅ 방 씬
+import 'package:chatdo/game/scenes/intro_scene.dart';
+import 'package:chatdo/game/scenes/sick_scene.dart';
+import 'package:chatdo/game/scenes/room_scene.dart';
+import 'package:chatdo/game/scenes/workout_scene.dart';
+import 'package:chatdo/game/components/flame/room_game.dart';
+// Game 타입 제대로 지정
+// Flame 1.8+ 기준
 
-class SceneSelector extends Component with HasGameReference<RoomGame> {
+class SceneSelector extends Component with HasGameRef<RoomGame> {
   final bool showSick;
+  final bool showWorkoutCongrats;
 
-  SceneSelector({required this.showSick});
+  SceneSelector({
+    required this.showSick,
+    required this.showWorkoutCongrats,
+  });
 
   @override
   Future<void> onLoad() async {
@@ -19,21 +24,25 @@ class SceneSelector extends Component with HasGameReference<RoomGame> {
 
     if (showSick) {
       print("🚀 SickScene 추가 시도");
-      game.add(SickScene(
+      gameRef.add(SickScene(
         onCompleted: () {
           print("✅ SickScene 완료 → RoomScene으로");
-          game.add(RoomScene());
+          gameRef.add(RoomScene());
+        },
+      ));
+    } else if (showWorkoutCongrats) {
+      print("🎉 WorkoutScene 추가 시도");
+      gameRef.add(WorkoutScene(
+        onCompleted: () {
+          print("✅ WorkoutScene 완료 → RoomScene으로");
+          gameRef.add(RoomScene());
         },
       ));
     } else {
       print("🚀 IntroScene 추가 시도");
-      game.add(IntroScene(
-        onCompleted: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('has_seen_intro', true);
-          game.add(RoomScene());
-        },
-      ));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_intro', true);
+      gameRef.add(RoomScene());
     }
   }
 }

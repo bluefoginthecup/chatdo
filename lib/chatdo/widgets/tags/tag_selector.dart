@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'custom_tag_dialog.dart';
+
+
 
 class TagSelector extends StatefulWidget {
   final List<String>? initialSelectedTags;
@@ -149,7 +152,33 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                             ),
                             child: const Text('완료'),
                           ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final newTag = await showCustomTagDialog(context);
+                              if (newTag != null && newTag.isNotEmpty && !_tags.contains(newTag)) {
+                                setState(() {
+                                  _tags.add(newTag);
+                                  _selectedTags.add(newTag);
+                                  widget.onTagChanged?.call(List.from(_selectedTags));
+                                });
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orangeAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: const TextStyle(fontSize: 12),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('커스텀 태그 추가'),
+                          ),
                         ],
+
                       ),
                     ),
                   ),
