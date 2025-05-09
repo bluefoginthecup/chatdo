@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'custom_tag_dialog.dart';
+import '../../models/user_tag.dart'; // 경로 맞게 조정할 것
 
 class TagSelector extends StatefulWidget {
   final List<String>? initialSelectedTags;
@@ -20,9 +21,20 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
   late final Animation<Offset> _offsetAnimation;
   late final Animation<double> _opacityAnimation;
 
-  final List<String> _tags = [
-    '운동', '건강', '스페인어', '베이킹', '방석재고', '세금',
-    '영수증', '매장관리', '재고채우기', '자수', '챗두', '언젠가', '기타'
+  final List<UserTag> _tags = [
+    UserTag(name: '운동'),
+    UserTag(name: '건강'),
+    UserTag(name: '스페인어'),
+    UserTag(name: '베이킹'),
+    UserTag(name: '방석재고'),
+    UserTag(name: '세금'),
+    UserTag(name: '영수증'),
+    UserTag(name: '매장관리'),
+    UserTag(name: '재고채우기'),
+    UserTag(name: '자수'),
+    UserTag(name: '챗두'),
+    UserTag(name: '언젠가'),
+    UserTag(name: '기타'),
   ];
   late List<String> _selectedTags;
 
@@ -36,32 +48,48 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     _offsetAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
-    _opacityAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _opacityAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _selectedTags = List.from(widget.initialSelectedTags ?? []);
-
     _loadCustomTagsFromFirestore();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _removeOverlay();
-    super.dispose();
+  Future<void> _loadCustomTagsFromFirestore() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('custom_tags')
+        .get();
+
+    setState(() {
+      for (final doc in snapshot.docs) {
+        final tag = UserTag.fromFirestore(doc.id, doc.data());
+        if (!_tags.any((t) => t.name.toLowerCase() == tag.name.toLowerCase())) {
+          _tags.add(tag);
+        }
+      }
+    });
   }
 
-  List<List<String>> _splitTags(List<String> tags, int chunkCount) {
-    final chunks = List.generate(chunkCount, (_) => <String>[]);
-    for (var i = 0; i < tags.length; i++) {
-      chunks[i % chunkCount].add(tags[i]);
-    }
-    return chunks;
+  Future<void> _toggleFavorite(UserTag tag) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final updated = tag.copyWith(isFavorite: !tag.isFavorite);
+    final index = _tags.indexWhere((t) => t.name == tag.name);
+    if (index == -1) return;
+
+    setState(() => _tags[index] = updated);
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('custom_tags')
+        .doc(updated.name)
+        .set(updated.toJson());
   }
 
   void _toggleMenu() {
@@ -76,7 +104,10 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     final RenderBox button = context.findRenderObject() as RenderBox;
     final Offset position = button.localToGlobal(Offset.zero);
 
-    final List<List<String>> tagRows = _splitTags(_tags, 3);
+    final chunks = List.generate(3, (_) => <UserTag>[]);
+    for (var i = 0; i < _tags.length; i++) {
+      chunks[i % 3].add(_tags[i]);
+    }
 
     _overlayEntry = OverlayEntry(
       builder: (context) => GestureDetector(
@@ -96,42 +127,57 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          ...tagRows.map((row) => Row(
-                            children: row.map((tag) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    if (_selectedTags.contains(tag)) {
-                                      _selectedTags.remove(tag);
-                                    } else {
-                                      _selectedTags.add(tag);
-                                    }
-                                    widget.onTagChanged?.call(List.from(_selectedTags));
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.amber[100],
-                                  foregroundColor: Colors.black,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  textStyle: const TextStyle(fontSize: 12),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                          ...chunks.map((row) => Row(
+                            children: row.map((tag) {
+                              final isSelected = _selectedTags.contains(tag.name);
+                              return Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Stack(
+                                  alignment: Alignment.topRight,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          if (isSelected) {
+                                            _selectedTags.remove(tag.name);
+                                          } else {
+                                            _selectedTags.add(tag.name);
+                                          }
+                                          widget.onTagChanged?.call(List.from(_selectedTags));
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: tag.isFavorite ? Colors.amber : Colors.grey[200],
+                                        foregroundColor: Colors.black,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        textStyle: const TextStyle(fontSize: 12),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: Text(tag.name),
+                                    ),
+                                    Positioned(
+                                      top: -4,
+                                      right: -4,
+                                      child: IconButton(
+                                        icon: Icon(tag.isFavorite ? Icons.star : Icons.star_border, size: 16),
+                                        onPressed: () => _toggleFavorite(tag),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: Text(tag),
-                              ),
-                            )).toList(),
+                              );
+                            }).toList(),
                           )),
                           const SizedBox(height: 8),
                           ElevatedButton(
@@ -149,46 +195,6 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                               ),
                             ),
                             child: const Text('완료'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final newTag = await showCustomTagDialog(context);
-                              final cleaned = newTag?.trim();
-                              if (cleaned == null || cleaned.isEmpty) return;
-
-                              final lower = cleaned.toLowerCase();
-                              final exists = _tags.any((t) => t.toLowerCase() == lower);
-                              if (exists) return;
-
-                              final uid = FirebaseAuth.instance.currentUser?.uid;
-                              if (uid != null) {
-                                await FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(uid)
-                                    .collection('custom_tags')
-                                    .doc(cleaned)
-                                    .set({'name': cleaned});
-                              }
-
-                              setState(() {
-                                _tags.add(cleaned);
-                                _selectedTags.add(cleaned);
-                                widget.onTagChanged?.call(List.from(_selectedTags));
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orangeAccent,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              textStyle: const TextStyle(fontSize: 12),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text('커스텀 태그 추가'),
                           ),
                         ],
                       ),
@@ -215,28 +221,6 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
       _isMenuOpen = false;
     }
   }
-
-  Future<void> _loadCustomTagsFromFirestore() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('custom_tags')
-        .get();
-
-    final fetched = snapshot.docs.map((doc) => doc['name'] as String).toList();
-
-    setState(() {
-      for (final tag in fetched) {
-        if (!_tags.any((t) => t.toLowerCase() == tag.toLowerCase())) {
-          _tags.add(tag);
-        }
-      }
-    });
-  }
-
 
   @override
   Widget build(BuildContext context) {

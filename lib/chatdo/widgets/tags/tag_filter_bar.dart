@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '/chatdo/constants/tag_list.dart';
+import '../../data/tag_repository.dart'; // TagRepository import
 
 class TagFilterBar extends StatelessWidget {
   final String? selectedTag;
@@ -13,20 +13,20 @@ class TagFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tags = TagRepository.getBuiltInTags().map((t) => t.name).toList();
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
-        children: allTags.map((tag) {
+        children: tags.map((tag) {
           final isSelected = selectedTag == tag;
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: ChoiceChip(
               label: Text(tag),
               selected: isSelected,
-              onSelected: (_) {
-                onTagSelected(isSelected ? null : tag);
-              },
+              onSelected: (_) => onTagSelected(isSelected ? null : tag),
               selectedColor: Colors.orangeAccent,
               backgroundColor: Colors.grey[300],
               labelStyle: TextStyle(

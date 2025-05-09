@@ -1,12 +1,12 @@
-// 태그 기반 일정 로그 뷰 (최신순으로 스크롤)
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/user_tag.dart';
 import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
+import '../widgets/tags/tag_tile.dart';
+import '../data/tag_repository.dart';
 import '/game/core/game_controller.dart';
-import '../constants/tag_list.dart';
 
 class TagListScreen extends StatefulWidget {
   final GameController gameController;
@@ -18,6 +18,7 @@ class TagListScreen extends StatefulWidget {
 }
 
 class _TagListScreenState extends State<TagListScreen> {
+  List<UserTag> _tags = [];
   String? _selectedTag;
   List<ScheduleEntry> _entries = [];
   bool _isLoading = false;
@@ -25,15 +26,30 @@ class _TagListScreenState extends State<TagListScreen> {
   @override
   void initState() {
     super.initState();
-    if (allTags.isNotEmpty) {
-      _loadEntries(allTags.first);
+    _loadTagsAndEntries();
+  }
+
+  Future<void> _loadTagsAndEntries() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final tags = await TagRepository.loadAllTags(uid);
+    setState(() {
+      _tags = tags;
+      if (_selectedTag == null && tags.isNotEmpty) {
+        _selectedTag = tags.first.name;
+      }
+    });
+
+    if (_selectedTag != null) {
+      _loadEntries(_selectedTag!);
     }
   }
 
-  Future<void> _loadEntries(String tag) async {
+  Future<void> _loadEntries(String tagName) async {
     setState(() {
       _isLoading = true;
-      _selectedTag = tag;
+      _selectedTag = tagName;
     });
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -47,7 +63,7 @@ class _TagListScreenState extends State<TagListScreen> {
           .collection('messages')
           .doc(uid)
           .collection('logs')
-          .where('tags', arrayContains: tag)
+          .where('tags', arrayContains: tagName)
           .orderBy('timestamp', descending: true)
           .limit(100)
           .get();
@@ -64,36 +80,53 @@ class _TagListScreenState extends State<TagListScreen> {
     }
   }
 
+  Future<void> _toggleFavorite(UserTag tag) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final updated = tag.copyWith(isFavorite: !tag.isFavorite);
+    await TagRepository.saveTag(uid, updated);
+
+    setState(() {
+      final index = _tags.indexWhere((t) => t.name == tag.name);
+      if (index != -1) _tags[index] = updated;
+    });
+  }
+
+  Future<void> _deleteTag(UserTag tag) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || tag.isBuiltin) return;
+
+    await TagRepository.deleteTag(uid, tag.name);
+
+    setState(() {
+      _tags.removeWhere((t) => t.name == tag.name);
+      if (_selectedTag == tag.name && _tags.isNotEmpty) {
+        _selectedTag = _tags.first.name;
+        _loadEntries(_selectedTag!);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(
-          height: 48,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemCount: allTags.length,
-            itemBuilder: (context, index) {
-              final tag = allTags[index];
-              final isSelected = _selectedTag == tag;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: ChoiceChip(
-                  label: Text(tag),
-                  selected: isSelected,
-                  onSelected: (_) => _loadEntries(tag),
-                  selectedColor: Colors.orange,
-                  backgroundColor: Colors.grey[200],
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black,
-                  ),
-                ),
-              );
-            },
-          ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: _tags.map((tag) {
+            return TagTile(
+              tag: tag,
+              isSelected: _selectedTag == tag.name,
+              onSelect: () => _loadEntries(tag.name),
+              onToggleFavorite: () => _toggleFavorite(tag),
+              onDelete: () => _deleteTag(tag),
+            );
+          }).toList(),
         ),
-        const Divider(height: 1),
+        const Divider(height: 16),
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
