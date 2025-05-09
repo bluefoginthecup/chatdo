@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'custom_tag_dialog.dart';
-
-
 
 class TagSelector extends StatefulWidget {
   final List<String>? initialSelectedTags;
@@ -45,6 +45,8 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
       curve: Curves.easeInOut,
     );
     _selectedTags = List.from(widget.initialSelectedTags ?? []);
+
+    _loadCustomTagsFromFirestore();
   }
 
   @override
@@ -96,17 +98,13 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                       decoration: BoxDecoration(
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
-
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-
                           ...tagRows.map((row) => Row(
-
                             children: row.map((tag) => Padding(
-
                               padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
                               child: ElevatedButton(
                                 onPressed: () {
@@ -120,7 +118,7 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                                   });
                                 },
                                 style: ElevatedButton.styleFrom(
-                                 backgroundColor: Colors.amber[100],
+                                  backgroundColor: Colors.amber[100],
                                   foregroundColor: Colors.black,
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   minimumSize: Size.zero,
@@ -155,13 +153,28 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                           ElevatedButton(
                             onPressed: () async {
                               final newTag = await showCustomTagDialog(context);
-                              if (newTag != null && newTag.isNotEmpty && !_tags.contains(newTag)) {
-                                setState(() {
-                                  _tags.add(newTag);
-                                  _selectedTags.add(newTag);
-                                  widget.onTagChanged?.call(List.from(_selectedTags));
-                                });
+                              final cleaned = newTag?.trim();
+                              if (cleaned == null || cleaned.isEmpty) return;
+
+                              final lower = cleaned.toLowerCase();
+                              final exists = _tags.any((t) => t.toLowerCase() == lower);
+                              if (exists) return;
+
+                              final uid = FirebaseAuth.instance.currentUser?.uid;
+                              if (uid != null) {
+                                await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(uid)
+                                    .collection('custom_tags')
+                                    .doc(cleaned)
+                                    .set({'name': cleaned});
                               }
+
+                              setState(() {
+                                _tags.add(cleaned);
+                                _selectedTags.add(cleaned);
+                                widget.onTagChanged?.call(List.from(_selectedTags));
+                              });
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orangeAccent,
@@ -178,7 +191,6 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                             child: const Text('커스텀 태그 추가'),
                           ),
                         ],
-
                       ),
                     ),
                   ),
@@ -204,6 +216,28 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     }
   }
 
+  Future<void> _loadCustomTagsFromFirestore() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('custom_tags')
+        .get();
+
+    final fetched = snapshot.docs.map((doc) => doc['name'] as String).toList();
+
+    setState(() {
+      for (final tag in fetched) {
+        if (!_tags.any((t) => t.toLowerCase() == tag.toLowerCase())) {
+          _tags.add(tag);
+        }
+      }
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
@@ -214,7 +248,6 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontSize: 14),
       ),
-
       child: const Text('+태그'),
     );
   }
