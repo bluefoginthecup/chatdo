@@ -29,6 +29,7 @@ class ScheduleOverviewScreen extends StatelessWidget {
           ),
         ),
         body: TabBarView(
+          physics: const NeverScrollableScrollPhysics(),
           children: [
             TodoListScreen(gameController: gameController),
             DoneListScreen(gameController: gameController),

@@ -1,4 +1,3 @@
-// lib/chatdo/screens/schedule_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,12 +8,10 @@ import '../widgets/schedule_entry_tile.dart';
 import '../widgets/tags/tag_filter_bar.dart';
 import '../../game/core/game_controller.dart';
 
-
 class ScheduleListScreen extends StatefulWidget {
   final ScheduleType type;
   final DateTime initialDate;
   final GameController gameController;
-
 
   const ScheduleListScreen({
     Key? key,
@@ -108,29 +105,54 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
     );
   }
 
+  Widget _buildContentArea() {
+    if (_entries.isEmpty) {
+      return Center(
+        child: Text(
+          widget.type == ScheduleType.todo
+              ? '할일이 없습니다.'
+              : '완료된 일이 없습니다.',
+          style: const TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadEntries,
+      child: ListView.builder(
+        itemCount: _entries.length,
+        itemBuilder: (context, index) {
+          final entry = _entries[index];
+          return ScheduleEntryTile(
+            entry: entry,
+            gameController: widget.gameController,
+            onRefresh: _loadEntries,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_entries.isEmpty) {
-      return Column(
-        children: [
-          const SizedBox(height: 16),
-          _buildDateHeader(),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Center(
-              child: Text(
-                widget.type == ScheduleType.todo
-                    ? '할일이 없습니다.'
-                    : '완료된 일이 없습니다.',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-        ],
+    Widget listContent = _buildContentArea();
+
+    if (widget.type == ScheduleType.todo || widget.type == ScheduleType.done) {
+      listContent = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity == null || details.primaryVelocity!.abs() < 300) return;
+          if (details.primaryVelocity! > 0) {
+            _changeDate(-1);
+          } else {
+            _changeDate(1);
+          }
+        },
+        child: listContent,
       );
     }
 
@@ -140,23 +162,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
         const SizedBox(height: 16),
         _buildDateHeader(),
         const SizedBox(height: 8),
-
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: _loadEntries,
-            child: ListView.builder(
-              itemCount: _entries.length,
-              itemBuilder: (context, index) {
-                final entry = _entries[index];
-                return ScheduleEntryTile(
-                  entry: entry,
-                  gameController: widget.gameController,
-                  onRefresh: _loadEntries,
-                );
-              },
-            ),
-          ),
-        ),
+        Expanded(child: listContent),
       ],
     );
   }
