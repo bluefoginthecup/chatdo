@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'custom_tag_dialog.dart';
-import '../../models/user_tag.dart'; // 경로 맞게 조정할 것
+import '../../models/user_tag.dart';
 
 class TagSelector extends StatefulWidget {
   final List<String>? initialSelectedTags;
@@ -74,24 +73,6 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     });
   }
 
-  Future<void> _toggleFavorite(UserTag tag) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final updated = tag.copyWith(isFavorite: !tag.isFavorite);
-    final index = _tags.indexWhere((t) => t.name == tag.name);
-    if (index == -1) return;
-
-    setState(() => _tags[index] = updated);
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('custom_tags')
-        .doc(updated.name)
-        .set(updated.toJson());
-  }
-
   void _toggleMenu() {
     if (_isMenuOpen) {
       _removeOverlay();
@@ -138,43 +119,30 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                               final isSelected = _selectedTags.contains(tag.name);
                               return Padding(
                                 padding: const EdgeInsets.all(2),
-                                child: Stack(
-                                  alignment: Alignment.topRight,
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          if (isSelected) {
-                                            _selectedTags.remove(tag.name);
-                                          } else {
-                                            _selectedTags.add(tag.name);
-                                          }
-                                          widget.onTagChanged?.call(List.from(_selectedTags));
-                                        });
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: tag.isFavorite ? Colors.amber : Colors.grey[200],
-                                        foregroundColor: Colors.black,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        textStyle: const TextStyle(fontSize: 12),
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                      ),
-                                      child: Text(tag.name),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      if (isSelected) {
+                                        _selectedTags.remove(tag.name);
+                                      } else {
+                                        _selectedTags.add(tag.name);
+                                      }
+                                      widget.onTagChanged?.call(List.from(_selectedTags));
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isSelected ? Colors.orangeAccent : Colors.grey[200],
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    textStyle: const TextStyle(fontSize: 12),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    Positioned(
-                                      top: -4,
-                                      right: -4,
-                                      child: IconButton(
-                                        icon: Icon(tag.isFavorite ? Icons.star : Icons.star_border, size: 16),
-                                        onPressed: () => _toggleFavorite(tag),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
+                                  child: Text(tag.name),
                                 ),
                               );
                             }).toList(),

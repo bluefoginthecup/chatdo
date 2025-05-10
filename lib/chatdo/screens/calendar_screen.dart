@@ -16,10 +16,10 @@ class CalendarScreen extends StatefulWidget {
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
-
 class _CalendarScreenState extends State<CalendarScreen> {
-  DateTime _focusedDate = DateTime.now();
-  DateTime _selectedDate = DateTime.now();
+  DateTime get _today => DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+  late DateTime _focusedDate;
+  late DateTime _selectedDate;
   Map<DateTime, List<ScheduleEntry>> _allEntriesByDate = {};
   List<ScheduleEntry> _entriesForSelectedDate = [];
   bool _isLoading = true;
@@ -27,6 +27,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+    _focusedDate = _today;
+    _selectedDate = _today;
     _loadAllEntriesForMonth(_focusedDate);
   }
 
@@ -73,7 +75,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     setState(() {
       _allEntriesByDate = grouped;
-      _entriesForSelectedDate = grouped[_selectedDate] ?? [];
+      final selectedEntries = grouped[_selectedDate] ?? [];
+      _entriesForSelectedDate = _sortEntries(selectedEntries);
+
       _isLoading = false;
     });
   }
@@ -83,10 +87,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return _allEntriesByDate[key] ?? [];
   }
 
+  List<ScheduleEntry> _sortEntries(List<ScheduleEntry> entries) {
+    final sorted = [...entries]; // 원본 건드리지 않게 복사
+    sorted.sort((a, b) {
+      // 1. 할일이 먼저
+      if (a.type != b.type) {
+        return a.type == ScheduleType.todo ? -1 : 1;
+      }
+
+      // 2. 태그 이름 기준
+      final aTag = (a.tags.isNotEmpty ? a.tags.first : '').toLowerCase();
+      final bTag = (b.tags.isNotEmpty ? b.tags.first : '').toLowerCase();
+      final tagCompare = aTag.compareTo(bTag);
+      if (tagCompare != 0) return tagCompare;
+
+      // 3. 최신순 (timestamp 내림차순)
+      return b.timestamp.compareTo(a.timestamp);
+    });
+    return sorted;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('캘린더')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -104,9 +128,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   setState(() {
                     _selectedDate = selected;
                     _focusedDate = focused;
-                    _entriesForSelectedDate = _getEventsForDay(selected);
+
+                    final selectedEntries = _getEventsForDay(selected);
+                    _entriesForSelectedDate = _sortEntries(selectedEntries);
+
+                    // 디버깅용 로그
+                    for (final e in selectedEntries) {
+                      debugPrint('📌 ${e.type.name} / ${e.tags.isNotEmpty ? e.tags.first : '태그없음'} / ${e.content}');
+                    }
                   });
                 },
+
                 onPageChanged: (focusedDay) {
                   _focusedDate = focusedDay;
                   _loadAllEntriesForMonth(focusedDay);

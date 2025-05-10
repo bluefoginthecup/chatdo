@@ -97,7 +97,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
   Widget build(BuildContext context) {
     final entry = widget.entry;
     final isDone = entry.type == ScheduleType.done;
-    final dateStr = DateFormat('yyyy-MM-dd').format(entry.date);
+    final dateStr = DateFormat('a h시 mm분', 'ko').format(entry.timestamp);
 
     return ListTile(
       leading: Row(
