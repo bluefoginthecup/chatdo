@@ -28,6 +28,10 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   late DateTime _currentDate;
   List<ScheduleEntry> _entries = [];
   bool _isLoading = true;
+  bool _slideFromRight = true;
+  bool _highlight = false;
+
+
   String? _selectedTag;
 
   @override
@@ -75,11 +79,22 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   }
 
   Future<void> _changeDate(int days) async {
+    _slideFromRight = days > 0;
+    _highlight = true;
     setState(() {
       _currentDate = _currentDate.add(Duration(days: days));
     });
     await _loadEntries();
+
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        setState(() {
+          _highlight = false;
+        });
+      }
+    });
   }
+
 
   Widget _buildDateHeader() {
     final formatted = DateFormat('yyyy년 M월 d일').format(_currentDate);
@@ -133,6 +148,8 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
     );
   }
 
+  double _dragDistance = 0;
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -141,16 +158,38 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
 
     Widget listContent = _buildContentArea();
 
+    // 날짜가 바뀔 때마다 콘텐츠 전환 애니메이션 적용
+    listContent = AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(_highlight ? 0.8 : 1.0),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: listContent,
+    );
+
+
+
+    // 할일/한일 탭이면 스와이프 감지 추가
     if (widget.type == ScheduleType.todo || widget.type == ScheduleType.done) {
       listContent = GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onHorizontalDragUpdate: (details) {
+          _dragDistance += details.primaryDelta ?? 0;
+        },
         onHorizontalDragEnd: (details) {
-          if (details.primaryVelocity == null || details.primaryVelocity!.abs() < 300) return;
-          if (details.primaryVelocity! > 0) {
+          if (_dragDistance.abs() < 40) {
+            _dragDistance = 0;
+            return;
+          }
+
+          if (_dragDistance > 0) {
             _changeDate(-1);
           } else {
             _changeDate(1);
           }
+          _dragDistance = 0;
         },
         child: listContent,
       );
@@ -166,4 +205,6 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
       ],
     );
   }
+
+
 }

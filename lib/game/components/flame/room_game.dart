@@ -4,6 +4,7 @@ import 'package:chatdo/game/scenes/scene_selector.dart';
 import '/game/scene_conditions/sick_scene_condition.dart';
 import '/game/scene_conditions/workout_scene_condition.dart';
 import '/game/scenes/room_scene.dart';
+import 'package:chatdo/game/events/scene_event_manager.dart';
 
 class RoomGame extends FlameGame {
   @override
@@ -25,15 +26,23 @@ class RoomGame extends FlameGame {
     final hasSeenIntro = prefs.getBool('has_seen_intro') ?? false;
 
     if (!hasSeenIntro) {
-      final showSick = await SickSceneCondition.shouldShow();        // ✅ 수정됨
-      final showWorkout = await WorkoutSceneCondition.shouldShow();  // ✅ 추가됨
+      final showSick = await SickSceneCondition.shouldShow(); // ✅ 수정됨
+      final showWorkout = await WorkoutSceneCondition.shouldShow(); // ✅ 추가됨
 
       add(SceneSelector(
         showSick: showSick,
         showWorkoutCongrats: showWorkout,
       ));
     } else {
-      add(RoomScene());
+      final sceneShown = await SceneEventManager(
+        onShowScene: (scene) {
+          add(scene);
+        },
+      ).checkTimeBasedScenes();
+
+      if (!sceneShown) {
+        add(RoomScene());
+      }
     }
   }
 }
