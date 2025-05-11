@@ -13,4 +13,10 @@ class SickScene extends DialogueSceneBase {
   @override
   String get characterImagePath => 'jordy_shocked.png'; // 아픈 조르디 그림
 
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    print("🧬 SickScene onLoad 진입");  // ✅ 이 로그 나오는지 확인
+  }
+
 }

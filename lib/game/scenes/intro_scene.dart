@@ -4,12 +4,6 @@ class IntroScene extends DialogueSceneBase {
   IntroScene({super.onCompleted});
 
 
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    print("🚀 IntroScene onLoad 진입");
-
-  }
 
 
   @override
@@ -20,4 +14,10 @@ class IntroScene extends DialogueSceneBase {
   @override
   String get characterImagePath => 'jordy_closeup.png';
 
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    print("🚀 IntroScene onLoad 진입");
+  }
 }

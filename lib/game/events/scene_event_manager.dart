@@ -1,16 +1,14 @@
 import 'dart:math';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chatdo/game/scenes/sick_scene.dart';
-import 'package:chatdo/game/scenes/workout_scene.dart';
-import 'package:chatdo/game/scenes/day_events/sat_night_scene.dart';
-import 'package:chatdo/game/scenes/day_events/sun_pm_scene.dart';
-import 'package:chatdo/game/scene_conditions/sick_scene_condition.dart';
-import 'package:chatdo/game/scene_conditions/workout_scene_condition.dart';
-import 'package:chatdo/game/scene_conditions/day_events/sat_night_scene_condition.dart';
-import 'package:chatdo/game/scene_conditions/day_events/sun_pm_scene_condition.dart';
 import 'package:flutter/foundation.dart';
+import 'package:chatdo/game/registry/scene_registry_health.dart';
+import '/game/scenes/room_scene.dart';
+import 'package:chatdo/game/scenes/intro_scene.dart';
 
+
+// 씬 생성자 타입: dynamic Function(VoidCallback onCompleted)
+typedef SceneBuilder = dynamic Function(VoidCallback onCompleted);
 
 class SceneEventManager {
   final void Function(dynamic scene) onShowScene;
@@ -19,30 +17,25 @@ class SceneEventManager {
 
   Future<bool> checkTimeBasedScenes() async {
     final now = DateTime.now();
-    final prefs = await SharedPreferences.getInstance();
-    final today = DateFormat('yyyy-MM-dd').format(now);
 
-    if (now.hour == 21 && prefs.getString('lastNightScene') != today) {
+    if (now.hour >= 12) {
       final scenesToShow = await gatherScenesToShow();
-      for (final builder in scenesToShow) {
-        builder(() => onShowScene);
-      }
-      prefs.setString('lastNightScene', today);
+      _playScenesSequentially(scenesToShow);
       return scenesToShow.isNotEmpty;
     }
+
+    print("⏱️ 아직 오후 아님 → 씬 스킵");
     return false;
   }
 
-  Future<List<void Function(VoidCallback)>> gatherScenesToShow() async {
-    final result = <void Function(VoidCallback)>[];
+
+  Future<List<SceneBuilder>> gatherScenesToShow() async {
+    final result = <SceneBuilder>[];
 
     print('🧪 이벤트 조건 체크 시작');
-    final eventCandidates = <MapEntry<Future<bool> Function(), void Function(VoidCallback)>>[
-      MapEntry(SatNightSceneCondition.shouldShow, (onCompleted) => onShowScene(SatNightScene(onCompleted: onCompleted))),
-      MapEntry(SunPmSceneCondition.shouldShow, (onCompleted) => onShowScene(SunPmScene(onCompleted: onCompleted))),
-    ];
+    final eventCandidates = <MapEntry<Future<bool> Function(), SceneBuilder>>[];
 
-    final validEvents = <void Function(VoidCallback)>[];
+    final validEvents = <SceneBuilder>[];
     for (final entry in eventCandidates) {
       final conditionResult = await entry.key();
       print('🧪 조건 ${entry.key} → $conditionResult');
@@ -58,17 +51,56 @@ class SceneEventManager {
       print('🚫 이벤트 씬 없음');
     }
 
-    final mandatoryScenes = <MapEntry<Future<bool> Function(), void Function(VoidCallback)>>[
-      MapEntry(SickSceneCondition.shouldShow, (onCompleted) => onShowScene(SickScene(onCompleted: onCompleted))),
-      MapEntry(WorkoutSceneCondition.shouldShow, (onCompleted) => onShowScene(WorkoutScene(onCompleted: onCompleted))),
+    final mandatoryScenes = [
+      ...buildHealthScenes(),
     ];
 
     for (final entry in mandatoryScenes) {
-      if (await entry.key()) {
+      final conditionResult = await entry.key();
+      print('🧪 조건 ${entry.key} → $conditionResult');
+      if (conditionResult) {
         result.add(entry.value);
       }
     }
 
+    // ✅ 조건/루틴 씬이 아무것도 없을 경우 → IntroScene 추가
+    if (result.isEmpty) {
+      print("🟡 큐가 비어 있음 → IntroScene 추가");
+      result.add((onCompleted) {
+        print("🎯 IntroScene builder 실행됨");
+        return IntroScene(onCompleted: onCompleted);
+      });
+    }
+
+    print("📦 최종 씬 큐 수: ${result.length}");
+    for (var builder in result) {
+      final scene = builder(() {
+        print("🧪 (미리보기) onCompleted 콜백 호출됨");
+      });
+      print("📦 포함된 씬: ${scene.runtimeType}");
+    }
+
     return result;
+  }
+
+
+  void _playScenesSequentially(List<SceneBuilder> builders, [int index = 0]) {
+    if (index >= builders.length) {
+      print("🏁 모든 씬 완료 → RoomScene 진입");
+      onShowScene(RoomScene());
+      return;
+    }
+    print("🎬 실행 중인 씬 인덱스: $index / 총 ${builders.length}");
+
+    final builder = builders[index];
+    final scene = builder(() {
+      print("▶️ onCompleted 호출됨 → 다음 씬으로");
+      _playScenesSequentially(builders, index + 1);
+    });
+
+    print("🎯 실행 중인 씬: ${scene.runtimeType}");
+    if (scene == null) print("❌ scene 반환값이 null입니다!");
+
+    onShowScene(scene);
   }
 }
