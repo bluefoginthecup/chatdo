@@ -18,7 +18,7 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
   late final SpriteComponent _jordyCloseup;
   late final SpriteComponent _textBackground;
   late final TextComponent _speakerName;
-  late final TextComponent _textBox;
+  late final TextBoxComponent _textBox;
   late final TimerComponent _autoAdvanceTimer;
   late final TextComponent _prevButton;
   late final TextComponent _nextButton;
@@ -65,10 +65,15 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
     );
     print("🗣️ 화자 이름 준비 완료: ${_speakerName.text}");
 
-    _textBox = TextComponent(
+    _textBox = TextBoxComponent(
       text: dialogueData[_dialogueIndex]["line"] ?? "",
       position: Vector2(40, size.y - 120),
       textRenderer: TextPaint(style: const TextStyle(fontSize: 20, color: Colors.black)),
+      boxConfig: TextBoxConfig(
+        maxWidth: 300,
+        timePerChar: 0.0,
+        growingBox: true,
+      ),
     );
     print("💬 첫 대사 준비 완료: ${_textBox.text}");
 
@@ -108,27 +113,24 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
     print("🎬 대사 씬 초기화 완료");
   }
 
-
-    bool _hasCompleted = false;
+  bool _hasCompleted = false;
   void _updateDialogueText() {
     _textBox.text = dialogueData[_dialogueIndex]["line"] ?? "";
     _speakerName.text = dialogueData[_dialogueIndex]["speaker"] ?? "";
     _updateCharacterVisuals();
   }
 
-
   void _nextDialogue() {
-      _dialogueIndex++;
-      if (_dialogueIndex >= dialogueData.length) {
-        if (!_hasCompleted) {
-          _hasCompleted = true;
-          onCompleted?.call();
-          removeFromParent();
-        }
-        return;
+    _dialogueIndex++;
+    if (_dialogueIndex >= dialogueData.length) {
+      if (!_hasCompleted) {
+        _hasCompleted = true;
+        onCompleted?.call();
+        removeFromParent();
       }
-      _updateDialogueText();
-
+      return;
+    }
+    _updateDialogueText();
   }
 
   void _previousDialogue() {

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:chatdo/game/registry/scene_registry_health.dart';
+import 'package:chatdo/game/registry/scene_registry_day_events.dart';
 import '/game/scenes/room_scene.dart';
 import 'package:chatdo/game/scenes/intro_scene.dart';
 
@@ -16,16 +17,9 @@ class SceneEventManager {
   SceneEventManager({required this.onShowScene});
 
   Future<bool> checkTimeBasedScenes() async {
-    final now = DateTime.now();
-
-    if (now.hour >= 12) {
-      final scenesToShow = await gatherScenesToShow();
-      _playScenesSequentially(scenesToShow);
-      return scenesToShow.isNotEmpty;
-    }
-
-    print("⏱️ 아직 오후 아님 → 씬 스킵");
-    return false;
+    final scenesToShow = await gatherScenesToShow();
+    _playScenesSequentially(scenesToShow);
+    return scenesToShow.isNotEmpty;
   }
 
 
@@ -33,8 +27,9 @@ class SceneEventManager {
     final result = <SceneBuilder>[];
 
     print('🧪 이벤트 조건 체크 시작');
-    final eventCandidates = <MapEntry<Future<bool> Function(), SceneBuilder>>[];
-
+    final eventCandidates = <MapEntry<Future<bool> Function(), SceneBuilder>>[
+      ...buildDayEventScenes(), // ✅ 여기 들어가야 무작위 씬 가능
+    ];
     final validEvents = <SceneBuilder>[];
     for (final entry in eventCandidates) {
       final conditionResult = await entry.key();
@@ -53,6 +48,7 @@ class SceneEventManager {
 
     final mandatoryScenes = [
       ...buildHealthScenes(),
+
     ];
 
     for (final entry in mandatoryScenes) {
