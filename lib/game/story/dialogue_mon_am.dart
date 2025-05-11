@@ -1,7 +1,7 @@
 final List<Map<String, String>> dialogueMonAm = [
   {
     "speaker": "조르디",
-    "line": "헉 벌써 나가시는 거예요?\n주인님 진짜 슈퍼스타 같은 스케줄…"
+    "line": "헉 벌써 나가시는 거예요?"
   },
   {
     "speaker": "조르디",
@@ -21,12 +21,12 @@ final List<Map<String, String>> dialogueMonAm = [
   },
   {
     "speaker": "조르디",
-    "line": "월요일은 버티기만 해도 이기는 거 알죠?."
+    "line": "월요일은 버티기만 해도 이기는 거 알죠?"
   },
 
   {
     "speaker": "조르디",
-    "line": "출근 전에 걱정은 이불 밑에 두고 가세요. 제가 잘 덮어놓을게요! 🛏️"
+    "line": "출근 전에 걱정은 이불 밑에 두고 가세요."
   },
   {
     "speaker": "조르디",

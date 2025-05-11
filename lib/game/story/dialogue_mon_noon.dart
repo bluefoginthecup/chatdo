@@ -1,7 +1,7 @@
 final List<Map<String, String>> dialogueMonNoon = [
   {
     "speaker": "조르디",
-    "line": "후… 오전 전쟁 끝! 지금은 잠깐 숨 쉬는 시간이에요.\n커피든 물이든 뭐든 한 잔 하고 계세요~"
+    "line": "후… 오전 전쟁 끝! 지금은 잠깐 숨 쉬는 시간이에요."
   },
   {
     "speaker": "조르디",
@@ -9,7 +9,7 @@ final List<Map<String, String>> dialogueMonNoon = [
   },
   {
     "speaker": "조르디",
-    "line": "참, 심심하실까봐 퀴즈 하나 드릴게요!\n‘월요일 오후에 가장 필요한 건?’"
+    "line": "참, 심심하실까봐 퀴즈 하나 드릴게요!"
   },
   {
     "speaker": "조르디",
@@ -17,7 +17,7 @@ final List<Map<String, String>> dialogueMonNoon = [
   },
   {
     "speaker": "조르디",
-    "line": "1번: 낮잠. 2번: 간식. 3번: 아무 생각 안 하기.\n정답은… 음… 전부요! 전부 줘요! 🍪😴🧠"
+    "line": "1번: 낮잠. 2번: 간식. 3번: 아무 생각 안 하기."
   },
   {
     "speaker": "조르디",
