@@ -5,16 +5,17 @@ import 'package:chatdo/game/scenes/sick_scene.dart';
 import 'package:chatdo/game/scenes/room_scene.dart';
 import 'package:chatdo/game/scenes/workout_scene.dart';
 import 'package:chatdo/game/components/flame/room_game.dart';
-// Game 타입 제대로 지정
-// Flame 1.8+ 기준
+import 'package:flutter/foundation.dart';
 
 class SceneSelector extends Component with HasGameRef<RoomGame> {
   final bool showSick;
   final bool showWorkoutCongrats;
+  VoidCallback? onCompleted;
 
   SceneSelector({
     required this.showSick,
     required this.showWorkoutCongrats,
+    this.onCompleted,
   });
 
   @override
@@ -26,23 +27,23 @@ class SceneSelector extends Component with HasGameRef<RoomGame> {
       print("🚀 SickScene 추가 시도");
       gameRef.add(SickScene(
         onCompleted: () {
-          print("✅ SickScene 완료 → RoomScene으로");
-          gameRef.add(RoomScene());
+          print("✅ SickScene 완료");
+          onCompleted?.call();
         },
       ));
     } else if (showWorkoutCongrats) {
       print("🎉 WorkoutScene 추가 시도");
       gameRef.add(WorkoutScene(
         onCompleted: () {
-          print("✅ WorkoutScene 완료 → RoomScene으로");
-          gameRef.add(RoomScene());
+          print("✅ WorkoutScene 완료");
+          onCompleted?.call();
         },
       ));
     } else {
       print("🚀 IntroScene 추가 시도");
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_seen_intro', true);
-      gameRef.add(RoomScene());
+      onCompleted?.call();
     }
   }
 }
