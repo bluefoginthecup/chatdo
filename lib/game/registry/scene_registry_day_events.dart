@@ -42,4 +42,11 @@ List<MapEntry<Future<bool> Function(), SceneBuilder>> buildDayEventScenes() => [
       return MonNoonScene(onCompleted: onCompleted);
     },
   ),
+  MapEntry(
+    TueAmSceneCondition.shouldShow,
+        (onCompleted) {
+      print("🎯 TueAmScene builder 실행됨");
+      return TueAmScene(onCompleted: onCompleted);
+    },
+  ),
 ];

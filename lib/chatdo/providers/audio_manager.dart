@@ -1,5 +1,5 @@
 // audio_manager.dart (페이드 아웃만 적용)
-
+import 'package:flutter/foundation.dart'; // VoidCallback 정의돼 있음
 import 'package:just_audio/just_audio.dart';
 
 class AudioManager {
@@ -39,20 +39,28 @@ class AudioManager {
     await _player!.stop();
   }
 
-  Future<void> fadeOutAndPlay(String assetPath, {double volume = 1.0}) async {
-    if (_player != null) {
-      await _fadeOut();
-      await _player!.stop();
-      await _player!.dispose();
-    }
-
+    Future<void> fadeOutAndPlay(
+        String assetPath, {
+          double volume = 1.0,
+          VoidCallback? onComplete, // ✅ 추가
+        }) async {
+      if (_player != null) {
+        await _fadeOut();
+        await _player!.stop();
+        await _player!.dispose();
+      }
     _player = AudioPlayer();
     await _player!.setAudioSource(AudioSource.asset(assetPath));
-    await _player!.setLoopMode(LoopMode.one);
-    await _player!.setVolume(volume); // 시작은 0으로 시작해서
+    await _player!.setLoopMode(LoopMode.off);
+      await _player!.setVolume(volume); // 시작은 0으로 시작해서
     await _player!.load();
     await _player!.play();
-
+// ✅ 재생 완료 감지 후 콜백 실행
+      _player!.playerStateStream.listen((state) {
+        if (state.processingState == ProcessingState.completed) {
+          onComplete?.call();
+        }
+      });
   }
 
 
