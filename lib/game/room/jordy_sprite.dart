@@ -26,22 +26,6 @@ class JordySprite extends SpriteComponent with HasGameRef {
   @override
   Future<void> onLoad() async {
     sprite = Sprite(gameRef.images.fromCache(spriteImage));
-
-    final bubble = SpeechBubbleComponent(
-      text: '테스트용 말풍선입니다',
-      maxWidth: 220,
-      bubbleColor: Colors.white,
-      textStyle: const TextStyle(
-        color: Colors.black,
-        fontSize: 18,
-      ),
-    );
-    bubble.priority = 1000;
-
-    bubble.position = Vector2(0, 0); // 📍 화면 중앙쯤
-    await add(bubble);
-
-    speechBubble = bubble;
   }
 
   @override

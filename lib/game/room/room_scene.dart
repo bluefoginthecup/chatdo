@@ -1,10 +1,12 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/material.dart';
 import 'package:chatdo/game/room/day_event.dart';
 import 'package:chatdo/game/room/girl_sprite.dart';
 import 'package:chatdo/game/room/jordy_sprite.dart';
 import 'package:chatdo/chatdo/providers/audio_manager.dart';
+import '/game/components/speech_bubble_component.dart';
 
 class RoomScene extends Component with HasGameRef<FlameGame> {
   final DayEvent event;
@@ -47,12 +49,19 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
     )..priority = 2);
 
     print('🐥 Jordy: sprite=${event.jordy.spriteImage}, pos=${event.jordy.position}, dialogue="${event.jordy.dialogueList}"');
-    add(JordySprite(
+    final jordy=JordySprite(
       position: event.jordy.position,
       dialogueList: event.jordy.dialogueList,
       spriteImage: event.jordy.spriteImage,
       animationName: event.jordy.animationName,
-    )..priority = 1);
+    )..priority = 1;
+
+    add(jordy); // 조르디 추가
+
+    final bubble = SpeechBubbleComponent.createFor(jordy, event.jordy.dialogueList);
+    jordy.speechBubble = bubble;
+    add(bubble);
+
   }
 
   void _shuffleBgmQueue() {
