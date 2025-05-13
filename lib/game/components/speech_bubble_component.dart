@@ -1,33 +1,39 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 
-/// A reusable speech bubble component with background and tail, supporting multiline text.
 class SpeechBubbleComponent extends PositionComponent {
-  final String text;
   final double maxWidth;
   final Color bubbleColor;
   final TextStyle textStyle;
 
   TextBoxComponent? _textBox;
+  PositionComponent? _background;
   PolygonComponent? _tail;
 
   String? get currentText => _textBox?.text;
 
   SpeechBubbleComponent({
-    required this.text,
+    required String text,
     this.maxWidth = 200,
     this.bubbleColor = Colors.white,
     this.textStyle = const TextStyle(color: Colors.black, fontSize: 18),
     Vector2? position,
   }) {
     this.position = position ?? Vector2.zero();
+    _initWithText(text);
   }
 
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
+  Future<void> _initWithText(String text) async {
+    await _buildComponents(text);
+  }
 
+  Future<void> _buildComponents(String text) async {
+    // 기존 컴포넌트 제거
+    _textBox?.removeFromParent();
+    _background?.removeFromParent();
+    _tail?.removeFromParent();
+
+    // 텍스트박스 생성
     final textBox = TextBoxComponent(
       text: text,
       boxConfig: TextBoxConfig(
@@ -36,19 +42,19 @@ class SpeechBubbleComponent extends PositionComponent {
         growingBox: true,
       ),
       textRenderer: TextPaint(style: textStyle),
-      position: Vector2(4, 4), // 🔹 내부 여백 줄이기
+      position: Vector2(4, 4),
       anchor: Anchor.topLeft,
     );
-    await textBox.onLoad();
+    await textBox.onLoad(); // 사이즈 계산 위해 필요
     _textBox = textBox;
 
-    final backgroundSize = textBox.size + Vector2(8, 8); // 🔹 여백 줄임
-
+    final backgroundSize = textBox.size + Vector2(8, 8);
     final background = _RoundedBackground(
       size: backgroundSize,
       color: bubbleColor,
-      cornerRadius: 12, // 🔹 좀 더 둥근 테두리
+      cornerRadius: 12,
     );
+    _background = background;
 
     final tailTopY = backgroundSize.y;
     final tail = PolygonComponent(
@@ -62,35 +68,13 @@ class SpeechBubbleComponent extends PositionComponent {
     _tail = tail;
 
     size = backgroundSize + Vector2(0, 15);
-
     addAll([background, tail, textBox]);
   }
 
-  void updateText(String newText) {
-    if (_textBox != null) {
-      _textBox!.text = newText;
-      _textBox!.position = Vector2(8, 8);
-      _textBox!.onLoad(); // 강제 리로드로 size 재계산
-
-      final newBackgroundSize = _textBox!.size + Vector2(16, 16);
-      size = newBackgroundSize + Vector2(0, 15);
-
-      // 꼬리 재생성 후 교체
-      _tail?.removeFromParent();
-      final tailTopY = newBackgroundSize.y;
-      _tail = PolygonComponent(
-        [
-          Vector2(40, tailTopY),
-          Vector2(55, tailTopY + 15),
-          Vector2(70, tailTopY),
-        ],
-        paint: Paint()..color = bubbleColor,
-      );
-      add(_tail!);
-    }
+  void updateText(String newText) async {
+    await _buildComponents(newText);
   }
 
-  /// Automatically positions the speech bubble above a target component
   void attachTo(PositionComponent target) {
     final adjusted = target.position - Vector2(100, target.size.y / 2 + size.y + 70);
     position = adjusted;
@@ -109,6 +93,7 @@ class SpeechBubbleComponent extends PositionComponent {
     return bubble;
   }
 }
+
 class _RoundedBackground extends PositionComponent {
   final Color color;
   final double cornerRadius;
