@@ -1,5 +1,5 @@
-import 'package:chatdo/game/scenes/dialogue_scene_base.dart';
-import 'package:chatdo/game/story/dialogue_mon_noon.dart';
+import 'package:chatdo/game/overlay/scenes/dialogue_scene_base.dart';
+import 'package:chatdo/game/overlay/story/dialogue_mon_noon.dart';
 
 class MonNoonScene extends DialogueSceneBase {
   MonNoonScene({super.onCompleted});

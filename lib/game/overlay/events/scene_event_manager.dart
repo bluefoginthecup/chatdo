@@ -2,10 +2,12 @@ import 'dart:math';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
-import 'package:chatdo/game/registry/scene_registry_health.dart';
-import 'package:chatdo/game/registry/scene_registry_day_events.dart';
-import '/game/scenes/room_scene.dart';
-import 'package:chatdo/game/scenes/intro_scene.dart';
+import '/game/room/room_scene.dart';
+import '/game/overlay/registry/scene_registry_health.dart';
+import '/game/overlay/registry/scene_registry_day_events.dart';
+import '/game/overlay/scenes/intro_scene.dart';
+import '/game/room/day_event_loader.dart';
+
 
 
 // 씬 생성자 타입: dynamic Function(VoidCallback onCompleted)
@@ -79,13 +81,15 @@ class SceneEventManager {
     return result;
   }
 
-
-  void _playScenesSequentially(List<SceneBuilder> builders, [int index = 0]) {
+  void _playScenesSequentially(List<SceneBuilder> builders, [int index = 0]) async {
     if (index >= builders.length) {
       print("🏁 모든 씬 완료 → RoomScene 진입");
-      onShowScene(RoomScene());
+
+      final event = await DayEventLoader.getCurrentEvent(DateTime.now());
+      onShowScene(RoomScene(event: event)); // ✅ DayEvent 전달
       return;
     }
+
     print("🎬 실행 중인 씬 인덱스: $index / 총 ${builders.length}");
 
     final builder = builders[index];
@@ -99,4 +103,5 @@ class SceneEventManager {
 
     onShowScene(scene);
   }
+
 }

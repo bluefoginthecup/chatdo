@@ -1,5 +1,5 @@
-import 'package:chatdo/game/scenes/dialogue_scene_base.dart';
-import 'package:chatdo/game/story/dialogue_sun_pm.dart';
+import 'package:chatdo/game/overlay/scenes/dialogue_scene_base.dart';
+import 'package:chatdo/game/overlay/story/dialogue_sun_pm.dart';
 
 class SunPmScene extends DialogueSceneBase {
   SunPmScene({super.onCompleted});

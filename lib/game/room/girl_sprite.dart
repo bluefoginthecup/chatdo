@@ -17,7 +17,9 @@ class GirlSprite extends SpriteAnimationComponent with HasGameRef {
   double idleTimer = 0.0, idleDuration = 0.5;
   bool _isFlipped = false;
 
-  GirlSprite({required Vector2 position})
+  final String? animationName;
+
+  GirlSprite({required Vector2 position, this.animationName})
       : super(position: position, size: Vector2(128, 256));
 
   @override
@@ -40,21 +42,32 @@ class GirlSprite extends SpriteAnimationComponent with HasGameRef {
     // Single walk cycle (ping-pong): 1→2→3→4→3→2
     walkCycleAnim = SpriteAnimation.spriteList(
       [
-        spriteSheet.getSprite(0, 0), // frame 1
-        spriteSheet.getSprite(1, 0), // frame 2
-        spriteSheet.getSprite(2, 0), // frame 3
-        spriteSheet.getSprite(3, 0), // frame 4
-        spriteSheet.getSprite(2, 0), // frame 3
-        spriteSheet.getSprite(1, 0), // frame 2
+        spriteSheet.getSprite(0, 0),
+        spriteSheet.getSprite(1, 0),
+        spriteSheet.getSprite(2, 0),
+        spriteSheet.getSprite(3, 0),
+        spriteSheet.getSprite(2, 0),
+        spriteSheet.getSprite(1, 0),
       ],
       stepTime: 0.45,
       loop: true,
     );
 
-    // Initial state: idle left
-    animation = idleLeftAnim;
-    flipHorizontally();
-    _isFlipped = true;
+    // 애니메이션 지정된 경우
+    if (animationName == 'walkRight') {
+      animation = walkCycleAnim;
+      _phase = _Phase.walkingRight;
+      _isFlipped = false;
+    } else if (animationName == 'idle') {
+      animation = idleLeftAnim;
+      _phase = _Phase.idleLeft;
+      _isFlipped = true;
+    } else {
+      // 기본 상태
+      animation = idleLeftAnim;
+      flipHorizontally();
+      _isFlipped = true;
+    }
   }
 
   @override
@@ -96,9 +109,7 @@ class GirlSprite extends SpriteAnimationComponent with HasGameRef {
     }
   }
 
-  /// Fade out → switch animation → fade in
   void _transitionTo(SpriteAnimation newAnim, {required bool flipX}) {
-    // Remove existing effects
     children.whereType<Effect>().forEach((e) => e.removeFromParent());
 
     final fadeOut = OpacityEffect.to(

@@ -1,0 +1,71 @@
+[{
+  "id": "mon_night",
+  "weekday": 1,
+  "hourStart": 20,
+  "hourEnd": 24,
+  "backgroundImage": "background_studyroom.png",
+  "jordy": {
+    "spriteImage": "sp_jordy_study.png",
+    "position": [230, 400],
+    "dialogue": ["스페인어로 '안녕'이 뭐더라요?"],
+    "animationName": "readBook"
+  },
+  "girl": {
+    "position": [100, 400],
+    "animationName": "read"
+  }
+},
+
+  {
+    "id": "tue_pm",
+    "weekday": 2,
+    "hourStart": 6,
+    "hourEnd": 18,
+    "backgroundImage": "background_studyroom.png",
+    "jordy": {
+      "spriteImage": "sp_jordy_study.png",
+      "position": [230, 400],
+      "dialogue": [
+        "Me llamo Sebastián Balbuena, igual que mi padre y mi abuelo y mi bisabuelo.",
+        "Creo que mi tatarabuelo también se llamaba Sebastián Balbuena.",
+        "Pero no estoy seguro.",
+        "Todo el mundo me llama Sebas.",
+        "Tengo 11 años.",
+        "En este momento, una docena de indios sioux me persiguen a caballo.",
+        "Quieren arrancarme la cabellera.",
+        "Estoy subido en una bicicleta roja.",
+        "Huyo, pedaleando con todas mis fuerzas.",
+        "No es una bicicleta cualquiera.",
+        "Es la Kawasaki 3W2.",
+        "Tiene un sistema de transmisión hidráulico de última generación.",
+        "Tiene ocho marchas y un sillín aerodinámico.",
+        "Las llantas son de aleación de acero y el cambio de marchas, alemán.",
+        "Me ajusto las gafas.",
+        "Muevo mis piernas todo lo deprisa que puedo.",
+        "Los sioux están cada vez más cerca."
+      ],
+
+      "animationName": "readBook"
+    },
+    "girl": {
+      "position": [100, 400],
+      "animationName": "read"
+    }
+  },
+  {
+    "id": "morning_garden",
+    "hourStart": 6,
+    "hourEnd": 9,
+    "backgroundImage": "background_garden.png",
+    "jordy": {
+      "spriteImage": "jordy_garden.png",
+      "position": [220, 400],
+      "dialogue": ["좋은 아침이에요~ 오늘도 잘 다녀오세요!"],
+      "animationName": "watering"
+    },
+    "girl": {
+      "position": [100, 400],
+      "animationName": "walkRight"
+    }
+  }
+]

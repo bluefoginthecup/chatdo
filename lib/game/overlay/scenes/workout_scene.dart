@@ -1,7 +1,7 @@
 // game/scenes/workout_scene.dart
 
-import 'package:chatdo/game/scenes/dialogue_scene_base.dart';
-import 'package:chatdo/game/story/dialogue_workout.dart';
+import 'package:chatdo/game/overlay/scenes/dialogue_scene_base.dart';
+import 'package:chatdo/game/overlay/story/dialogue_workout.dart';
 
 class WorkoutScene extends DialogueSceneBase {
   WorkoutScene({super.onCompleted});

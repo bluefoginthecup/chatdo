@@ -1,4 +1,4 @@
-import 'package:chatdo/game/scenes/dialogue_scene_base.dart';
+import 'package:chatdo/game/overlay/scenes/dialogue_scene_base.dart';
 
 class SatNightScene extends DialogueSceneBase {
   SatNightScene({super.onCompleted});

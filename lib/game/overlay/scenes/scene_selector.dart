@@ -1,6 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:chatdo/game/components/flame/room_game.dart';
-import 'package:chatdo/game/events/scene_event_manager.dart';
+import 'package:chatdo/game/overlay/events/scene_event_manager.dart';
 import 'package:flutter/foundation.dart';
 
 class SceneSelector extends Component with HasGameRef<RoomGame> {

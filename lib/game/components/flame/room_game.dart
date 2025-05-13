@@ -1,8 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chatdo/game/scenes/scene_selector.dart';
-import '/game/scenes/room_scene.dart';
-import 'package:chatdo/game/events/scene_event_manager.dart';
+import 'package:chatdo/game/overlay/events/scene_event_manager.dart';
+import 'package:chatdo/game/overlay/scenes/scene_selector.dart';
 import 'package:flutter/foundation.dart';
 class RoomGame extends FlameGame {
   late final SceneEventManager sceneEventManager;
@@ -11,13 +10,17 @@ class RoomGame extends FlameGame {
   Future<void> onLoad() async {
     await super.onLoad();
 
+    print('📦 preload images 시작');
     await images.loadAll([
       'background.png',
       'girl_walk.png',
       'jordy_idle.png',
       'jordy_shocked.png',
       'jordy_happy.png',
+      'sp_jordy_study.png',
+      'background_studyroom.png',
     ]);
+    print('✅ preload images 완료');
 
     sceneEventManager = SceneEventManager(
       onShowScene: (scene) async {

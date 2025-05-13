@@ -1,5 +1,5 @@
-import 'package:chatdo/game/scenes/dialogue_scene_base.dart';
-import 'package:chatdo/game/story/dialogue_chapter0.dart';
+import 'package:chatdo/game/overlay/scenes/dialogue_scene_base.dart';
+import 'package:chatdo/game/overlay/story/dialogue_chapter0.dart';
 class IntroScene extends DialogueSceneBase {
   IntroScene({super.onCompleted});
 
