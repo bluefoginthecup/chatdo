@@ -9,6 +9,7 @@ class SpeechBubbleComponent extends PositionComponent {
   TextBoxComponent? _textBox;
   PositionComponent? _background;
   PolygonComponent? _tail;
+  PositionComponent? _target;
 
   String? get currentText => _textBox?.text;
 
@@ -59,9 +60,9 @@ class SpeechBubbleComponent extends PositionComponent {
     final tailTopY = backgroundSize.y;
     final tail = PolygonComponent(
       [
-        Vector2(40, tailTopY),
-        Vector2(55, tailTopY + 15),
-        Vector2(70, tailTopY),
+        Vector2(100, tailTopY),
+        Vector2(115, tailTopY + 15),
+        Vector2(80, tailTopY),
       ],
       paint: Paint()..color = bubbleColor,
     );
@@ -69,16 +70,28 @@ class SpeechBubbleComponent extends PositionComponent {
 
     size = backgroundSize + Vector2(0, 15);
     addAll([background, tail, textBox]);
+
+    _reposition(); // 크기 바뀐 뒤 위치도 갱신
   }
 
   void updateText(String newText) async {
     await _buildComponents(newText);
   }
 
+  PositionComponent? attachedTo;
+
   void attachTo(PositionComponent target) {
-    final adjusted = target.position - Vector2(100, target.size.y / 2 + size.y + 70);
-    position = adjusted;
-    print('🗯️ SpeechBubble attached at: $position, $size');
+    _target = target;
+    attachedTo = target;
+    _reposition();
+  }
+
+  void _reposition() {
+    if (_target != null) {
+      final adjusted = _target!.position - Vector2(100, _target!.size.y / 2 + size.y - 70);
+      position = adjusted;
+      print('🗯️ SpeechBubble repositioned to: $position, size: $size');
+    }
   }
 
   static SpeechBubbleComponent createFor(PositionComponent target, List<String> dialogueList) {
@@ -86,7 +99,7 @@ class SpeechBubbleComponent extends PositionComponent {
       text: dialogueList.isNotEmpty ? dialogueList.first : '',
       maxWidth: 220,
       bubbleColor: Colors.white,
-      textStyle: const TextStyle(color: Colors.black, fontSize: 18),
+      textStyle: const TextStyle(color: Colors.black, fontSize: 24),
     )..priority = 1000;
 
     bubble.attachTo(target);

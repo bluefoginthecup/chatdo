@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '/game/components/speech_bubble_component.dart';
 
 class JordySprite extends SpriteComponent with HasGameRef {
-  final List<String> dialogueList;
+  List<String> dialogueList;
   final String spriteImage;
   final String? animationName;
 

@@ -7,6 +7,8 @@ import 'package:chatdo/game/room/girl_sprite.dart';
 import 'package:chatdo/game/room/jordy_sprite.dart';
 import 'package:chatdo/chatdo/providers/audio_manager.dart';
 import '/game/components/speech_bubble_component.dart';
+import 'package:chatdo/game/core/weather_scene_controller.dart'; // 추가
+
 
 class RoomScene extends Component with HasGameRef<FlameGame> {
   final DayEvent event;
@@ -20,6 +22,10 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
   ];
 
   late List<String> _bgmQueue;
+
+  // ✅ 배경과 말풍선 컴포넌트를 추적
+  late SpriteComponent background;
+  late SpeechBubbleComponent bubble;
 
   @override
   Future<void> onLoad() async {
@@ -35,12 +41,14 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
 
     print('🖼️ 배경 이미지 로딩 시도: ${event.backgroundImage}');
     final bgSprite = await gameRef.loadSprite(event.backgroundImage);
-    add(SpriteComponent(
+    background = SpriteComponent(
       sprite: bgSprite,
       size: gameRef.size,
       position: Vector2.zero(),
       priority: -1,
-    ));
+    );
+    add(background);
+
 
     print('👧 Girl: pos=${event.girl.position}, anim=${event.girl.animationName}');
     add(GirlSprite(
@@ -61,6 +69,13 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
     final bubble = SpeechBubbleComponent.createFor(jordy, event.jordy.dialogueList);
     jordy.speechBubble = bubble;
     add(bubble);
+
+    final weatherController = WeatherSceneController();
+    await weatherController.applyWeatherToRoom(
+      backgroundComponent: background,
+      speechBubble: bubble,
+    );
+
 
   }
 

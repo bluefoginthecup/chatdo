@@ -20,6 +20,8 @@ class AudioManager {
       await _player!.setVolume(volume);
       await _player!.load();
 
+
+
       print('🎧 재생 준비됨: $assetPath');
       await _player!.play();
       print("✅ play() 호출됨");
@@ -39,28 +41,44 @@ class AudioManager {
     await _player!.stop();
   }
 
-    Future<void> fadeOutAndPlay(
-        String assetPath, {
-          double volume = 1.0,
-          VoidCallback? onComplete, // ✅ 추가
-        }) async {
+  Future<void> fadeOutAndPlay(
+      String assetPath, {
+        double volume = 1.0,
+        VoidCallback? onComplete,
+      }) async {
+    try {
+      // 🔇 기존 플레이어 정리
       if (_player != null) {
         await _fadeOut();
         await _player!.stop();
         await _player!.dispose();
       }
-    _player = AudioPlayer();
-    await _player!.setAudioSource(AudioSource.asset(assetPath));
-    await _player!.setLoopMode(LoopMode.off);
-      await _player!.setVolume(volume); // 시작은 0으로 시작해서
-    await _player!.load();
-    await _player!.play();
-// ✅ 재생 완료 감지 후 콜백 실행
+
+      // 🆕 새 플레이어 생성
+      _player = AudioPlayer();
+
+      // 🎧 상태 변화 로그
       _player!.playerStateStream.listen((state) {
+        print("🎧 상태 변화: ${state.processingState}, playing: ${state.playing}");
         if (state.processingState == ProcessingState.completed) {
           onComplete?.call();
         }
       });
+
+      // 🧠 재생 준비 (에러 발생 시 잡힘)
+      await _player!.setAudioSource(AudioSource.asset(assetPath));
+      await _player!.setLoopMode(LoopMode.off);
+      await _player!.setVolume(volume);
+      await _player!.load(); // ✅ 꼭 분리해서 await
+
+      print('🎧 재생 준비됨: $assetPath');
+
+      await _player!.play(); // ✅ 준비된 후 play
+      print("✅ play() 호출됨");
+    } catch (e, stackTrace) {
+      print('🎵 AudioManager play error: $e');
+      print('📍 STACK: $stackTrace');
+    }
   }
 
 
