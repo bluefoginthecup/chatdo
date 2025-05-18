@@ -67,7 +67,7 @@ class GirlConfig {
 
   GirlConfig({
     required this.position,
-    this.animationName,
+    this.animationName = 'walkRight',
   });
 
   factory GirlConfig.fromJson(Map<String, dynamic> json) {
@@ -76,7 +76,7 @@ class GirlConfig {
         (json['position'][0] as num).toDouble(),
         (json['position'][1] as num).toDouble(),
       ),
-      animationName: json['animationName'],
+      animationName: json['animationName'] ?? 'walkRight',
     );
   }
 }

@@ -34,7 +34,7 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
 
   @override
   Future<void> onLoad() async {
-    print('📱 RoomScreen created!');
+    print('📱 RoomScene created!');
     print('🎮 RoomScene loaded with event = ${event.backgroundImage}');
 
     _shuffleBgmQueue();
@@ -46,7 +46,7 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
     );
 
     final now = DateTime.now();
-    final isMorningWeatherTime = now.hour >= 5 && now.hour < 20;
+    final isMorningWeatherTime = now.hour >= 5 && now.hour < 9;
 
     final weatherRepo = WeatherRepository();
     final (text, _) = await weatherRepo.getTodayWeather(); // 실제 호출은 딱 1번
@@ -73,6 +73,8 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
       )..priority = 1;
       add(jordy);
 
+
+
       bubble = SpeechBubbleComponent.createFor(jordy, []);
       jordy.speechBubble = bubble;
       add(bubble);
@@ -80,6 +82,7 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
       final dialogues = await WeatherService().getDialoguesFromJson();
       showDialoguesSequentially(dialogues, bubble.show);
     } else {
+      print('⛅ non-morning branch 진입');
       background = SpriteComponent(
         sprite: await gameRef.loadSprite('background.png'),
         size: gameRef.size,
@@ -98,6 +101,15 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
         animationName: event.jordy.animationName,
       )..priority = 1;
       add(jordy);
+
+      final girl = GirlSprite(
+        position: Vector2(100, 400),
+        animationName: event.girl.animationName,
+      )..priority = 1;
+      add(girl);
+      print('🎞️ Girl animation name: ${event.girl.animationName}');
+
+
 
       bubble = SpeechBubbleComponent.createFor(jordy, event.jordy.dialogueList);
       jordy.speechBubble = bubble;

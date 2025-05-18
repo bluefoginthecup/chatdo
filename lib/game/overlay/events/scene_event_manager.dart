@@ -15,7 +15,7 @@ typedef SceneBuilder = dynamic Function(VoidCallback onCompleted);
 
 class SceneEventManager {
   final void Function(dynamic scene) onShowScene;
-
+  bool _isDisposed = false;
   SceneEventManager({required this.onShowScene});
 
   Future<bool> checkTimeBasedScenes() async {
@@ -93,9 +93,12 @@ class SceneEventManager {
     print("🎬 실행 중인 씬 인덱스: $index / 총 ${builders.length}");
 
     final builder = builders[index];
+
     final scene = builder(() {
       print("▶️ onCompleted 호출됨 → 다음 씬으로");
-      _playScenesSequentially(builders, index + 1);
+      Future.delayed(const Duration(milliseconds: 30), () {
+        _playScenesSequentially(builders, index + 1);
+      });
     });
 
     print("🎯 실행 중인 씬: ${scene.runtimeType}");
@@ -103,5 +106,8 @@ class SceneEventManager {
 
     onShowScene(scene);
   }
-
+  void dispose() {
+    _isDisposed = true;
+    print("🧹 SceneEventManager disposed");
+  }
 }

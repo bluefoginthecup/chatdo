@@ -111,21 +111,21 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
 
     _updateCharacterVisuals();
     print("🎬 대사 씬 초기화 완료");
-  }
 
-  @override
-  void onRemove() {
-    print("🛑 DialogueSceneBase.onRemove 호출됨");
-    AudioManager.instance.stop(); // ✅ 씬 제거 시 오디오 정리
-    super.onRemove(); // 반드시 호출
+    _isLoaded = true;
   }
 
   bool _hasCompleted = false;
+  bool _isLoaded = false;
+
+
   void _updateDialogueText() {
+    if (!_isLoaded) return;
     _textBox.text = dialogueData[_dialogueIndex]["line"] ?? "";
     _speakerName.text = dialogueData[_dialogueIndex]["speaker"] ?? "";
     _updateCharacterVisuals();
   }
+
 
   void _nextDialogue() {
     _dialogueIndex++;
@@ -150,6 +150,13 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
   void _updateCharacterVisuals() {
     final speaker = dialogueData[_dialogueIndex]["speaker"];
     _jordyCloseup.opacity = speaker == "조르디" ? 1.0 : 0.0;
+  }
+
+  @override
+  void onRemove() {
+    print("🛑 DialogueSceneBase.onRemove 호출됨");
+    AudioManager.instance.stop(); // ✅ 씬 제거 시 오디오 정리
+    super.onRemove(); // 반드시 호출
   }
 
   @override
