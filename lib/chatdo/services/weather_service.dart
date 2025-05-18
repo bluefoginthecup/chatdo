@@ -38,19 +38,25 @@ class WeatherService {
     }
 
     final data = jsonDecode(response.body);
-
     final currentTemp = data['current']['temp'];
+    final feelsLike = data['current']['feels_like'];
+    final humidity = data['current']['humidity'];
+    final wind = data['current']['wind_speed'];
+    final uvi = data['current']['uvi'] ?? 0.0;
     final currentDesc = data['current']['weather'][0]['description'];
+
     final today = data['daily'][0];
     final minTemp = today['temp']['min'];
     final maxTemp = today['temp']['max'];
-    final todayDesc = today['weather'][0]['description'];
     final pop = today['pop'] ?? 0.0;
     final rainAmount = today['rain'] ?? 0.0;
-    final uvi = data['current']['uvi'] ?? 0.0;
+
 
     return {
       'currentTemp': currentTemp,
+      'feels_like': feelsLike,
+      'humidity': humidity,
+      'wind': wind,
       'minTemp': minTemp,
       'maxTemp': maxTemp,
       'pop': pop,
@@ -58,6 +64,7 @@ class WeatherService {
       'uvi': uvi,
       'description': currentDesc,
     };
+
   }
 
   Future<List<String>> getDialoguesFromJson() async {
@@ -65,13 +72,18 @@ class WeatherService {
 
     final weather = WeatherData(
       temp: (rawData['currentTemp'] as num).toDouble(),
+      feelsLike: (rawData['feels_like'] as num?)?.toDouble() ?? 0.0,
       minTemp: (rawData['minTemp'] as num).toDouble(),
       maxTemp: (rawData['maxTemp'] as num).toDouble(),
       pop: (rawData['pop'] as num?)?.toDouble() ?? 0.0,
       rainAmount: (rawData['rainAmount'] as num?)?.toDouble() ?? 0.0,
       uvi: (rawData['uvi'] as num?)?.toDouble() ?? 0.0,
+      humidity: (rawData['humidity'] as num?)?.toDouble() ?? 0.0,
+      wind: (rawData['wind'] as num?)?.toDouble() ?? 0.0,
       description: rawData['description'] ?? '',
     );
+
+
 
 
     final jsonStr = await rootBundle.loadString('assets/data/weather_dialogues.json');
@@ -85,9 +97,12 @@ class WeatherService {
       var text = rule['dialogue'].toString();;
       return text
           .replaceAll('{temp}', weather.temp.toStringAsFixed(1))
+          .replaceAll('{feels_like}', weather.feelsLike.toStringAsFixed(1)) // 추가
           .replaceAll('{pop}', (weather.pop * 100).round().toString())
           .replaceAll('{rain}', weather.rainAmount.toStringAsFixed(1))
           .replaceAll('{uvi}', weather.uvi.toStringAsFixed(1))
+          .replaceAll('{humidity}', weather.humidity.toStringAsFixed(1))     // 추가
+          .replaceAll('{wind}', weather.wind.toStringAsFixed(1))             // 추가
           .replaceAll('{minTemp}', weather.minTemp.toStringAsFixed(1))
           .replaceAll('{maxTemp}', weather.maxTemp.toStringAsFixed(1));
     }).toList();

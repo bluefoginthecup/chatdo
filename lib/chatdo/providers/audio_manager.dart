@@ -12,7 +12,6 @@ class AudioManager {
       _player = AudioPlayer();
 
       _player!.playerStateStream.listen((state) {
-        print("🎧 상태 변화: ${state.processingState}, playing: ${state.playing}");
       });
 
       await _player!.setAudioSource(AudioSource.asset(assetPath));
@@ -57,9 +56,7 @@ class AudioManager {
       // 🆕 새 플레이어 생성
       _player = AudioPlayer();
 
-      // 🎧 상태 변화 로그
       _player!.playerStateStream.listen((state) {
-        print("🎧 상태 변화: ${state.processingState}, playing: ${state.playing}");
         if (state.processingState == ProcessingState.completed) {
           onComplete?.call();
         }

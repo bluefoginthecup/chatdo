@@ -9,7 +9,7 @@ import 'package:chatdo/chatdo/providers/audio_manager.dart';
 import '/game/components/speech_bubble_component.dart';
 import 'package:chatdo/game/core/weather_scene_controller.dart';
 import 'package:chatdo/chatdo/services/weather_service.dart';
-import 'package:chatdo/chatdo/utils/dialogue_helper.dart';
+import 'package:chatdo/game/room/dialogue_helper.dart';
 
 
 class RoomScene extends Component with HasGameRef<FlameGame> {
@@ -42,7 +42,7 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
     );
 
     final now = DateTime.now();
-    final isMorningWeatherTime = now.hour >= 5 && now.hour < 14;
+    final isMorningWeatherTime = now.hour >= 5 && now.hour < 16;
     final weatherController = WeatherSceneController();
 
     if (isMorningWeatherTime) {

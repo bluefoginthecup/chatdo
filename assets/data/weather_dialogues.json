@@ -8,14 +8,63 @@
     "dialogue": "☀️ 오늘은 하늘이 맑아요! 기분까지 맑아지네요~"
   },
   {
-  "id": "overcast_clouds",
-  "target": "description",
-  "operator": "contains",
-  "value": "overcast clouds",
-  "priority": 1,
-  "dialogue": "☁️ 오늘은 잔뜩 흐리네요. 너무 우울해하지 마세요!"
-},
+    "id": "overcast_clouds",
+    "target": "description",
+    "operator": "contains",
+    "value": "overcast clouds",
+    "priority": 1,
+    "dialogue": "☁️ 오늘은 흐리네요. 너무 우울해하지 마세요!"
+  },
+  {
+    "id": "scattered_clouds",
+    "target": "description",
+    "operator": "contains",
+    "value": "clouds",
+    "priority": 2,
+    "dialogue": "🌥 구름이 조금 있네요. 하늘은 적당히 흐리네요"
+  },
+  {
+    "id": "rain",
+    "target": "description",
+    "operator": "contains",
+    "value": "rain",
+    "priority": 1,
+    "dialogue": "🌧 오늘은 비가 내리네요. 우산 꼭 챙기세요!"
+  },
+  {
+    "id": "snow",
+    "target": "description",
+    "operator": "contains",
+    "value": "snow",
+    "priority": 1,
+    "dialogue": "❄️ 눈이 오고 있어요. 미끄러우니까 조심히 다녀오세요!"
+  },
 
+  {
+    "id": "temp_hot",
+    "target": "temp",
+    "operator": "gte",
+    "value": 30,
+    "priority": 2,
+    "dialogue": "🔥 오늘은 {temp}도나 돼요! 무더운 하루가 될 거예요. 물 많이 마시세요!"
+  },
+  {
+    "id": "hot_day_alert",
+    "target": "isHotDay",
+    "operator": "equals",
+    "value": true,
+    "priority": 2,
+    "dialogue": "🔥 낮에 30도 넘겠대요. 오늘은 그냥 카페에 숨자!"
+  },
+  {
+    "id": "temp_mid_range",
+    "target": "temp",
+    "operator": "between",
+    "min": 11,
+    "max": 20,
+    "priority": 2,
+    "dialogue": "🍂 지금 기온은 {temp}도예요. 선선하고 기분 좋은 하루가 될 거예요~"
+  },
   {
     "id": "temp_info",
     "target": "temp",
@@ -24,6 +73,80 @@
     "max": 29,
     "priority": 2,
     "dialogue": "🌡 현재 기온은 {temp}도. 약간 더운 날씨네요. 시원한 물 자주 드세요!"
+  },
+  {
+    "id": "temp_cold",
+    "target": "temp",
+    "operator": "lte",
+    "value": 10,
+    "priority": 2,
+    "dialogue": "🧊 현재 {temp}도예요. 꽤 쌀쌀하네요. 따뜻하게 입고 나가요!"
+  },
+  {
+    "id": "freezing_temp",
+    "target": "temp",
+    "operator": "lt",
+    "value": 0,
+    "priority": 2,
+    "dialogue": "❄️ 기온이 영하로 떨어졌어요! 방한용품 꼭 챙기세요!"
+  },
+  {
+    "id": "freezing_morning",
+    "target": "isFreezing",
+    "operator": "equals",
+    "value": true,
+    "priority": 2,
+    "dialogue": "🧊 오늘 아침은 영하야. 이불 밖은 위험하겠는데?"
+  },
+  {
+    "id": "today_temp_summary",
+    "target": "temp",
+    "operator": "gte",
+    "value": -999,
+    "priority": 3,
+    "dialogue": "📊 오늘 기온은 최저 {minTemp}도, 최고 {maxTemp}도예요."
+  },
+  {
+    "id": "big_temp_gap",
+    "target": "tempGap",
+    "operator": "gte",
+    "value": 10,
+    "priority": 3,
+    "dialogue": "🌡️ 오늘은 일교차가 크네요. 얇은 옷 여러 겹 챙기면 좋아요!"
+  },
+  {
+    "id": "big_temp_gap_notice",
+    "target": "isBigTempGap",
+    "operator": "equals",
+    "value": true,
+    "priority": 2,
+    "dialogue": "🌡️ 일교차가 10도 넘는대요. 아침저녁 옷차림 잘 챙기기!"
+  },
+  {
+    "id": "feels_different_temp",
+    "target": "isFeelsDifferent",
+    "operator": "equals",
+    "value": true,
+    "priority": 2,
+    "dialogue": "🤔 오늘 체감온도랑 실제 기온이 좀 달라요. 느낌이 좀 이상할 수도?"
+  },
+  {
+    "id": "rainy_and_cold_day",
+    "target": "isRainyAndCold",
+    "operator": "equals",
+    "value": true,
+    "priority": 2,
+    "dialogue": "☔🧥 비도 오고 추워요. 따뜻하게 챙기고 나가요, 알겠죠?"
+  },
+
+  {
+    "id": "light_rain_chance",
+    "target": "pop",
+    "operator": "between",
+    "min": 0.1,
+    "max": 0.59,
+    "priority": 3,
+    "dialogue": "🌂 비 올 확률이 {pop}%예요. 혹시 모르니 작은 우산 챙기세요~"
   },
   {
     "id": "rain_probability",
@@ -42,6 +165,24 @@
     "dialogue": "💦 비가 {rain}mm 온다니까 꽤 많이 온대요! 장화 필수예요!"
   },
   {
+    "id": "light_rain",
+    "target": "rainAmount",
+    "operator": "between",
+    "min": 0.1,
+    "max": 5,
+    "priority": 4,
+    "dialogue": "🌦 이슬비처럼 가볍게 비가 와요. 작은 우산 하나 챙겨도 좋아요."
+  },
+  {
+    "id": "no_rain_expected",
+    "target": "pop",
+    "operator": "equals",
+    "value": 0,
+    "priority": 3,
+    "dialogue": "🌞 오늘은 비 소식 없어요. 빨래라도 널어볼까?"
+  },
+
+  {
     "id": "low_uvi",
     "target": "uvi",
     "operator": "lt",
@@ -49,21 +190,65 @@
     "priority": 5,
     "dialogue": "☁️ 자외선은 그리 높지 않아요. 맘 편히 다녀오세요!"
   },
-    {
-      "id": "temp_mid_range",
-      "target": "temp",
-      "operator": "between",
-      "min": 11,
-      "max": 20,
-      "priority": 2,
-      "dialogue": "🍂 지금 기온은 {temp}도예요. 선선하고 기분 좋은 날씨네요~"
-    },
-    {
-      "id": "today_temp_summary",
-      "target": "temp",
-      "operator": "gte",
-      "value": -999,
-      "priority": 3,
-      "dialogue": "📊 오늘 기온은 최저 {minTemp}도, 최고 {maxTemp}도예요."
-    }
+  {
+    "id": "high_uvi",
+    "target": "uvi",
+    "operator": "gte",
+    "value": 5,
+    "priority": 5,
+    "dialogue": "🕶 자외선이 강하니 선크림 꼭 발라요! 기미 생겨요!"
+  },
+
+  {
+    "id": "normal_humidity",
+    "target": "humidity",
+    "operator": "between",
+    "min": 41,
+    "max": 69,
+    "priority": 6,
+    "dialogue": "🌤 습도는 {humidity}% 정도로 쾌적해요. 일하기 좋겠네요"
+  },
+  {
+    "id": "humid_day",
+    "target": "humidity",
+    "operator": "gte",
+    "value": 70,
+    "priority": 6,
+    "dialogue": "💧 습도가 {humidity}%예요. 끈적한 하루가 될지도 몰라요!"
+  },
+  {
+    "id": "dry_day",
+    "target": "humidity",
+    "operator": "lte",
+    "value": 40,
+    "priority": 6,
+    "dialogue": "🌵 오늘은 건조해요. 립밤이나 수분크림 챙기세요!"
+  },
+
+  {
+    "id": "dry_and_windy_alert",
+    "target": "isDryAndWindy",
+    "operator": "equals",
+    "value": true,
+    "priority": 2,
+    "dialogue": "💨 바람도 불고 건조해요. 불씨 조심, 피부도 조심!"
+  },
+
+  {
+    "id": "windy",
+    "target": "wind",
+    "operator": "gte",
+    "value": 6,
+    "priority": 5,
+    "dialogue": "🍃 바람이 {wind}m/s로 꽤 불고 있어요. 머리카락 조심하세요~"
+  },
+  {
+    "id": "breeze",
+    "target": "wind",
+    "operator": "between",
+    "min": 1,
+    "max": 5,
+    "priority": 5,
+    "dialogue": "🍃 선선한 바람이 불어요. 책 보기 좋은 하루군요"
+  }
 ]

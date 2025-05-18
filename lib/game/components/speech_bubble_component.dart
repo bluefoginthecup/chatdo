@@ -96,7 +96,6 @@ class SpeechBubbleComponent extends PositionComponent {
     if (_target != null) {
       final adjusted = _target!.position - Vector2(100, _target!.size.y / 2 + size.y - 70);
       position = adjusted;
-      print('🗯️ SpeechBubble repositioned to: $position, size: $size');
     }
   }
 

@@ -50,12 +50,15 @@ class WeatherSceneController {
     final rawData = await WeatherService().fetchWeatherFromCurrentLocation();
 
     final weather = WeatherData(
-      temp: rawData['currentTemp'],
-      minTemp: rawData['minTemp'],
-      maxTemp: rawData['maxTemp'],
-      pop: rawData['pop'] ?? 0.0,
-      rainAmount: rawData['rainAmount'] ?? 0.0,
-      uvi: rawData['uvi'] ?? 0.0,
+      temp: (rawData['currentTemp'] as num).toDouble(),
+      feelsLike: (rawData['feels_like'] as num?)?.toDouble() ?? 0.0,
+      minTemp: (rawData['minTemp'] as num).toDouble(),
+      maxTemp: (rawData['maxTemp'] as num).toDouble(),
+      pop: (rawData['pop'] as num?)?.toDouble() ?? 0.0,
+      rainAmount: (rawData['rainAmount'] as num?)?.toDouble() ?? 0.0,
+      uvi: (rawData['uvi'] as num?)?.toDouble() ?? 0.0,
+      humidity: (rawData['humidity'] as num?)?.toDouble() ?? 0.0,
+      wind: (rawData['wind'] as num?)?.toDouble() ?? 0.0,
       description: rawData['description'] ?? '',
     );
 
@@ -70,9 +73,12 @@ class WeatherSceneController {
       var text = rule['dialogue'].toString();
       return text
           .replaceAll('{temp}', weather.temp.toStringAsFixed(1))
+          .replaceAll('{feels_like}', weather.feelsLike.toStringAsFixed(1))
           .replaceAll('{pop}', (weather.pop * 100).round().toString())
           .replaceAll('{rain}', weather.rainAmount.toStringAsFixed(1))
           .replaceAll('{uvi}', weather.uvi.toStringAsFixed(1))
+          .replaceAll('{humidity}', weather.humidity.toStringAsFixed(1))
+          .replaceAll('{wind}', weather.wind.toStringAsFixed(1))
           .replaceAll('{minTemp}', weather.minTemp.toStringAsFixed(1))
           .replaceAll('{maxTemp}', weather.maxTemp.toStringAsFixed(1));
     }).toList();
