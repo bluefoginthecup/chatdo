@@ -1,8 +1,5 @@
-import 'dart:convert';
-import 'package:flutter/services.dart';
 import '../models/weather_data.dart';
 
-// 2. 조건 평가기
 class WeatherDialogueEvaluator {
   final WeatherData data;
 
@@ -48,37 +45,5 @@ class WeatherDialogueEvaluator {
       case 'description': return data.description;
       default: return null;
     }
-  }
-}
-
-// 3. JSON 파싱 및 대사 리스트 생성
-Future<List<String>> getDialoguesFromJson(WeatherData data, String jsonStr) async {
-  final List<dynamic> rules = jsonDecode(jsonStr);
-  final evaluator = WeatherDialogueEvaluator(data);
-  final List<Map<String, dynamic>> matchedRules = [];
-
-  for (final rule in rules) {
-    if (evaluator.evaluate(rule)) {
-      matchedRules.add(rule);
-    }
-  }
-
-  matchedRules.sort((a, b) => (a['priority'] ?? 999).compareTo(b['priority'] ?? 999));
-
-  return matchedRules.map((rule) {
-    var text = rule['dialogue'];
-    return text
-        .replaceAll('{temp}', data.temp.toStringAsFixed(1))
-        .replaceAll('{pop}', (data.pop * 100).round().toString())
-        .replaceAll('{rain}', data.rainAmount.toStringAsFixed(1))
-        .replaceAll('{uvi}', data.uvi.toStringAsFixed(1));
-  }).toList();
-}
-
-// 4. 말풍선 출력 순차 처리
-void showDialoguesSequentially(List<String> dialogues, void Function(String) showBubble) async {
-  for (final text in dialogues) {
-    showBubble(text);
-    await Future.delayed(Duration(seconds: 1));
   }
 }

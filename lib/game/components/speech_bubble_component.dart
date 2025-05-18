@@ -78,6 +78,12 @@ class SpeechBubbleComponent extends PositionComponent {
     await _buildComponents(newText);
   }
 
+// ✅ 새로 추가
+  void show(String text) {
+    updateText(text);
+  }
+
+
   PositionComponent? attachedTo;
 
   void attachTo(PositionComponent target) {

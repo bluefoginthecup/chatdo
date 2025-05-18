@@ -8,13 +8,14 @@
     "dialogue": "☀️ 오늘은 하늘이 맑아요! 기분까지 맑아지네요~"
   },
   {
-    "id": "overcast_clouds",
-    "target": "description",
-    "operator": "contains",
-    "value": "overcast_clouds",
-    "priority": 1,
-    "dialogue":"오늘은 잔뜩 흐리네요. 너무 우울해하지 마세요!"
-  },
+  "id": "overcast_clouds",
+  "target": "description",
+  "operator": "contains",
+  "value": "overcast clouds",
+  "priority": 1,
+  "dialogue": "☁️ 오늘은 잔뜩 흐리네요. 너무 우울해하지 마세요!"
+},
+
   {
     "id": "temp_info",
     "target": "temp",
@@ -47,5 +48,22 @@
     "value": 5,
     "priority": 5,
     "dialogue": "☁️ 자외선은 그리 높지 않아요. 맘 편히 다녀오세요!"
-  }
+  },
+    {
+      "id": "temp_mid_range",
+      "target": "temp",
+      "operator": "between",
+      "min": 11,
+      "max": 20,
+      "priority": 2,
+      "dialogue": "🍂 지금 기온은 {temp}도예요. 선선하고 기분 좋은 날씨네요~"
+    },
+    {
+      "id": "today_temp_summary",
+      "target": "temp",
+      "operator": "gte",
+      "value": -999,
+      "priority": 3,
+      "dialogue": "📊 오늘 기온은 최저 {minTemp}도, 최고 {maxTemp}도예요."
+    }
 ]

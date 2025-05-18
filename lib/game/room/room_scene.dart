@@ -7,7 +7,9 @@ import 'package:chatdo/game/room/girl_sprite.dart';
 import 'package:chatdo/game/room/jordy_sprite.dart';
 import 'package:chatdo/chatdo/providers/audio_manager.dart';
 import '/game/components/speech_bubble_component.dart';
-import 'package:chatdo/game/core/weather_scene_controller.dart'; // 추가
+import 'package:chatdo/game/core/weather_scene_controller.dart';
+import 'package:chatdo/chatdo/services/weather_service.dart';
+import 'package:chatdo/chatdo/utils/dialogue_helper.dart';
 
 
 class RoomScene extends Component with HasGameRef<FlameGame> {
@@ -39,44 +41,62 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
       onComplete: _playNextRandomBgm,
     );
 
-    print('🖼️ 배경 이미지 로딩 시도: ${event.backgroundImage}');
-    final bgSprite = await gameRef.loadSprite(event.backgroundImage);
-    background = SpriteComponent(
-      sprite: bgSprite,
-      size: gameRef.size,
-      position: Vector2.zero(),
-      priority: -1,
-    );
-    add(background);
-
-
-    print('👧 Girl: pos=${event.girl.position}, anim=${event.girl.animationName}');
-    add(GirlSprite(
-      position: event.girl.position,
-      animationName: event.girl.animationName,
-    )..priority = 2);
-
-    print('🐥 Jordy: sprite=${event.jordy.spriteImage}, pos=${event.jordy.position}, dialogue="${event.jordy.dialogueList}"');
-    final jordy=JordySprite(
-      position: event.jordy.position,
-      dialogueList: event.jordy.dialogueList,
-      spriteImage: event.jordy.spriteImage,
-      animationName: event.jordy.animationName,
-    )..priority = 1;
-
-    add(jordy); // 조르디 추가
-
-    final bubble = SpeechBubbleComponent.createFor(jordy, event.jordy.dialogueList);
-    jordy.speechBubble = bubble;
-    add(bubble);
-
+    final now = DateTime.now();
+    final isMorningWeatherTime = now.hour >= 5 && now.hour < 14;
     final weatherController = WeatherSceneController();
-    await weatherController.applyWeatherToRoom(
-      backgroundComponent: background,
-      speechBubble: bubble,
-    );
+
+    if (isMorningWeatherTime) {
+      final (text, farmBgPath) = await weatherController.getWeatherDialogueAndBg();
+      background = SpriteComponent(
+        sprite: await gameRef.loadSprite(farmBgPath),
+        size: gameRef.size,
+        position: Vector2.zero(),
+        priority: -1,
+      );
+      add(background);
+
+      final jordy = JordySprite(
+        position: Vector2(220, 400),
+        dialogueList: [],
+        spriteImage: event.jordy.spriteImage,
+        animationName: event.jordy.animationName,
+      )..priority = 1;
+      add(jordy);
+
+      bubble = SpeechBubbleComponent.createFor(jordy, []);
+      jordy.speechBubble = bubble;
+      add(bubble);
+
+      final dialogues = await WeatherService().getDialoguesFromJson();
+      showDialoguesSequentially(dialogues, bubble.show);
 
 
+    } else {
+      background = SpriteComponent(
+        sprite: await gameRef.loadSprite('background.png'),
+        size: gameRef.size,
+        position: Vector2.zero(),
+        priority: -1,
+      );
+      add(background);
+
+      final overlay = await weatherController.getWindowOverlay();
+      add(overlay);
+
+      final jordy = JordySprite(
+        position: Vector2(100, 400),
+        dialogueList: event.jordy.dialogueList,
+        spriteImage: event.jordy.spriteImage,
+        animationName: event.jordy.animationName,
+      )..priority = 1;
+      add(jordy);
+
+      bubble = SpeechBubbleComponent.createFor(jordy, event.jordy.dialogueList);
+      jordy.speechBubble = bubble;
+      add(bubble);
+
+      bubble.updateText(event.jordy.dialogueList.isNotEmpty ? event.jordy.dialogueList.first : '좋은 하루 되세요!');
+    }
   }
 
   void _shuffleBgmQueue() {
