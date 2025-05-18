@@ -49,7 +49,7 @@ class DayEventLoader {
         position: Vector2(250, 400),
         dialogueList: [
           '어서오세요, 아가씨!',
-        '날씨가 화창하죠?'],
+        ],
       ),
       girl: GirlConfig(
         position: Vector2(100, 400),

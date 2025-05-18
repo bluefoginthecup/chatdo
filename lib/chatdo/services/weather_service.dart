@@ -3,16 +3,14 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
 class WeatherService {
-  final String _apiKey = '7340e5c10e98d532bd2c205f745dd365'; // TODO: 여기에 OpenWeatherMap API 키 입력
+  final String _apiKey = 'a8f145a55231456c864db884f3ae3b5a';
 
   Future<Map<String, dynamic>> fetchWeatherFromCurrentLocation() async {
-    final permission = await Geolocator.checkPermission();
-    print('[Weather] 위치 권한 상태: $permission');
+    print('[Weather] 사용하는 API 키: $_apiKey');
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      final request = await Geolocator.requestPermission();
-      print('[Weather] 위치 권한 요청 결과: $request');
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
     }
 
     final position = await Geolocator.getCurrentPosition(
@@ -22,17 +20,35 @@ class WeatherService {
     final lat = position.latitude;
     final lon = position.longitude;
 
-
     final url = Uri.parse(
-      'https://api.openweathermap.org/data/2.5/weather'
-          '?lat=$lat&lon=$lon&appid=$_apiKey&units=metric&lang=kr',
+      'https://api.openweathermap.org/data/3.0/onecall'
+          '?lat=$lat&lon=$lon&appid=$_apiKey&units=metric&exclude=minutely,hourly,alerts',
     );
 
     final response = await http.get(url);
-    print('[Weather] API 응답: ${response.body}');
+    print('[Weather] 호출 URL: $url');
+    print('[Weather] 응답 상태: ${response.statusCode}');
+    print('[Weather] 응답 내용: ${response.body}');
 
-    return jsonDecode(response.body);
+    if (response.statusCode != 200) {
+      throw Exception('날씨 API 호출 실패: ${response.statusCode}');
+    }
+
+    final data = jsonDecode(response.body);
+
+    final currentTemp = data['current']['temp'];
+    final currentDesc = data['current']['weather'][0]['description'];
+    final today = data['daily'][0];
+    final minTemp = today['temp']['min'];
+    final maxTemp = today['temp']['max'];
+    final todayDesc = today['weather'][0]['description'];
+
+    return {
+      'currentTemp': currentTemp,
+      'currentDescription': currentDesc,
+      'minTemp': minTemp,
+      'maxTemp': maxTemp,
+      'description': todayDesc,
+    };
   }
-
-
 }

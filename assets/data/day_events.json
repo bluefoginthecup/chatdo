@@ -55,10 +55,10 @@
   {
     "id": "morning_garden",
     "hourStart": 6,
-    "hourEnd": 9,
+    "hourEnd": 12,
     "backgroundImage": "background_garden.png",
     "jordy": {
-      "spriteImage": "jordy_garden.png",
+      "spriteImage": "sp_jordy_study.png",
       "position": [220, 400],
       "dialogue": ["좋은 아침이에요~ 오늘도 잘 다녀오세요!"],
       "animationName": "watering"
