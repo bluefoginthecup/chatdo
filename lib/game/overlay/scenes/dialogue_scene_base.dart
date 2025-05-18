@@ -113,6 +113,13 @@ abstract class DialogueSceneBase extends PositionComponent with TapCallbacks, Ha
     print("🎬 대사 씬 초기화 완료");
   }
 
+  @override
+  void onRemove() {
+    print("🛑 DialogueSceneBase.onRemove 호출됨");
+    AudioManager.instance.stop(); // ✅ 씬 제거 시 오디오 정리
+    super.onRemove(); // 반드시 호출
+  }
+
   bool _hasCompleted = false;
   void _updateDialogueText() {
     _textBox.text = dialogueData[_dialogueIndex]["line"] ?? "";

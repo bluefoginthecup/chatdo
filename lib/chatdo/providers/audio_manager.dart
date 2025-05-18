@@ -38,6 +38,7 @@ class AudioManager {
     if (_player == null) return;
     await _fadeOut();
     await _player!.stop();
+    await _player!.dispose();
   }
 
   Future<void> fadeOutAndPlay(

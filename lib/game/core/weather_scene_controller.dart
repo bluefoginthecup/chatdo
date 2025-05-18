@@ -7,24 +7,33 @@ import 'dart:convert';
 import 'package:chatdo/chatdo/services/weather_service.dart';
 import 'package:chatdo/chatdo/models/weather_data.dart';
 import 'package:chatdo/chatdo/services/weather_dialogue_evaluator.dart';
+import 'package:chatdo/chatdo/data/weather_repository.dart';
 
 class WeatherSceneController {
   final WeatherRepository _repository = WeatherRepository();
 
+  // ✅ 여기 추가
+  String _getBackgroundPath(String description) {
+    if (description.contains('rain')) return 'background_farm_rainy.png';
+    if (description.contains('snow')) return 'background_farm_snowy.png';
+    if (description.contains('cloud')) return 'background_farm_cloudy.png';
+    return 'background_farm_sunny.png';
+  }
+
   /// ✅ 1. 아침용 텍스트 + 텃밭 배경 리턴
-  Future<(String text, String bgImagePath)> getWeatherDialogueAndBg() async {
+  Future<(String, String)> getWeatherDialogueAndBg(String description) async {
     try {
-      final (text, bgImagePath) = await _repository.getTodayWeather();
-      return (text, bgImagePath);
-    } catch (e) {
+      final bgImage = _getBackgroundPath(description);
+      final text = '오늘 날씨는 $description입니다.';
+      return (text, bgImage);
+    }catch (e) {
       print('[Weather] ❌ ERROR in getWeatherDialogueAndBg: $e');
       return ('날씨 정보를 불러오지 못했어요.', 'background_garden.png');
     }
   }
 
   /// ✅ 2. 10시 이후용 창문 오버레이 (추후 구현)
-  Future<SpriteComponent> getWindowOverlay() async {
-    final description = await _repository.getTodayWeatherDescription();
+  Future<SpriteComponent> getWindowOverlay(String description) async {
     String overlayPath;
     if (description.contains('rain')) {
       overlayPath = 'window_overlay_rainy.png';
@@ -46,8 +55,10 @@ class WeatherSceneController {
   }
 
   /// ✅ 3. 날씨 JSON 대사 리스트 반환
-  Future<List<String>> getWeatherDialogues() async {
-    final rawData = await WeatherService().fetchWeatherFromCurrentLocation();
+
+    Future<List<String>> getWeatherDialogues() async {
+      final rawData = await _repository.getCachedOrFetchWeather(); // ✅ 캐시된 데이터 재활용
+
 
     final weather = WeatherData(
       temp: (rawData['currentTemp'] as num).toDouble(),

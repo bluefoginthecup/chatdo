@@ -10,6 +10,8 @@ import '/game/components/speech_bubble_component.dart';
 import 'package:chatdo/game/core/weather_scene_controller.dart';
 import 'package:chatdo/chatdo/services/weather_service.dart';
 import 'package:chatdo/game/room/dialogue_helper.dart';
+import 'package:chatdo/chatdo/data/weather_repository.dart';
+
 
 
 class RoomScene extends Component with HasGameRef<FlameGame> {
@@ -25,12 +27,14 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
 
   late List<String> _bgmQueue;
 
+
   // ✅ 배경과 말풍선 컴포넌트를 추적
   late SpriteComponent background;
   late SpeechBubbleComponent bubble;
 
   @override
   Future<void> onLoad() async {
+    print('📱 RoomScreen created!');
     print('🎮 RoomScene loaded with event = ${event.backgroundImage}');
 
     _shuffleBgmQueue();
@@ -42,11 +46,17 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
     );
 
     final now = DateTime.now();
-    final isMorningWeatherTime = now.hour >= 5 && now.hour < 16;
+    final isMorningWeatherTime = now.hour >= 5 && now.hour < 20;
+
+    final weatherRepo = WeatherRepository();
+    final (text, _) = await weatherRepo.getTodayWeather(); // 실제 호출은 딱 1번
+    final weatherDescription = weatherRepo.cachedDescription ?? 'clear';
+
     final weatherController = WeatherSceneController();
 
     if (isMorningWeatherTime) {
-      final (text, farmBgPath) = await weatherController.getWeatherDialogueAndBg();
+      final (text, farmBgPath) =
+      await weatherController.getWeatherDialogueAndBg(weatherDescription);
       background = SpriteComponent(
         sprite: await gameRef.loadSprite(farmBgPath),
         size: gameRef.size,
@@ -69,8 +79,6 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
 
       final dialogues = await WeatherService().getDialoguesFromJson();
       showDialoguesSequentially(dialogues, bubble.show);
-
-
     } else {
       background = SpriteComponent(
         sprite: await gameRef.loadSprite('background.png'),
@@ -80,7 +88,7 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
       );
       add(background);
 
-      final overlay = await weatherController.getWindowOverlay();
+      final overlay = await weatherController.getWindowOverlay(weatherDescription);
       add(overlay);
 
       final jordy = JordySprite(
@@ -95,7 +103,9 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
       jordy.speechBubble = bubble;
       add(bubble);
 
-      bubble.updateText(event.jordy.dialogueList.isNotEmpty ? event.jordy.dialogueList.first : '좋은 하루 되세요!');
+      bubble.updateText(event.jordy.dialogueList.isNotEmpty
+          ? event.jordy.dialogueList.first
+          : '좋은 하루 되세요!');
     }
   }
 
