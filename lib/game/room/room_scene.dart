@@ -46,7 +46,7 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
     );
 
     final now = DateTime.now();
-    final isMorningWeatherTime = now.hour >= 5 && now.hour < 9;
+    final isMorningWeatherTime = now.hour >= 5 && now.hour < 7;
 
     final weatherRepo = WeatherRepository();
     final (text, _) = await weatherRepo.getTodayWeather(); // 실제 호출은 딱 1번
@@ -83,16 +83,15 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
       showDialoguesSequentially(dialogues, bubble.show);
     } else {
       print('⛅ non-morning branch 진입');
+      final indoorBgPath = await weatherController.getIndoorBackground(weatherDescription);
+
       background = SpriteComponent(
-        sprite: await gameRef.loadSprite('background.png'),
+        sprite: await gameRef.loadSprite(indoorBgPath),
         size: gameRef.size,
         position: Vector2.zero(),
         priority: -1,
       );
       add(background);
-
-      final overlay = await weatherController.getWindowOverlay(weatherDescription);
-      add(overlay);
 
       final jordy = JordySprite(
         position: Vector2(100, 400),
@@ -136,5 +135,10 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
       volume: 0.02,
       onComplete: _playNextRandomBgm,
     );
+  }
+  @override
+  void onRemove() {
+    AudioManager.instance.dispose();
+    super.onRemove();
   }
 }

@@ -92,4 +92,22 @@ class AudioManager {
       _player?.setVolume((initialVolume - step * i).clamp(0.0, 1.0));
     }
   }
+  Future<void> dispose() async {
+    print("🛑 AudioManager dispose 시작");
+    try {
+      if (_player != null) {
+        await _fadeOut();
+        await _player!.stop();
+        await _player!.dispose();
+        print("🌊 기존 AudioPlayer 정리 완료");
+      }
+    } catch (e, stackTrace) {
+      print("🔴 AudioManager dispose error: $e");
+      print("📍 STACK: $stackTrace");
+    } finally {
+      _player = null;
+      print("✅ AudioManager dispose 완료");
+    }
+  }
 }
+

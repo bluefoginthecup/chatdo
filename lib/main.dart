@@ -10,6 +10,10 @@ import 'chatdo/models/message.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'chatdo/providers/audio_manager.dart';
 import 'firebase_options.dart';
+import 'chatdo/services/auto_postpone_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +32,13 @@ void main() async {
   Hive.registerAdapter(MessageAdapter());
   await Hive.openBox<Message>('messages');
   await Hive.openBox<Map>('syncQueue');
+
+  final prefs = await SharedPreferences.getInstance();
+  final isAutoPostponeEnabled = prefs.getBool('auto_postpone_enabled') ?? false;
+
+  if (isAutoPostponeEnabled) {
+    await autoPostponeUnfinishedTasks(); // 🔁 자동 미루기 함수
+  }
 
 
   runApp(

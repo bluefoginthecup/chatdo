@@ -32,27 +32,19 @@ class WeatherSceneController {
     }
   }
 
-  /// ✅ 2. 10시 이후용 창문 오버레이 (추후 구현)
-  Future<SpriteComponent> getWindowOverlay(String description) async {
-    String overlayPath;
+  /// ✅ 2. 9시 이후용 창문 날씨 배경(추후 구현)
+  Future<String> getIndoorBackground(String description) async {
     if (description.contains('rain')) {
-      overlayPath = 'window_overlay_rainy.png';
+      return 'room_bg_thunderbolt.png';
     } else if (description.contains('snow')) {
-      overlayPath = 'window_overlay_snowy.png';
+      return 'room_bg_snowy.png';
     } else if (description.contains('cloud')) {
-      overlayPath = 'window_overlay_cloudy.png';
+      return 'room_bg_cloudy.png';
     } else {
-      overlayPath = 'window_overlay_sunny.png';
+      return 'room_bg_sunny.png';
     }
-
-    final sprite = await Sprite.load(overlayPath);
-    return SpriteComponent(
-      sprite: sprite,
-      size: Vector2(100, 120),
-      position: Vector2(100, 100),
-      priority: 0,
-    );
   }
+
 
   /// ✅ 3. 날씨 JSON 대사 리스트 반환
 

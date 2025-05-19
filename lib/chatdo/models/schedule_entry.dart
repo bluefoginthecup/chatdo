@@ -15,6 +15,10 @@ class ScheduleEntry {
   final List<String>? imageUrls;
   final List<String> tags;
   final DateTime timestamp;
+  final bool isFixedDate;
+  final int postponedCount;
+  final bool isSyncedWithFirebase;
+
 
 
 
@@ -30,6 +34,9 @@ class ScheduleEntry {
     this.imageUrls,
     this.tags = const [],
     required this.timestamp,
+    this.isFixedDate = false, // ✅ 기본값
+    this.postponedCount = 0,  // ✅ 기본값
+    this.isSyncedWithFirebase = true, // ✅ 기본값
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
@@ -70,6 +77,10 @@ class ScheduleEntry {
       routineInfo: json['routineInfo'] as Map<String, dynamic>?,
       imageUrls: (json['imageUrls'] as List<dynamic>?)?.cast<String>(),
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      isFixedDate: json['isFixedDate'] ?? false,
+      postponedCount: json['postponedCount'] ?? 0,
+      isSyncedWithFirebase: json['isSyncedWithFirebase'] ?? true,
+
     );
   }
   factory ScheduleEntry.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -107,6 +118,9 @@ class ScheduleEntry {
       routineInfo: data['routineInfo'],
       imageUrls: (data['imageUrls'] as List<dynamic>?)?.cast<String>(),
       tags: (data['tags'] as List<dynamic>?)?.cast<String>() ?? [],
+      isFixedDate: data['isFixedDate'] ?? false,
+      postponedCount: data['postponedCount'] ?? 0,
+      isSyncedWithFirebase: data['isSyncedWithFirebase'] ?? true,
 
 
     );
@@ -130,6 +144,9 @@ class ScheduleEntry {
       'timestamp': createdAt.toIso8601String(),
       'mode': type.name,
       'docId': docId,
+      'isFixedDate': isFixedDate,
+      'postponedCount': postponedCount,
+      'isSyncedWithFirebase': isSyncedWithFirebase,
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (body != null) 'body': body,
       if (routineInfo != null) 'routineInfo': routineInfo,
@@ -150,6 +167,10 @@ class ScheduleEntry {
     List<String>? imageUrls,
     List<String>? tags,
     DateTime? timestamp,
+    bool? isFixedDate,
+    int? postponedCount,
+    bool? isSyncedWithFirebase,
+
   }) {
     return ScheduleEntry(
       date: date ?? this.date,
@@ -163,6 +184,10 @@ class ScheduleEntry {
       imageUrls: imageUrls ?? this.imageUrls,
       tags: tags ?? this.tags,
       timestamp: timestamp ?? this.timestamp,
+      isFixedDate: isFixedDate ?? this.isFixedDate,
+      postponedCount: postponedCount ?? this.postponedCount,
+      isSyncedWithFirebase: isSyncedWithFirebase ?? this.isSyncedWithFirebase,
+
     );
   }
 }
