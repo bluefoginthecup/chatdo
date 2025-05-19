@@ -1,4 +1,5 @@
-// audio_manager.dart (페이드 아웃만 적용)
+// audio_manager.dart
+
 import 'package:flutter/foundation.dart'; // VoidCallback 정의돼 있음
 import 'package:just_audio/just_audio.dart';
 
@@ -30,6 +31,28 @@ class AudioManager {
       print('🌊 디스포즈 완료');
     } catch (e, stackTrace) {
       print('🎵 AudioManager play error: $e');
+      print('📍 STACK: $stackTrace');
+    }
+  }
+  Future<void> playLoop(String assetPath, {double volume = 1.0}) async {
+    try {
+      final oldPlayer = _player;
+      _player = AudioPlayer();
+
+      await _player!.setAudioSource(AudioSource.asset(assetPath));
+      await _player!.setLoopMode(LoopMode.one); // 🎯 반복
+      await _player!.setVolume(volume);
+      await _player!.load();
+
+      print('🎧 loop 재생 준비됨: $assetPath');
+      await _player!.play();
+      print("✅ loop play() 호출됨");
+
+      await oldPlayer?.stop();
+      await oldPlayer?.dispose();
+      print('🌊 이전 player 정리됨');
+    } catch (e, stackTrace) {
+      print('🎵 AudioManager playLoop error: $e');
       print('📍 STACK: $stackTrace');
     }
   }

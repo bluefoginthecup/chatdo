@@ -43,8 +43,8 @@ class _TabNavState extends State<TabNav> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      setState(() => _selectedIndex = 0);
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      AudioManager.instance.stop(); // 🔇 앱이 백그라운드로 가면 음악 멈춤
     }
   }
 
