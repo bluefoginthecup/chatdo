@@ -46,7 +46,7 @@ class RoomScene extends Component with HasGameRef<FlameGame> {
     );
 
     final now = DateTime.now();
-    final isMorningWeatherTime = now.hour >= 5 && now.hour < 7;
+    final isMorningWeatherTime = now.hour >= 5 && now.hour < 12;
 
     final weatherRepo = WeatherRepository();
     final (text, _) = await weatherRepo.getTodayWeather(); // 실제 호출은 딱 1번
