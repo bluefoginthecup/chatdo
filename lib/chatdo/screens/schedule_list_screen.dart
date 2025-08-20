@@ -7,6 +7,7 @@ import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
 import '../widgets/tags/tag_filter_bar.dart';
 import '../../game/core/game_controller.dart';
+import '../utils/friendly_date_utils.dart';
 
 class ScheduleListScreen extends StatefulWidget {
   final ScheduleType type;
@@ -77,7 +78,6 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
       _isLoading = false;
     });
   }
-
   Future<void> _changeDate(int days) async {
     _slideFromRight = days > 0;
     _highlight = true;
@@ -97,7 +97,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
 
 
   Widget _buildDateHeader() {
-    final formatted = DateFormat('yyyy년 M월 d일').format(_currentDate);
+    final friendlyLabel = getFriendlyDateLabel(_currentDate);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -106,7 +106,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
           onPressed: () => _changeDate(-1),
         ),
         Text(
-          formatted,
+          friendlyLabel,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
