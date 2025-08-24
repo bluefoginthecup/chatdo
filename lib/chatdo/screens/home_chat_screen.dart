@@ -19,6 +19,7 @@ import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 import '../models/enums.dart'; // Mode, DateTag 가져오기
 
 
+
 class HomeChatScreen extends StatefulWidget {
   final GameController gameController;
   const HomeChatScreen({super.key, required this.gameController});
@@ -78,14 +79,21 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     final box = Hive.box<Message>('messages');
     final loaded = box.values.toList();
     loaded.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    final newLog = loaded.map((m) => {
-      'id': m.id,
-      'content': m.text,
-      'date': m.date.toString(),
-      if (m.imageUrl != null) 'imageUrl': m.imageUrl!,
-      if (m.imageUrls != null) 'imageUrls': m.imageUrls,
-      'tags': m.tags,
+
+    final newLog = loaded.map((m) {
+      final listUrls = (m.imageUrls ?? const <String>[]);
+      final firstUrl = m.imageUrl ?? (listUrls.isNotEmpty ? listUrls.first : null);
+      return {
+        'id': m.id,
+        'content': m.text,
+        'date': m.date.toString(),
+        if (firstUrl != null) 'imageUrl': firstUrl,      // ✅ 채팅 UI가 이 필드만 봐도 이미지 뜸
+        'imageUrls': listUrls,                            // (유지)
+        'tags': m.tags ?? const <String>[],              // (널 안전)
+      };
     }).toList();
+
+
     setState(() {
       _messageLog = List<Map<String, dynamic>>.from(newLog);
 
@@ -181,19 +189,17 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         }
       }
 
-      Widget messageContent;
-      if (imageUrl != null) {
-        messageContent = Image.network(imageUrl, width: 200);
-      } else {
-        messageContent = Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.teal.shade100,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(content),
-        );
-      }
+      final hasText = (content.trim().isNotEmpty);
+      Widget messageContent = hasText
+          ? Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.teal.shade100,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(content),
+      )
+          : const SizedBox.shrink();
 
       widgets.add(
         Align(
@@ -206,18 +212,86 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
               margin: const EdgeInsets.symmetric(vertical: 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  messageContent,
-                  IconButton(
-                    icon: const Icon(Icons.search, size: 20),
-                    onPressed: () {
-                      _openScheduleDetail(msg);
-                    },
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    splashRadius: 18,
-                  ),
-                ],
+                  children: [
+                    // 1) 제목(텍스트) — 항상 보이게
+                    messageContent,
+
+                    // 2) 대표 이미지(첫 장)
+                    //    imageUrl(단일) 없으면 imageUrls 첫 번째를 대표로 사용
+                    if ((msg['imageUrl'] != null) ||
+                        (((msg['imageUrls'] as List?)?.isNotEmpty ?? false)))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Builder(builder: (_) {
+                          final listUrls = (msg['imageUrls'] as List?)?.cast<String>() ?? const <String>[];
+                          final firstUrl = (msg['imageUrl'] as String?) ??
+                              (listUrls.isNotEmpty ? listUrls.first : null);
+                          if (firstUrl == null) return const SizedBox.shrink();
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(firstUrl, width: 200, fit: BoxFit.cover),
+                          );
+                        }),
+                      ),
+
+                    // 3) 나머지 이미지 썸네일 가로 스크롤 (네가 이미 넣어둔 그 블록)
+                    //    (firstUrl는 건너뛰고 2번째부터)
+                    if ((msg['imageUrls'] as List?)?.length != null &&
+                        (msg['imageUrls'] as List).length > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: SizedBox(
+                          height: 110,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: (msg['imageUrls'] as List).length - 1,
+                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            itemBuilder: (_, i) {
+                              final urls = (msg['imageUrls'] as List).cast<String>();
+                              final url = urls[i + 1];
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(url, width: 110, height: 110, fit: BoxFit.cover),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+
+                    // 4) 태그 칩 (이미 추가한 블록 유지)
+                    if ((msg['tags'] as List?)?.isNotEmpty == true)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: -6,
+                          children: (msg['tags'] as List).map((t) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black12,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                t.toString(),
+                                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+
+                    // 5) 기존 돋보기 버튼
+                    IconButton(
+                      icon: const Icon(Icons.search, size: 20),
+                      onPressed: () => _openScheduleDetail(msg),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 18,
+                    ),
+                  ]
+
+
               ),
             ),
           ),
@@ -228,7 +302,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     return widgets;
   }
 
-  void _openScheduleDetail(Map<String, dynamic> msg) {
+  Future<void> _openScheduleDetail(Map<String, dynamic> msg) async {
     final entry = ScheduleEntry(
       docId: msg['id'],
       content: msg['content'] ?? '',
@@ -239,14 +313,12 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
           ? (msg['tags'] as List<dynamic>).map((e) => e.toString()).toList()
           : [],
       timestamp: DateTime.now(),
-      imageUrl: msg['imageUrl'], // ✅ 추가
+      imageUrl: msg['imageUrl'],
       imageUrls: msg['imageUrls'] != null
           ? List<String>.from(msg['imageUrls'])
-          : [], // ✅ 추가
-
+          : [],
     );
-
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ScheduleDetailScreen(
@@ -255,6 +327,12 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         ),
       ),
     );
+    final String scheduleId = (msg['id'] ?? '').toString();
+    if (scheduleId.isNotEmpty) {
+      await _syncOneFromRemote(scheduleId);
+      await _loadMessagesFromHive(); // 화면 다시 로드
+    }
+
   }
 
   @override
@@ -289,4 +367,63 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       ),
     );
   }
+  Future<void> _syncOneFromRemote(String id) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+
+      // ⚠️ 네가 ScheduleUseCase에서 쓰는 컬렉션 경로가 다르면 이 줄만 바꿔라.
+
+      final ref = FirebaseFirestore.instance
+          .collection('messages')
+          .doc(uid)
+          .collection('logs')
+          .doc(id);
+
+      final snap = await ref.get();
+      if (!snap.exists) return;
+      final data = snap.data() as Map<String, dynamic>;
+
+
+      final updatedText = (data['content'] ?? '').toString();
+      final ts = data['date'];
+      final updatedDate = ts is Timestamp ? ts.toDate() : DateTime.now();
+      final updatedTags = (data['tags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+      final updatedImageUrl = data['imageUrl'] as String?;
+      final updatedImageUrls = (data['imageUrls'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+
+      final box = Hive.box<Message>('messages');
+
+      // 키를 찾아서 그 슬롯만 교체(putAt 말고 put(키)로 안전하게)
+      dynamic targetKey;
+      for (final k in box.keys) {
+        final m = box.get(k);
+        if (m is Message && m.id == id) {
+          targetKey = k;
+          break;
+        }
+      }
+      if (targetKey == null) return;
+
+      final old = box.get(targetKey) as Message;
+
+      // Message 모델에 copyWith가 있으면 그걸 쓰고,
+      // 없으면 생성자로 새로 만들어도 됨. (여기서는 안전하게 새로 생성)
+      final patched = Message(
+        id: old.id,
+        text: updatedText,
+        type: old.type,                       // 기존 것 유지
+        date: DateFormat('yyyy-MM-dd').format(updatedDate),
+        timestamp: old.timestamp,             // 정렬 안 틀어지게 기존 유지
+        imageUrl: updatedImageUrl,
+        imageUrls: updatedImageUrls.isEmpty ? old.imageUrls : updatedImageUrls,
+        tags: updatedTags.isEmpty ? old.tags : updatedTags,
+      );
+
+      await box.put(targetKey, patched);
+    } catch (e) {
+      debugPrint('syncOneFromRemote error: $e');
+    }
+  }
+
 }
