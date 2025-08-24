@@ -17,6 +17,7 @@ import '../widgets/chat_input_box.dart';
 import '/game/core/game_controller.dart';
 import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 import '../models/enums.dart'; // Mode, DateTag 가져오기
+import '../widgets/chat_message_card.dart';
 
 
 
@@ -201,102 +202,10 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       )
           : const SizedBox.shrink();
 
-      widgets.add(
-        Align(
-          alignment: Alignment.centerRight,
-          child: InkWell(
-            onDoubleTap: () {
-              _openScheduleDetail(msg);
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // 1) 제목(텍스트) — 항상 보이게
-                    messageContent,
-
-                    // 2) 대표 이미지(첫 장)
-                    //    imageUrl(단일) 없으면 imageUrls 첫 번째를 대표로 사용
-                    if ((msg['imageUrl'] != null) ||
-                        (((msg['imageUrls'] as List?)?.isNotEmpty ?? false)))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Builder(builder: (_) {
-                          final listUrls = (msg['imageUrls'] as List?)?.cast<String>() ?? const <String>[];
-                          final firstUrl = (msg['imageUrl'] as String?) ??
-                              (listUrls.isNotEmpty ? listUrls.first : null);
-                          if (firstUrl == null) return const SizedBox.shrink();
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(firstUrl, width: 200, fit: BoxFit.cover),
-                          );
-                        }),
-                      ),
-
-                    // 3) 나머지 이미지 썸네일 가로 스크롤 (네가 이미 넣어둔 그 블록)
-                    //    (firstUrl는 건너뛰고 2번째부터)
-                    if ((msg['imageUrls'] as List?)?.length != null &&
-                        (msg['imageUrls'] as List).length > 1)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: SizedBox(
-                          height: 110,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: (msg['imageUrls'] as List).length - 1,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
-                            itemBuilder: (_, i) {
-                              final urls = (msg['imageUrls'] as List).cast<String>();
-                              final url = urls[i + 1];
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(url, width: 110, height: 110, fit: BoxFit.cover),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-
-                    // 4) 태그 칩 (이미 추가한 블록 유지)
-                    if ((msg['tags'] as List?)?.isNotEmpty == true)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: -6,
-                          children: (msg['tags'] as List).map((t) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.black12,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                t.toString(),
-                                style: const TextStyle(fontSize: 12, color: Colors.black87),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-
-                    // 5) 기존 돋보기 버튼
-                    IconButton(
-                      icon: const Icon(Icons.search, size: 20),
-                      onPressed: () => _openScheduleDetail(msg),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      splashRadius: 18,
-                    ),
-                  ]
-
-
-              ),
-            ),
-          ),
-        ),
-      );
+      widgets.add(ChatMessageCard(
+        msg: msg,
+        onOpenDetail: _openScheduleDetail,
+      ));
     }
 
     return widgets;
