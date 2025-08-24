@@ -37,7 +37,7 @@ void main() async {
   final isAutoPostponeEnabled = prefs.getBool('auto_postpone_enabled') ?? false;
 
   if (isAutoPostponeEnabled) {
-    await autoPostponeUnfinishedTasks(); // 🔁 자동 미루기 함수
+    await AutoPostponeService.runIfNeeded();// 🔁 자동 미루기 함수
   }
 
 
