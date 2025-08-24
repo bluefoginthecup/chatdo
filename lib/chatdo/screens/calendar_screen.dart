@@ -15,8 +15,11 @@ class CalendarScreen extends StatefulWidget {
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
+
+
 }
 class _CalendarScreenState extends State<CalendarScreen> {
+  DateTime _dKey(DateTime d) => DateTime(d.year, d.month, d.day);
   DateTime get _today => DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
   late DateTime _focusedDate;
   late DateTime _selectedDate;
@@ -34,9 +37,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> _loadAllEntriesForMonth(DateTime monthDate) async {
     setState(() {
-      _isLoading = true;
-      _allEntriesByDate.clear();
+      _isLoading = true;              // ✅ 로딩 켜고
+      _allEntriesByDate.clear();      // ✅ 이전 데이터 비우고
     });
+
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -75,17 +79,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     setState(() {
       _allEntriesByDate = grouped;
-      final selectedEntries = grouped[_selectedDate] ?? [];
-      _entriesForSelectedDate = _sortEntries(selectedEntries);
 
+      // ✅ 선택일을 00:00으로 정규화해서 키 조회
+      final key = _dKey(_selectedDate);
+      final selectedEntries = grouped[key] ?? const <ScheduleEntry>[];
+
+      _entriesForSelectedDate = _sortEntries(selectedEntries);
       _isLoading = false;
     });
+
   }
 
   List<ScheduleEntry> _getEventsForDay(DateTime day) {
-    final key = DateTime(day.year, day.month, day.day);
-    return _allEntriesByDate[key] ?? [];
+    return _allEntriesByDate[_dKey(day)] ?? const <ScheduleEntry>[];
   }
+
 
   List<ScheduleEntry> _sortEntries(List<ScheduleEntry> entries) {
     final sorted = [...entries]; // 원본 건드리지 않게 복사
