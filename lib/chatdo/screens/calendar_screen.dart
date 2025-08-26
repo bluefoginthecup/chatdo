@@ -8,6 +8,8 @@ import 'package:table_calendar/table_calendar.dart';
 import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
 import '../../game/core/game_controller.dart';
+import 'day_schedule_list_screen.dart'; // 새 래퍼(아래 코드)
+
 
 class CalendarScreen extends StatefulWidget {
   final GameController gameController;
@@ -145,6 +147,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       debugPrint('📌 ${e.type.name} / ${e.tags.isNotEmpty ? e.tags.first : '태그없음'} / ${e.content}');
                     }
                   });
+                },
+
+                onDayLongPressed: (selected, focused) {
+                  // 날짜를 00:00으로 정규화해서 넘김
+                  final d = DateTime(selected.year, selected.month, selected.day);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DayScheduleListsScreen(
+                        date: d,
+                        gameController: widget.gameController,
+                      ),
+                    ),
+                  );
                 },
 
                 onPageChanged: (focusedDay) {

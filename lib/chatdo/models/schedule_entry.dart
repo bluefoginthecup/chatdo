@@ -18,6 +18,7 @@ class ScheduleEntry {
   final bool isFixedDate;
   final int postponedCount;
   final bool isSyncedWithFirebase;
+  final String? originDate; // ⬅️ 추가: 'yyyy-MM-dd' 문자열, Firestore에만 있을 수도
 
 
 
@@ -37,6 +38,8 @@ class ScheduleEntry {
     this.isFixedDate = false, // ✅ 기본값
     this.postponedCount = 0,  // ✅ 기본값
     this.isSyncedWithFirebase = true, // ✅ 기본값
+    this.originDate,
+
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
@@ -80,10 +83,11 @@ class ScheduleEntry {
       isFixedDate: json['isFixedDate'] ?? false,
       postponedCount: json['postponedCount'] ?? 0,
       isSyncedWithFirebase: json['isSyncedWithFirebase'] ?? true,
-
+      originDate: json['originDate'] as String?,
     );
   }
   factory ScheduleEntry.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+
     final data = doc.data()!;
     final rawDate = data['date'];
     DateTime parsedDate;
@@ -107,8 +111,6 @@ class ScheduleEntry {
     return ScheduleEntry(
       content: data['content'] ?? '',
       body: data.containsKey('body') ? data['body'] as String? ?? '' : '',
-
-
       date: parsedDate,
       type: data['mode'] == 'done' ? ScheduleType.done : ScheduleType.todo,
       createdAt: createdAt,
@@ -121,7 +123,7 @@ class ScheduleEntry {
       isFixedDate: data['isFixedDate'] ?? false,
       postponedCount: data['postponedCount'] ?? 0,
       isSyncedWithFirebase: data['isSyncedWithFirebase'] ?? true,
-
+      originDate: data['originDate'] as String?,
 
     );
   }
@@ -152,6 +154,7 @@ class ScheduleEntry {
       if (routineInfo != null) 'routineInfo': routineInfo,
       if (imageUrls != null) 'imageUrls': imageUrls,
       if (tags.isNotEmpty) 'tags': tags,
+      if (originDate != null) 'originDate': originDate,
     };
   }
 
@@ -170,6 +173,7 @@ class ScheduleEntry {
     bool? isFixedDate,
     int? postponedCount,
     bool? isSyncedWithFirebase,
+    String? originDate,
 
   }) {
     return ScheduleEntry(
@@ -187,7 +191,7 @@ class ScheduleEntry {
       isFixedDate: isFixedDate ?? this.isFixedDate,
       postponedCount: postponedCount ?? this.postponedCount,
       isSyncedWithFirebase: isSyncedWithFirebase ?? this.isSyncedWithFirebase,
-
+      originDate: originDate ?? this.originDate,
     );
   }
 }

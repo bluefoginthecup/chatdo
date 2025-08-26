@@ -98,6 +98,9 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
     final entry = widget.entry;
     final isDone = entry.type == ScheduleType.done;
     final dateStr = DateFormat('a h시 mm분', 'ko').format(entry.timestamp);
+// ✅ 현재 일정일(yyyy-MM-dd)과 처음 지정일(originDate) 준비
+    final curYmd = DateFormat('yyyy-MM-dd').format(entry.date);
+    final firstYmd = entry.originDate; // String? (예: '2025-08-20')
 
     return ListTile(
       leading: Row(
@@ -166,11 +169,22 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
             ),
           )
         ],
-      ),
-      subtitle: Text(
-        dateStr,
-        style: const TextStyle(fontSize: 12, color: Colors.grey),
-      ),
+      ),subtitle: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          dateStr, // 기존 시간 표기 유지
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        if (firstYmd != null && firstYmd != curYmd)
+          const SizedBox(height: 2),
+        if (firstYmd != null && firstYmd != curYmd)
+          Text(
+            '처음: $firstYmd',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+      ],
+    ),
 
 
 
