@@ -19,6 +19,10 @@ import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 import '../models/enums.dart'; // Mode, DateTag 가져오기
 import '../widgets/chat_message_card.dart';
 
+// 맨 위 아무 데나
+CollectionReference<Map<String, dynamic>> _userSubCol(String uid, String sub) {
+  return FirebaseFirestore.instance.collection('users').doc(uid).collection(sub);
+}
 
 
 class HomeChatScreen extends StatefulWidget {
@@ -46,7 +50,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+    _userId = FirebaseAuth.instance.currentUser?.uid;
     _loadMessagesFromHive();
     SyncService.uploadAllIfConnected();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -102,26 +106,34 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
 
     if (text.trim().isEmpty || _userId == null) return;
     final now = DateTime.now();
-    final docRef = FirebaseFirestore.instance.collection('messages').doc(_userId).collection('logs').doc();
-    final entry = ScheduleEntry(
+
+    String newId;
+   if (_userId != null) {
+   newId = _userSubCol(_userId!, 'messages').doc().id;
+   } else {
+   // 오프라인/비로그인일 때 로컬용 임시 ID
+   newId = now.microsecondsSinceEpoch.toString();
+   }
+
+   final entry = ScheduleEntry(
       content: text,
       date: date,
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
-      docId: docRef.id,
+     docId: newId,
       tags: tags,
       timestamp: DateTime.now(),
     );
-
-    await ScheduleUseCase.updateEntry(
-      entry: entry,
-      newType: entry.type,
-      provider: context.read<ScheduleProvider>(),
-      gameController: widget.gameController,
-      firestore: FirebaseFirestore.instance,
-      userId: _userId!,
-    );
-
+    if (_userId != null) {
+      await ScheduleUseCase.updateEntry(
+        entry: entry,
+        newType: entry.type,
+        provider: context.read<ScheduleProvider>(),
+        gameController: widget.gameController,
+        firestore: FirebaseFirestore.instance,
+        userId: _userId!,
+      );
+    }
     final box = await Hive.openBox<Message>('messages');
     await box.add(Message(
       id: entry.docId ?? UniqueKey().toString(),
@@ -278,13 +290,21 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
 
       // ⚠️ 네가 ScheduleUseCase에서 쓰는 컬렉션 경로가 다르면 이 줄만 바꿔라.
 
-      final ref = FirebaseFirestore.instance
-          .collection('messages')
-          .doc(uid)
-          .collection('logs')
-          .doc(id);
+    // 1) 새 경로
+    final newRef = _userSubCol(uid, 'messages').doc(id);
+    var snap = await newRef.get();
+    if (!snap.exists) {
+      // 2) 구경로(루트 messages)
+      final oldDailyRef = FirebaseFirestore.instance.collection('messages').doc(id);
+       snap = await oldDailyRef.get();
+     }
+     if (!snap.exists) {
+       // 3) 아주 옛날 경로(messages/{uid}/logs/{id})
+       final veryOldRef = FirebaseFirestore.instance
+           .collection('messages').doc(uid).collection('logs').doc(id);
+       snap = await veryOldRef.get();
+     }
 
-      final snap = await ref.get();
       if (!snap.exists) return;
       final data = snap.data() as Map<String, dynamic>;
 
