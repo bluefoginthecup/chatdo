@@ -18,7 +18,6 @@ import '/game/core/game_controller.dart';
 import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 import '../models/enums.dart'; // Mode, DateTag 가져오기
 import '../widgets/chat_message_card.dart';
-import '../services/auto_postpone_service.dart';
 
 
 
@@ -60,7 +59,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         SyncService.uploadAllIfConnected();
       }
     });
-    _autoPostponeAndReload();
   }
 
   @override
@@ -73,15 +71,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
 
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _autoPostponeAndReload(); // ✅ 자정 지나고 다시 열었을 때도 자동 반영
-      _focusNode.requestFocus(); // 네 기존 코드 유지
-    }
-  }
-
-
-
   Future<void> _loadMessagesFromHive() async {
     final box = Hive.box<Message>('messages');
     final loaded = box.values.toList();
@@ -341,11 +330,5 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     }
   }
 
-  Future<void> _autoPostponeAndReload() async {
-    final n = await AutoPostponeService.runIfNeeded(); // 설정 켜져 있으면 하루 1번만 실행
-    if (n > 0) {
-      await _loadMessagesFromHive(); // 채팅 목록 즉시 갱신
-    }
-  }
 
 }

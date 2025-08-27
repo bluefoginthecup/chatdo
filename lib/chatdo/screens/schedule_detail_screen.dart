@@ -14,6 +14,8 @@ import '../widgets/blocks/block_editor.dart';
 import '../../game/core/game_controller.dart';
 import '../widgets/tags/tag_selector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart'; // ✅ 날짜 포맷용 (DateFormat)
+
 
 
 class ScheduleDetailScreen extends StatefulWidget {
@@ -43,6 +45,8 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
 
   final ImagePicker _picker = ImagePicker();
   final GlobalKey<BlockEditorState> _blockEditorKey = GlobalKey<BlockEditorState>();
+
+  String _ymd(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
   @override
   void initState() {
@@ -90,6 +94,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
           tags: List<String>.from(data['tags'] ?? []),
           imageUrls: List<String>.from(data['imageUrls'] ?? []),
           body: raw,
+          // ✅ 여기 추가
+          originDate: data['originDate'] as String?,
+          postponedCount: (data['postponedCount'] ?? 0) as int,
         );
         _blocks = parsedBlocks;
       });
@@ -328,7 +335,51 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                     },
                   ),
               ],
+            ),// 날짜 Row 아래, 제목(Text) 위에 끼워 넣기
+            const SizedBox(height: 12),
+            Card(
+              elevation: 0,
+              color: Colors.grey.shade50,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 최초 생성일(없으면 createdAt로 대체)
+                    Row(
+                      children: [
+                        const Icon(Icons.flag, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          '최초 생성일: ${_entry.originDate ?? _ymd(_entry.createdAt)}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // 미룬 횟수
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule, size: 16),
+                        const SizedBox(width: 6),
+                        Text('미룬 횟수: ${_entry.postponedCount}회', style: const TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // 현재 예정일(이미 위에도 날짜가 있지만, 상세 카드에 같이 보여주고 싶으면 유지)
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 16),
+                        const SizedBox(width: 6),
+                        Text('현재 예정일: ${_ymd(_entry.date)}', style: const TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 8),
+
             const SizedBox(height: 16),
             _isEditing
                 ? TextField(controller: _titleController, decoration: const InputDecoration(labelText: '제목'))

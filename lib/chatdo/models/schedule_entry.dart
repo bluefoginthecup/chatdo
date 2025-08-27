@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; // ✅ Firestore 관련 클래스 (DocumentSnapshot, Timestamp)
-
+import 'package:intl/intl.dart';
 
 enum ScheduleType { todo, done }
 
@@ -115,7 +115,7 @@ class ScheduleEntry {
       type: data['mode'] == 'done' ? ScheduleType.done : ScheduleType.todo,
       createdAt: createdAt,
       timestamp: createdAt, // 혹은 위에서 새로 만든 timestamp 변수
-      docId: data['docId'],
+      docId: doc.id,
       imageUrl: data['imageUrl'],
       routineInfo: data['routineInfo'],
       imageUrls: (data['imageUrls'] as List<dynamic>?)?.cast<String>(),
@@ -127,6 +127,8 @@ class ScheduleEntry {
 
     );
   }
+
+  String? get id => null;
 
 
   static ScheduleEntry fromParsedEntry(DateTime date, ScheduleType type, String content) {
@@ -140,9 +142,10 @@ class ScheduleEntry {
   }
 
   Map<String, dynamic> toJson() {
+    final ymd = DateFormat('yyyy-MM-dd').format(date); // ✅ 형식 통일
     return {
       'content': content,
-      'date': date.toIso8601String(),
+      'date': ymd,
       'timestamp': createdAt.toIso8601String(),
       'mode': type.name,
       'docId': docId,
