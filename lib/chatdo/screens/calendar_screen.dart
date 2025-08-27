@@ -9,6 +9,10 @@ import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
 import '../../game/core/game_controller.dart';
 import 'day_schedule_list_screen.dart'; // 새 래퍼(아래 코드)
+import '../data/firestore/repos/message_repo.dart';
+import 'package:provider/provider.dart';
+
+
 
 
 class CalendarScreen extends StatefulWidget {
@@ -28,12 +32,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Map<DateTime, List<ScheduleEntry>> _allEntriesByDate = {};
   List<ScheduleEntry> _entriesForSelectedDate = [];
   bool _isLoading = true;
+  late MessageRepo _messageRepo;
+  String? _uid;
+
 
   @override
   void initState() {
     super.initState();
     _focusedDate = _today;
     _selectedDate = _today;
+    _messageRepo = context.read<MessageRepo>();  // ✅ Repo 주입
+    _uid = FirebaseAuth.instance.currentUser?.uid;
     _loadAllEntriesForMonth(_focusedDate);
   }
 
@@ -43,52 +52,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
       _allEntriesByDate.clear();      // ✅ 이전 데이터 비우고
     });
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    if (_uid == null) { setState(() => _isLoading = false); return; }
+    try {
+      final list = await _messageRepo.fetchMonth(_uid!, monthDate); // ✅ 경로 몰라도 됨
 
-    final firstDay = DateTime(monthDate.year, monthDate.month, 1);
-    final lastDay = DateTime(monthDate.year, monthDate.month + 1, 0);
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(uid)
-        .collection('logs')
-        .where('date', isGreaterThanOrEqualTo: DateFormat('yyyy-MM-dd').format(firstDay))
-        .where('date', isLessThanOrEqualTo: DateFormat('yyyy-MM-dd').format(lastDay))
-        .get();
-
-    final Map<DateTime, List<ScheduleEntry>> grouped = {};
-
-    for (final doc in snapshot.docs) {
-      final data = doc.data();
-      final dateRaw = data['date'];
-
-      DateTime date;
-      if (dateRaw is Timestamp) {
-        date = dateRaw.toDate();
-      } else if (dateRaw is String) {
-        date = DateTime.parse(dateRaw);
-      } else {
-        throw Exception('Unknown date format');
+      final Map<DateTime, List<ScheduleEntry>> grouped = {};
+      for (final e in list) {
+        final d = e.date; // ScheduleEntry가 DateTime으로 파싱되어 있다고 가정
+        final key = DateTime(d.year, d.month, d.day);
+        (grouped[key] ??= <ScheduleEntry>[]).add(e);
       }
-
-      if (date.year == monthDate.year && date.month == monthDate.month) {
-        final entry = ScheduleEntry.fromFirestore(doc);
-        final key = DateTime(date.year, date.month, date.day);
-        grouped.update(key, (list) => list..add(entry), ifAbsent: () => [entry]);
-      }
+      setState(() {
+        _allEntriesByDate = grouped;
+        final key = _dKey(_selectedDate);
+        _entriesForSelectedDate = _sortEntries(grouped[key] ?? const <ScheduleEntry>[]);
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('calendar fetch error: $e');
+      setState(() => _isLoading = false);
     }
-
-    setState(() {
-      _allEntriesByDate = grouped;
-
-      // ✅ 선택일을 00:00으로 정규화해서 키 조회
-      final key = _dKey(_selectedDate);
-      final selectedEntries = grouped[key] ?? const <ScheduleEntry>[];
-
-      _entriesForSelectedDate = _sortEntries(selectedEntries);
-      _isLoading = false;
-    });
 
   }
 

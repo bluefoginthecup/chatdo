@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
@@ -9,6 +8,10 @@ import '../widgets/tags/tag_filter_bar.dart';
 import '../../game/core/game_controller.dart';
 import '../utils/friendly_date_utils.dart';
 import '../models/enums.dart';
+// 추가
+import 'package:provider/provider.dart';
+import '../data/firestore/repos/message_repo.dart';
+
 
 
 class ScheduleListScreen extends StatefulWidget {
@@ -36,6 +39,11 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
 
   String? _selectedTag;
 
+  // 필드 추가/정리
+  late MessageRepo _messageRepo;
+  String? _uid;
+
+
   // 날짜 스와이프 충돌 방지(가장자리에서만 날짜 넘김)
   final double _edgeWidth = 24;
   double _dragDistance = 0;
@@ -45,6 +53,9 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   void initState() {
     super.initState();
     _currentDate = widget.initialDate;
+
+    _messageRepo = context.read<MessageRepo>(); // ✅ Repo 주입
+    _uid = FirebaseAuth.instance.currentUser?.uid;
     _loadEntries();
   }
 
@@ -52,43 +63,27 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
     if (!mounted) return;
     setState(() => _isLoading = true);
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      setState(() {
-        _entries = [];
-        _isLoading = false;
-      });
+    if (_uid == null) {
+      setState(() { _entries = []; _isLoading = false; });
       return;
     }
 
-    final dateString = DateFormat('yyyy-MM-dd').format(_currentDate);
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('messages')
-          .doc(uid)
-          .collection('logs')
-          .where('mode', isEqualTo: widget.type.name)
-          .where('date', isEqualTo: dateString)
-          .orderBy('timestamp')
-          .limit(200) // 과도한 로드 방지
-          .get();
-
-      final list = snapshot.docs
-          .map((doc) => ScheduleEntry.fromFirestore(doc))
-          .toList();
+      final list = await _messageRepo.fetchDayByType(
+        _uid!, _currentDate, widget.type,
+        tag: _selectedTag, // 태그 필터 쓰려면
+      );
 
       setState(() {
         _entries = list;
         _isLoading = false;
       });
     } catch (e) {
-      // 인덱스 미설정 등 오류 시 빈 목록 처리
-      setState(() {
-        _entries = [];
-        _isLoading = false;
-      });
+      debugPrint('schedule list fetch error: $e');
+      setState(() { _entries = []; _isLoading = false; });
     }
   }
+
 
   Future<void> _changeDate(int days) async {
     _slideFromRight = days > 0;
@@ -130,105 +125,82 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   ) ??
   false;
   }
-
   Future<void> _postponeEntryOneDay(ScheduleEntry entry) async {
     if (widget.type != ScheduleType.todo) return;
+    final uid = _uid;
+    final id  = entry.docId ?? entry.id; // 모델에 따라 키 확인
+    if (uid == null || id == null) return;
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null || entry.docId == null) return;
-
-    // ✅ entry.date는 이미 DateTime이므로 parse 하지 말고 그대로 사용
     final base = DateTime(entry.date.year, entry.date.month, entry.date.day);
     final next = base.add(const Duration(days: 1));
 
-    // 저장은 'yyyy-MM-dd' 문자열로
-    final currentYmd = DateFormat('yyyy-MM-dd').format(base);
-    final nextYmd = DateFormat('yyyy-MM-dd').format(next);
+    // originDate는 한 번만 세팅하고 싶을 때: entry.originDate가 없으면 현재값을 전달
+    final originYmd = entry.originDate ?? DateFormat('yyyy-MM-dd').format(base);
 
-    final ref = FirebaseFirestore.instance
-        .collection('messages').doc(uid)
-        .collection('logs').doc(entry.docId);
-
-    // ✅ 최초 생성일(originDate) 없으면 한 번만 세팅
-    await ref.set({
-      'originDate': entry.originDate ?? currentYmd,
-    }, SetOptions(merge: true));
-
-    // ✅ 날짜 변경 + 카운트 증가 + 정렬 보정
-    await ref.update({
-      'date': nextYmd,
-      'timestamp': FieldValue.serverTimestamp(),
-      'postponedCount': FieldValue.increment(1),
-    });
-
+    await _messageRepo.postponeOneDay(uid, id, next, originDateYmd: originYmd);
     await _loadEntries();
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('내일($nextYmd)로 미뤘어요')),
+      SnackBar(content: Text('내일(${DateFormat('yyyy-MM-dd').format(next)})로 미뤘어요')),
+    );
+  }
+
+  Widget _entryActionsButton(ScheduleEntry entry) {
+    final isTodo = (widget.type == ScheduleType.todo);
+    return PopupMenuButton<EntryAction>(
+      icon: const Icon(Icons.more_vert),
+      onSelected: (action) async {
+        switch (action) {
+          case EntryAction.postpone:
+            if (!isTodo) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('완료된 일은 미룰 수 없어요.')),
+              );
+              return;
+            }
+            final ok = await _confirmPostponeDialog();
+            if (ok) await _postponeEntryOneDay(entry);
+            break;
+
+          case EntryAction.delete:
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (ctx) =>
+                  AlertDialog(
+                    title: const Text('삭제'),
+                    content: const Text('이 일정을 삭제할까요?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('취소')),
+                      TextButton(onPressed: () => Navigator.pop(ctx, true),
+                          child: const Text('삭제')),
+                    ],
+                  ),
+            ) ?? false;
+            if (!ok) return;
+
+            final uid = _uid;
+            final id = entry.docId ?? entry.id;
+            if (uid == null || id == null) return;
+
+            await _messageRepo.remove(uid, id); // ✅ Repo 경유
+            await _loadEntries();
+            break;
+        }
+      },
+      itemBuilder: (ctx) =>
+      <PopupMenuEntry<EntryAction>>[
+        if (isTodo)
+          const PopupMenuItem(
+              value: EntryAction.postpone, child: Text('내일로 미루기')),
+        const PopupMenuItem(value: EntryAction.delete, child: Text('삭제')),
+      ],
     );
   }
 
 
-  Widget _entryActionsButton(ScheduleEntry entry) {
-  final isTodo = (widget.type == ScheduleType.todo);
-  return PopupMenuButton<EntryAction>(
-  icon: const Icon(Icons.more_vert),
-  onSelected: (action) async {
-  switch (action) {
-  case EntryAction.postpone:
-  if (!isTodo) {
-  ScaffoldMessenger.of(context).showSnackBar(
-  const SnackBar(content: Text('완료된 일은 미룰 수 없어요.')),
-  );
-  return;
-  }
-  final ok = await _confirmPostponeDialog();
-  if (ok) await _postponeEntryOneDay(entry);
-  break;
 
-  case EntryAction.delete:
-  final ok = await showDialog<bool>(
-  context: context,
-  builder: (ctx) => AlertDialog(
-  title: const Text('삭제'),
-  content: const Text('이 일정을 삭제할까요?'),
-  actions: [
-  TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
-  TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('삭제')),
-  ],
-  ),
-  ) ??
-  false;
-  if (!ok) return;
-
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-  if (uid == null) return;
-
-  await FirebaseFirestore.instance
-      .collection('messages')
-      .doc(uid)
-      .collection('logs')
-      .doc(entry.id)
-      .delete();
-
-  await _loadEntries();
-  break;
-  }
-  },
-  itemBuilder: (ctx) => <PopupMenuEntry<EntryAction>>[
-  if (isTodo)
-  const PopupMenuItem(
-  value: EntryAction.postpone,
-  child: Text('내일로 미루기'),
-  ),
-  const PopupMenuItem(
-  value: EntryAction.delete,
-  child: Text('삭제'),
-  ),
-  ],
-  );
-  }
 
   // ===== UI =====
 
