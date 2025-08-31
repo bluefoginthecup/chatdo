@@ -5,6 +5,7 @@ import 'package:provider/provider.dart'; //
 import '../data/firestore/repos/routine_repo.dart'; // ✅ RoutineRepo
 import '../models/routine_model.dart';
 import '../widgets/routine_edit_form.dart';
+import '../utils/weekdays.dart';
 
 class RoutineListScreen extends StatefulWidget {
   const RoutineListScreen({Key? key}) : super(key: key);
@@ -54,14 +55,18 @@ class _RoutineListScreenState extends State<RoutineListScreen> {
               final doc = docs[index];
               final data = doc.data();
               final docId = doc.id;
-              final title = (data['title'] ?? '').toString();
-              final days = Map<String, String>.from(data['days'] ?? <String, String>{});
-
-              return Column(
+              final title = (data['title'] ?? data['name'] ?? '').toString();
+              // 🔧 days 안전 캐스팅 (dynamic → Map<String,String>)
+                            final rawDays = Map<String, dynamic>.from(
+                              data['days'] ?? const <String, dynamic>{},
+                            );
+                            final days = rawDays.map((k, v) => MapEntry(k.toString(), v.toString()));
+                            // 🔒 요일 고정 순서로 표시
+                            final orderedDayKeys = sortWeekdayKeys(days.keys); return Column(
                 children: [
                   ListTile(
                     title: Text(title),
-                    subtitle: Text(days.keys.join(', ')),
+                    subtitle: Text(orderedDayKeys.join(', ')),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

@@ -1,24 +1,13 @@
 // chat_input_box.dart (로딩스피너 개별 이미지용 리팩터)
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:multi_image_picker_plus/multi_image_picker_plus.dart';
-import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/message.dart';
-import '../models/schedule_entry.dart';
-import '../providers/schedule_provider.dart';
-import '../usecases/schedule_usecase.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '/game/core/game_controller.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'tags/tag_selector.dart';
 import '../models/enums.dart';
 import '../widgets/mode_date_selector.dart';
-import '../models/content_block.dart';
 import '../utils/image_source_selector.dart';
 import '../widgets/image_upload_preview.dart';
 import '../models/upload_item.dart';
@@ -111,175 +100,6 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     });
   }
 
-  // Future<void> _handleSubmit() async {
-  //   if (_pendingUploads.isNotEmpty) {
-  //     setState(() => _isSending = true);
-  //     await _handleSendImages(widget.controller.text.trim());
-  //     setState(() {
-  //       _pendingUploads.clear();
-  //       widget.controller.clear();
-  //       _isSending = false;
-  //     });
-  //     return;
-  //   }
-  //
-  //   final text = widget.controller.text.trim();
-  //   if (text.isEmpty) return;
-  //   FocusScope.of(context).unfocus();
-  //   setState(() => _isSending = true);
-  //
-  //   widget.onSubmitted(text, _selectedMode, _selectedDate, _selectedTags);
-  //
-  //   setState(() {
-  //     widget.controller.clear();
-  //     _selectedTags.clear();
-  //     _isSending = false;
-  //   });
-  // }
-
-  // Future<void> _handleSendImages(String title) async {
-  //   final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
-  //   List<String> downloadUrls = [];
-  //   int totalBytes = 0;
-  //
-  //   for (int i = 0; i < _pendingUploads.length; i++) {
-  //     final imageFile = _pendingUploads[i].file;
-  //     final timestamp = DateTime.now().millisecondsSinceEpoch;
-  //     final fileName = '$timestamp.jpg';
-  //     final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
-  //     final tempDir = Directory.systemTemp;
-  //
-  //     final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
-  //       imageFile.absolute.path,
-  //       '${tempDir.path}/compressed_$fileName',
-  //       quality: 70,
-  //       minWidth: 720,
-  //       minHeight: 720,
-  //       format: CompressFormat.jpeg,
-  //     );
-  //
-  //     final File? compressedFile = compressedXFile != null ? File(compressedXFile.path) : null;
-  //     final File fileToUpload = compressedFile ?? imageFile;
-  //     final fileSize = await fileToUpload.length();
-  //     totalBytes += fileSize;
-  //
-  //     final metadata = SettableMetadata(contentType: 'image/jpeg');
-  //     UploadTask uploadTask = ref.putFile(fileToUpload, metadata);
-  //
-  //     uploadTask.snapshotEvents.listen((event) {
-  //       setState(() {
-  //         _pendingUploads[i].progress = event.bytesTransferred / event.totalBytes;
-  //         _pendingUploads[i].isUploading = true;
-  //       });
-  //     });
-  //
-  //     await uploadTask;
-  //     final downloadUrl = await ref.getDownloadURL();
-  //     downloadUrls.add(downloadUrl);
-  //   }
-  //
-  //   final readable = totalBytes < 1024
-  //       ? '$totalBytes B'
-  //       : totalBytes < 1024 * 1024
-  //       ? '${(totalBytes / 1024).toStringAsFixed(1)} KB'
-  //       : '${(totalBytes / 1024 / 1024).toStringAsFixed(2)} MB';
-  //
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text('메시지 전송 완료 (총 $readable)'), duration: Duration(seconds: 2)),
-  //   );
-  //
-  //   final now = DateTime.now();
-  //   final docRef = FirebaseFirestore.instance.collection('messages').doc(userId).collection('logs').doc();
-  //   final body = ContentBlock.buildJsonBody(
-  //     text: title,
-  //     imageUrls: downloadUrls,
-  //   );
-  //
-  //   final entry = ScheduleEntry(
-  //     content: title.isNotEmpty ? title : '[IMAGES]',
-  //     date: _selectedDate,
-  //     type: _selectedMode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
-  //     createdAt: now,
-  //     docId: docRef.id,
-  //     imageUrl: downloadUrls.isNotEmpty ? downloadUrls.first : null,
-  //     imageUrls: downloadUrls,
-  //     body: body,
-  //     tags: _selectedTags,
-  //     timestamp: now,
-  //   );
-  //
-  //   await ScheduleUseCase.updateEntry(
-  //     entry: entry,
-  //     newType: entry.type,
-  //     provider: context.read<ScheduleProvider>(),
-  //     gameController: widget.gameController,
-  //     firestore: FirebaseFirestore.instance,
-  //     userId: userId,
-  //   );
-  //
-  //   final box = await Hive.openBox<Message>('messages');
-  //   await box.add(Message(
-  //     id: entry.docId ?? UniqueKey().toString(),
-  //     text: entry.content,
-  //     type: entry.type.name,
-  //     date: DateFormat('yyyy-MM-dd').format(entry.date),
-  //     timestamp: now.millisecondsSinceEpoch,
-  //     imageUrl: entry.imageUrl,
-  //     imageUrls: entry.imageUrls,
-  //   ));
-  // }
-
-  // void _retryUploadAtIndex(int index) async {
-  //   final item = _pendingUploads[index];
-  //   setState(() {
-  //     item.hasError = false;
-  //     item.isUploading = true;
-  //     item.progress = 0.0;
-  //   });
-  //
-  //   final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
-  //   final timestamp = DateTime.now().millisecondsSinceEpoch;
-  //   final fileName = '$timestamp.jpg';
-  //   final ref = FirebaseStorage.instance.ref().child('chat_images').child(userId).child(fileName);
-  //   final tempDir = Directory.systemTemp;
-  //
-  //   try {
-  //     final XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
-  //       item.file.absolute.path,
-  //       '${tempDir.path}/compressed_$fileName',
-  //       quality: 70,
-  //       minWidth: 720,
-  //       minHeight: 720,
-  //       format: CompressFormat.jpeg,
-  //     );
-  //
-  //     final File fileToUpload = compressedXFile != null ? File(compressedXFile.path) : item.file;
-  //     final metadata = SettableMetadata(contentType: 'image/jpeg');
-  //
-  //     final uploadTask = ref.putFile(fileToUpload, metadata);
-  //     uploadTask.snapshotEvents.listen((event) {
-  //       setState(() {
-  //         item.progress = event.bytesTransferred / event.totalBytes;
-  //       });
-  //     });
-  //
-  //     await uploadTask;
-  //     final url = await ref.getDownloadURL();
-  //
-  //     // ✅ 업로드 성공 후 별도 처리 (예: 리스트에서 삭제하거나 메시지 전송 등)
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('재업로드 성공')),
-  //     );
-  //   } catch (e) {
-  //     setState(() {
-  //       item.hasError = true;
-  //       item.isUploading = false;
-  //     });
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('업로드 실패!')),
-  //     );
-  //   }
-  // }
 
 
   @override

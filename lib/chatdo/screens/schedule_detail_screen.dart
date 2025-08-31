@@ -18,6 +18,7 @@ import '../data/firestore/paths.dart';
 import '../data/firestore/repos/routine_repo.dart';
 import '../data/firestore/repos/message_repo.dart';
 import 'package:provider/provider.dart';
+import '../utils/weekdays.dart'; // kWeekdaysKo, sortWeekdayKeys()
 
 
 
@@ -139,7 +140,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
         );
         final url = await ref.getDownloadURL();
         out.add(url);
-        uploadIndex++;
+        uploadIndex  ;
       } else {
         debugPrint('⚠️ 로컬 이미지 경로가 없음: $src');
       }
@@ -484,15 +485,18 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   }
 
   Widget _buildRoutineInfo() {
-    final daysMap = (_entry.routineInfo!['days'] as Map).cast<String, String>();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('루틴 등록됨', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        ...daysMap.entries.map((entry) => Text('${entry.key}: ${entry.value}')),
-      ],
-    );
+    // 🔒 안전 캐스팅   요일 고정 순서 표시(월→일)
+         final raw = (_entry.routineInfo!['days'] as Map?) ?? const {};
+         final daysMap = raw.map((k, v) => MapEntry(k.toString(), v.toString()));
+         final ordered = sortWeekdayKeys(daysMap.keys); // from utils/weekdays.dart
+     
+         return Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+           children: [
+             const Text('루틴 등록됨', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+             const SizedBox(height: 8),
+             ...ordered.map((d) => Text('$d: ${daysMap[d] ?? ''}')),
+           ],
+         );
   }
 }

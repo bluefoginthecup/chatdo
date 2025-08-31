@@ -1,6 +1,7 @@
 // lib/forms/routine_edit_form.dart
 
 import 'package:flutter/material.dart';
+import '../utils/weekdays.dart';
 
 class RoutineEditForm extends StatefulWidget {
   final Map<String, String>? initialDays; // 수정할 때 초기 데이터 넘길 수 있게
@@ -15,9 +16,8 @@ class RoutineEditForm extends StatefulWidget {
   @override
   _RoutineEditFormState createState() => _RoutineEditFormState();
 }
-
 class _RoutineEditFormState extends State<RoutineEditForm> {
-  final List<String> _daysOfWeek = ['월', '화', '수', '목', '금', '토', '일'];
+  final List<String> _daysOfWeek = kWeekdaysKo;
   final Set<String> _selectedDays = {}; // 지금 선택된 요일들
   final Map<String, String> _dayTimeMap = {}; // 최종 저장될 요일별 시간
 
@@ -29,8 +29,34 @@ class _RoutineEditFormState extends State<RoutineEditForm> {
     }
   }
 
-  Future<void> _selectTimeForSelectedDays() async {
-    if (_selectedDays.isEmpty) return;
+   // 'HH:mm' → TimeOfDay
+   TimeOfDay _parseTime(String hhmm) {
+     final parts = hhmm.split(':');
+     if (parts.length != 2) return const TimeOfDay(hour: 8, minute: 0);
+     final h = int.tryParse(parts[0]) ?? 8;
+     final m = int.tryParse(parts[1]) ?? 0;
+     return TimeOfDay(hour: h, minute: m);
+   }
+ 
+   // 단일 요일 시간 편집
+   Future<void> _editTimeForDay(String day) async {
+     final initial = _dayTimeMap[day] != null
+         ? _parseTime(_dayTimeMap[day]!)
+         : const TimeOfDay(hour: 8, minute: 0);
+     final picked = await showTimePicker(
+       context: context,
+       initialTime: initial,
+     );
+     if (picked != null) {
+       setState(() {
+         _dayTimeMap[day] =
+             '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+       });
+     }
+   }
+ 
+Future<void> _selectTimeForSelectedDays() async {
+if (_selectedDays.isEmpty) return;
 
     final picked = await showTimePicker(
       context: context,
@@ -55,6 +81,7 @@ class _RoutineEditFormState extends State<RoutineEditForm> {
 
   @override
   Widget build(BuildContext context) {
+    final sortedEntries = sortWeekdayMap(_dayTimeMap);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -83,15 +110,28 @@ class _RoutineEditFormState extends State<RoutineEditForm> {
           onPressed: _selectTimeForSelectedDays,
           child: const Text('선택한 요일에 시간 설정'),
         ),
+
+             const SizedBox(height: 8),
+             Align(
+               alignment: Alignment.centerRight,
+               child: TextButton(
+                 onPressed: _selectedDays.isEmpty
+                     ? null
+                     : () => setState(() => _selectedDays.clear()),
+                 child: const Text('선택 해제'),
+               ),
+             ),
         const SizedBox(height: 24),
         const Text('설정된 요일과 시간:', style: TextStyle(fontSize: 16)),
         const SizedBox(height: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _dayTimeMap.entries.map((entry) {
+
+    children: sortedEntries.map((entry) {
             return ListTile(
               title: Text('${entry.key} - ${entry.value}'),
-              trailing: IconButton(
+    onTap: () => _editTimeForDay(entry.key), // 탭해서 시간 수정
+    trailing: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => _removeDay(entry.key),
               ),
@@ -100,12 +140,14 @@ class _RoutineEditFormState extends State<RoutineEditForm> {
         ),
         const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: () {
-            widget.onSave(_dayTimeMap); // 저장할 때 부모로 Map 넘기기
-          },
+    onPressed: _dayTimeMap.isEmpty
+                   ? null
+                   : () {
+    widget.onSave(Map<String, String>.from(_dayTimeMap)); // 방어적 복사
+    },
           child: const Text('저장하기'),
-        ),
-      ],
+    ),
+    ],
     );
+    }
   }
-}

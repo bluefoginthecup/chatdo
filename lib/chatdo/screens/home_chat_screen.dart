@@ -146,6 +146,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         'id': id,
         'content': entry.content,
         'date': entry.date.toIso8601String(),
+        'createdAt': now.millisecondsSinceEpoch,   // ✅ 시간 표시용
+        'role': 'me',
         if (entry.imageUrl != null) 'imageUrl': entry.imageUrl!,
         'imageUrls': entry.imageUrls ?? const <String>[],
         'tags': entry.tags,

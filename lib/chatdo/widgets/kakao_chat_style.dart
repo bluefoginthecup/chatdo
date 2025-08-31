@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 class KakaoTokens {
   // Colors
   static const bg = Color(0xFFEDEDED);
-  static const bubbleMine = Color(0xFF103149); // 내 말풍선 색 (원래 카톡 노랑: 0xFFFFE94D)
+  static const bubbleMine = Colors.transparent; // 내 말풍선 색 (원래 카톡 노랑: 0xFFFFE94D)
   static const bubbleOther = Colors.white;
   static const text = Color(0xFF111111);
   static const time = Color(0xFF9AA0A6);
-  static const tagFg = Color(0xFF0B0A0A);
-  static const tagBg = Color(0x2C15A8D5);
+  static const tagFg = Color(0xFFF4EDED);
+  static const tagBg = Color(0xC8E65F17);
+  // Tag spacing (추가)
+  static const tagSpacingH = 6.0; // 태그 칩들 사이 가로 간격
+  static const tagSpacingV = 4.0; // 줄바꿈 시 세로 간격(줄 간격) ← 여기 숫자만 바꾸면 됨
+
   static const contentBoxBg = Color(0xADFFC506);
   static const overlay = Colors.black45;
 
@@ -291,4 +295,38 @@ String formatKakaoTime(DateTime dt) {
   final ampm = dt.hour < 12 ? '오전' : '오후';
   final mm = dt.minute.toString().padLeft(2, '0');
   return '$ampm $h12:$mm';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// 레이아웃 정책: 메시지 맵에서 lane(right/left/center) 자동 결정
+class KakaoLayout {
+  /// 최종 lane 결정을 반환합니다.
+  /// 우선순위: 명시된 lane → 시스템/알림 힌트 → 사용자 힌트 → 기타 역할(왼쪽) → 기본값(right)
+  static String laneOf(Map<String, dynamic> msg) {
+    final lane = (msg['lane'] as String?)?.toLowerCase().trim();
+    if (lane == 'right' || lane == 'left' || lane == 'center') return lane!;
+
+    // 시스템/알림 힌트 → center
+    if (msg['isSystem'] == true) return 'center';
+    final role = (msg['role'] as String?)?.toLowerCase();
+    final source = (msg['source'] as String?)?.toLowerCase();
+    if (role == 'system' || role == 'reminder' || role == 'notice') return 'center';
+    if (source == 'calendar' || source == 'scheduler' || msg.containsKey('deliverAt')) {
+      return 'center';
+    }
+
+    // 사용자(내) 힌트 → right
+    if (role == 'me' || role == 'user' || role == 'self') return 'right';
+    if (msg['isMe'] == true) return 'right';
+    final from = (msg['from'] as String?)?.toLowerCase();
+    if (from == 'me' || from == 'user' || from == 'self' || from == 'composer') return 'right';
+
+    // 기타 역할/봇(조르디 등) → left
+    if (role != null && role.isNotEmpty) return 'left';
+
+    // 기본값: 사용자 메시지로 가정 → right
+    return 'right';
+  }
+
+  static bool isMe(Map<String, dynamic> msg) => laneOf(msg) == 'right';
+  static bool isSystem(Map<String, dynamic> msg) => laneOf(msg) == 'center';
 }

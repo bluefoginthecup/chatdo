@@ -23,3 +23,9 @@ class FirestorePathsV1 implements UserStorePaths {
   CollectionReference<Map<String, dynamic>> customTags(String uid) =>
       db.collection('users').doc(uid).collection('custom_tags');
 }
+ /// 현재 활성 경로 버전 선택기
+ UserStorePaths currentPaths(FirebaseFirestore db) {
+     return FirestorePathsV1(db);
+     // 경로 바꾸면 여기만 V2로 갈아끼우면 됨:
+     // return FirestorePathsV2(db);
+   }

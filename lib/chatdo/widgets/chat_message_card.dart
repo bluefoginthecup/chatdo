@@ -10,7 +10,7 @@ import 'kakao_chat_style.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
-/// ─────────────────────────────────────────────────────────────────────────────
+
 /// 버킷 문자열 교정(.firebasestorage.app → .appspot.com)
 String _fixBucketOnce(String url) {
   return url.replaceFirst(
@@ -156,6 +156,7 @@ class _StorageImageState extends State<StorageImage> {
 
   @override
   Widget build(BuildContext context) {
+
     final image = (_resolvedUrl == null)
         ? Container(
       width: widget.width ?? 200,
@@ -236,7 +237,9 @@ class ChatMessageCard extends StatelessWidget {
     final uploadState = (msg['uploadState'] ?? 'done').toString();
     final uploading = uploadState == 'queued' || uploadState == 'uploading';
 
-    final bool isMe = (msg['isMe'] as bool?) ?? false;
+    final lane = KakaoLayout.laneOf(msg);
+    final bool isMe = lane == 'right';
+    final bool isSystem = lane == 'center';
 
     DateTime? createdAt;
     final rawCreatedAt = msg['createdAt'];
@@ -251,6 +254,34 @@ class ChatMessageCard extends StatelessWidget {
 
     // --- 말풍선 내부 컨텐츠 구축 ---
     final List<Widget> bubbleChildren = [];
+
+    if (isSystem) {
+      final systemText = content.isNotEmpty
+          ? content
+          : ((msg['title'] as String?) ?? '알림');
+
+      return Align(
+        alignment: Alignment.center,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: KakaoTokens.gap4,
+            horizontal: KakaoTokens.gap8,
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: KakaoTokens.chipPadH,
+              vertical: KakaoTokens.chipPadV,
+            ),
+            decoration: BoxDecoration(
+              color: KakaoTokens.contentBoxBg,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(systemText, style: KakaoText.time),
+          ),
+        ),
+      );
+    }
+
 
     // 본문
     if (content.isNotEmpty) {
@@ -322,26 +353,23 @@ class ChatMessageCard extends StatelessWidget {
       );
     }
 
-    // 태그
-    if (tags.isNotEmpty) {
-      bubbleChildren
-        ..add(KakaoGap.v6)
-        ..add(
-          Wrap(
-            spacing: KakaoTokens.gap6,
-            runSpacing: -KakaoTokens.gap6,
-            children: tags.map((t) => KakaoTagChip(t)).toList(),
-          ),
-        );
-    }
+
 
     // 말풍선 + 시간
     final bubble = KakaoBubble(
       isMe: isMe,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: bubbleChildren,
-      ),
+        children: [   if (tags.isNotEmpty) ...[
+          Wrap(
+            spacing: KakaoTokens.tagSpacingH,
+            runSpacing: KakaoTokens.tagSpacingV, // ✅ 줄 간격 여기서 조절
+            children: tags.map((t) => KakaoTagChip(t)).toList(),
+          ),
+          KakaoGap.v6,
+        ],
+    ...bubbleChildren,
+    ],  ),
     );
 
     final line = Row(
