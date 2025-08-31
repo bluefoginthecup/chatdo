@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import '../models/message.dart';
 import '../data/firestore/paths.dart';
+import '../data/storage/paths.dart';
 
 class SyncService {
   static Box<Map>? _box; // 지연 오픈
@@ -119,10 +120,11 @@ class SyncService {
     }
     // 2) Storage 업로드
     final urls = <String>[];
-    for (var i = 0; i < localPaths.length; i++) {
-      final file = File(localPaths[i]);
-      final ref = FirebaseStorage.instance
-          .ref('chat_images/$uid/$messageId/$i.jpg');
+    final storage = currentStoragePaths(FirebaseStorage.instance);
+         final root = storage.chatImagesRoot(uid, messageId);
+         for (var i = 0; i < localPaths.length; i  ) {
+           final file = File(localPaths[i]);
+           final ref = root.child('$i.jpg');
       await ref.putFile(file);
       urls.add(await ref.getDownloadURL());
     }
@@ -139,7 +141,7 @@ class SyncService {
           SetOptions(merge: true),
         );
 
-    // 4) Hive 패치(상태 done + URL 치환)
+    // 4) Hive 패치(상태 done   URL 치환)
     if (targetKey != null && old != null) {
       await mbox.put(targetKey, old.copyWith(
         imageUrl: old.imageUrl ?? (urls.isNotEmpty ? urls.first : null),

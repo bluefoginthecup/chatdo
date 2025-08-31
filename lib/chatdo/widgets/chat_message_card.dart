@@ -18,10 +18,8 @@ String _fixBucketOnce(String url) {
     '/v0/b/chatdo-48bf4.appspot.com',
   );
 }
-
-/// URL에서 Storage 경로(/o/<encodedPath>)만 뽑아서 디코딩
-/// 예) https://.../o/chat_images%2Fuid%2FmsgId%2F0.jpg?alt=media&token=...
-///   → chat_images/uid/msgId/0.jpg
+///   → use UserStoragePaths.chatImagesRoot(uid, msgId)
+///      (V1: chat_images/{uid}/{msgId}/0.jpg – 중앙화 파일에 정의됨)
 String? _storagePathFromUrl(String? url) {
   if (url == null || url.isEmpty) return null;
   url = _fixBucketOnce(url);

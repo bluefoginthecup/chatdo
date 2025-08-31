@@ -8,11 +8,12 @@ class ScheduleEntry {
   final ScheduleType type;                    // todo | done
   final String content;                       // 본문 (새 스키마: text)
   final DateTime createdAt;                   // 생성 시각
-  final String? docId;                        // 문서 ID
+  final String? docId;// 문서 ID
+  final List<String> imagePaths;
   final String? imageUrl;
+  final List<String>? imageUrls;
   final String? body;
   final Map<String, dynamic>? routineInfo;
-  final List<String>? imageUrls;
   final List<String> tags;
   final DateTime timestamp;                   // 업데이트/정렬 기준 (updatedAt 성격)
   final bool isFixedDate;
@@ -26,6 +27,7 @@ class ScheduleEntry {
     required this.content,
     DateTime? createdAt,
     this.docId,
+    this.imagePaths = const [],
     this.imageUrl,
     this.body,
     this.routineInfo,
@@ -67,6 +69,7 @@ class ScheduleEntry {
       createdAt: createdAt,
       timestamp: parseDT(json['timestamp'] ?? createdAt),
       docId: json['docId'] as String?,
+      imagePaths: (json['imagePaths'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       imageUrl: json['imageUrl'] as String?,
       body: json['body'] as String?,
       routineInfo: (json['routineInfo'] as Map?)?.cast<String, dynamic>(),
@@ -77,6 +80,8 @@ class ScheduleEntry {
       isSyncedWithFirebase: (json['isSyncedWithFirebase'] as bool?) ?? true,
       originDate: json['originDate'] as String?,
     );
+
+
   }
 
   /// Firestore 문서 파서 (구/신 스키마 겸용)
@@ -109,6 +114,7 @@ class ScheduleEntry {
       createdAt: createdAt,
       timestamp: parseDT(data['timestamp'] ?? createdAt),
       docId: doc.id,
+      imagePaths: List<String>.from(data['imagePaths'] ?? const []),
       imageUrl: data['imageUrl'] as String?,
       routineInfo: (data['routineInfo'] as Map?)?.cast<String, dynamic>(),
       imageUrls: (data['imageUrls'] as List?)?.map((e) => e.toString()).toList(),
@@ -125,7 +131,6 @@ class ScheduleEntry {
   Map<String, dynamic> toFirestoreMap() {
     final utcDay = DateTime.utc(date.year, date.month, date.day);
     return {
-      'uid': null,                            // 호출부에서 주입
       'docId': docId,
       'text': content,
       'type': type.name,
@@ -133,8 +138,9 @@ class ScheduleEntry {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(timestamp),
       'tags': tags,
-      if (imageUrl != null) 'imageUrl': imageUrl,
-      if (imageUrls != null) 'imageUrls': imageUrls,
+      'imagePaths': imagePaths,
+      if (imageUrl != null) 'imageUrl': imageUrl,         // 과도기 호환
+      if (imageUrls != null) 'imageUrls': imageUrls,      // 과도기 호환
       if (body != null) 'body': body,
       if (routineInfo != null) 'routineInfo': routineInfo,
       if (originDate != null) 'originDate': originDate,
@@ -157,6 +163,7 @@ class ScheduleEntry {
       'isFixedDate': isFixedDate,
       'postponedCount': postponedCount,
       'isSyncedWithFirebase': isSyncedWithFirebase,
+      if (imagePaths.isNotEmpty) 'imagePaths': imagePaths,
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (body != null) 'body': body,
       if (routineInfo != null) 'routineInfo': routineInfo,
@@ -187,6 +194,7 @@ class ScheduleEntry {
     String? content,
     DateTime? createdAt,
     String? docId,
+    List<String>? imagePaths,
     String? imageUrl,
     String? body,
     Map<String, dynamic>? routineInfo,
@@ -204,6 +212,7 @@ class ScheduleEntry {
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
       docId: docId ?? this.docId,
+      imagePaths: imagePaths ?? this.imagePaths,
       imageUrl: imageUrl ?? this.imageUrl,
       body: body ?? this.body,
       routineInfo: routineInfo ?? this.routineInfo,

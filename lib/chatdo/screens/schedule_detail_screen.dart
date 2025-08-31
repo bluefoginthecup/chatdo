@@ -19,7 +19,7 @@ import '../data/firestore/repos/routine_repo.dart';
 import '../data/firestore/repos/message_repo.dart';
 import 'package:provider/provider.dart';
 import '../utils/weekdays.dart'; // kWeekdaysKo, sortWeekdayKeys()
-
+import '../data/storage/paths.dart';
 
 
 class ScheduleDetailScreen extends StatefulWidget {
@@ -122,6 +122,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   }) async {
     final out = <String>[];
     var uploadIndex = 0;
+    final storage = currentStoragePaths(FirebaseStorage.instance);
+        final root = storage.chatImagesRoot(uid, messageId);
+
     for (final src in inputs) {
       // 이미 URL이면 그대로 사용
       if (src.startsWith('http://') || src.startsWith('https://')) {
@@ -131,9 +134,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       // 로컬 파일이면 업로드
       final f = File(src);
       if (await f.exists()) {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('chat_images/$uid/$messageId/$uploadIndex.jpg');
+        final ref = root.child('$uploadIndex.jpg');
         await ref.putFile(
           f,
           SettableMetadata(contentType: 'image/jpeg'),
