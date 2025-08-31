@@ -7,13 +7,16 @@ import '../models/schedule_entry.dart';
 import '../providers/schedule_provider.dart';
 import '../usecases/schedule_usecase.dart';
 import '../../game/core/game_controller.dart';
+import '../data/firestore/paths.dart';
 
-/// 공통: 새/구 레퍼런스
+final _store = FirestorePathsV1(FirebaseFirestore.instance);
 DocumentReference<Map<String, dynamic>> _newRef(String uid, String id) =>
-    FirebaseFirestore.instance.collection('users').doc(uid).collection('messages').doc(id);
+      _store.messages(uid).doc(id);
 
+
+// 🔧 레거시 경로(구조: messages/{uid}/logs/{id}) — 폴백/정리용
 DocumentReference<Map<String, dynamic>> _oldRef(String uid, String id) =>
-    FirebaseFirestore.instance.collection('messages').doc(uid).collection('logs').doc(id);
+         FirebaseFirestore.instance.collection('messages').doc(uid).collection('logs').doc(id);
 
 /// 편집/삭제 다이얼로그 (신 경로 우선, 구경로 폴백)
 Future<void> showEditOrDeleteDialog({
@@ -66,9 +69,9 @@ Future<void> showEditOrDeleteDialog({
           child: const Text('저장'),
           onPressed: () async {
             final ref = await pickRef();
-            // 신 스키마로 저장(text/updatedAt). date/type은 그대로 유지.
+            // 신 스키마로 저장(content/updatedAt). date/type은 그대로 유지.
             await ref.set({
-              'text': controller.text,
+              'content': controller.text.trim(),
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
             Navigator.of(context).pop();
@@ -107,7 +110,7 @@ Future<void> markAsOtherType({
     }
     // 1-1) 구문서 데이터를 신 스키마로 업서트(migrate-lite)
     final d = os.data()!;
-    final text = (d['text'] ?? d['content'] ?? '').toString();
+    final text = (d['content'] ?? d['text'] ?? '').toString();
     final typeStr = (d['type'] ?? d['mode'] ?? currentMode).toString();
     final rawDate = d['date'];
     final DateTime date = rawDate is Timestamp
@@ -117,7 +120,7 @@ Future<void> markAsOtherType({
     await ref.set({
       'uid': uid,
       'docId': docId,
-      'text': text,
+      'content': text,
       'type': typeStr,
       'date': Timestamp.fromDate(DateTime.utc(date.year, date.month, date.day)),
       'createdAt': d['createdAt'] is Timestamp

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/user_tag.dart';
+import '../../data/firestore/paths.dart';
+import 'package:provider/provider.dart';
 
 class TagSelector extends StatefulWidget {
   final List<String>? initialSelectedTags;
@@ -57,19 +59,19 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('custom_tags')
-        .get();
+    // ✅ 직접 경로 생성 금지. Provider로 주입된 paths 사용.
+        final store = context.read<UserStorePaths>();
+        final snapshot = await store.customTags(uid).get();
+
 
     setState(() {
       for (final doc in snapshot.docs) {
-        final tag = UserTag.fromFirestore(doc.id, doc.data());
-        if (!_tags.any((t) => t.name.toLowerCase() == tag.name.toLowerCase())) {
-          _tags.add(tag);
-        }
-      }
+              final tag = UserTag.fromFirestore(doc.id, doc.data());
+              final exists = _tags.any(
+                (t) => t.name.toLowerCase() == tag.name.toLowerCase(),
+              );
+              if (!exists) _tags.add(tag);
+            }
     });
   }
 

@@ -8,13 +8,16 @@ import 'package:image_picker/image_picker.dart';
 import '../models/routine_model.dart';
 import '../models/schedule_entry.dart';
 import '../models/content_block.dart';
-import '../services/routine_service.dart';
 import '../widgets/routine_edit_form.dart';
 import '../widgets/blocks/block_editor.dart';
 import '../../game/core/game_controller.dart';
 import '../widgets/tags/tag_selector.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart'; // ✅ 날짜 포맷용 (DateFormat)
+import '../data/firestore/paths.dart';
+import '../data/firestore/repos/routine_repo.dart';
+import '../data/firestore/repos/message_repo.dart';
+import 'package:provider/provider.dart';
 
 
 
@@ -37,6 +40,7 @@ class ScheduleDetailScreen extends StatefulWidget {
 class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   late ScheduleEntry _entry;
   late TextEditingController _titleController;
+  late UserStorePaths _paths;
   bool _isEditing = false;
   bool _isRoutineFormOpen = false;
 
@@ -51,6 +55,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _paths = context.read<UserStorePaths>();
     _entry = widget.entry;
     _titleController = TextEditingController(text: _entry.content);
     _selectedTags = List.from(_entry.tags);
@@ -60,12 +65,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
 
   Future<void> _fetchLatestEntry() async {
     final userId = FirebaseAuth.instance.currentUser!.uid;
-    final doc = await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(userId)
-        .collection('logs')
-        .doc(widget.entry.docId)
-        .get();
+    final doc = await _paths.messages(userId).doc(widget.entry.docId!).get();
 
     if (!doc.exists) return;
 
@@ -114,6 +114,38 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     _titleController.dispose();
     super.dispose();
   }
+  Future<List<String>> _ensureDownloadUrls({
+    required String uid,
+    required String messageId,
+    required List<String> inputs,
+  }) async {
+    final out = <String>[];
+    var uploadIndex = 0;
+    for (final src in inputs) {
+      // 이미 URL이면 그대로 사용
+      if (src.startsWith('http://') || src.startsWith('https://')) {
+        out.add(src);
+        continue;
+      }
+      // 로컬 파일이면 업로드
+      final f = File(src);
+      if (await f.exists()) {
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('chat_images/$uid/$messageId/$uploadIndex.jpg');
+        await ref.putFile(
+          f,
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
+        final url = await ref.getDownloadURL();
+        out.add(url);
+        uploadIndex++;
+      } else {
+        debugPrint('⚠️ 로컬 이미지 경로가 없음: $src');
+      }
+    }
+    return out;
+  }
 
   Future<void> _saveChanges() async {
     debugPrint("🧪 [_saveChanges] 시작");
@@ -126,23 +158,27 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     debugPrint("📝 encodedBody: $encodedBody");
 
     final previousImagesEmpty = _entry.imageUrls == null || _entry.imageUrls!.isEmpty;
-    final newImages = currentBlocks.where((e) => e.type == 'image').map((e) => e.data).toList();
-    final isFirstImageAdded = previousImagesEmpty && newImages.isNotEmpty;
-
-    final imageUrlsToSave = isFirstImageAdded ? [newImages.first] : newImages;
-
+    final newImages = currentBlocks
+         .where((e) => e.type == 'image')
+          .map((e) => e.data.toString())
+          .toList();
+      // 로컬 경로는 업로드하여 downloadURL로 교체
+      final uploadedUrls = await _ensureDownloadUrls(
+        uid: userId,
+        messageId: _entry.docId!,
+        inputs: newImages,
+      );
+      // 네가 썸네일로 첫 장만 쓰는 로직 유지하려면 그대로
+      final isFirstImageAdded = previousImagesEmpty && uploadedUrls.isNotEmpty;
+      final imageUrlsToSave = isFirstImageAdded ? [uploadedUrls.first] : uploadedUrls;
     debugPrint("📤 Firestore 업데이트 시작");
-    await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(userId)
-        .collection('logs')
-        .doc(_entry.docId)
-        .update({
+    await _paths.messages(userId).doc(_entry.docId!).set({
       'content': _titleController.text.trim(),
       'body': encodedBody,
       'tags': _selectedTags,
       'imageUrls': imageUrlsToSave,
-    });
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
     setState(() {
       _entry = _entry.copyWith(
@@ -170,14 +206,11 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     if (_entry.docId == null) return;
 
     final dateString = "${newDate.year.toString().padLeft(4, '0')}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}";
-
-    await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(userId)
-        .collection('logs')
-        .doc(_entry.docId)
-        .update({'date': dateString});
-
+    final utcMid = DateTime.utc(newDate.year, newDate.month, newDate.day);
+    await _paths.messages(userId).doc(_entry.docId!).set({
+      'date': Timestamp.fromDate(utcMid),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
     setState(() {
       _entry = _entry.copyWith(date: newDate);
     });
@@ -203,12 +236,8 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     );
 
     if (confirm == true) {
-      await FirebaseFirestore.instance
-          .collection('messages')
-          .doc(userId)
-          .collection('logs')
-          .doc(_entry.docId)
-          .delete();
+      await _paths.messages(userId).doc(_entry.docId!).delete();
+
 
       if (widget.onUpdate != null) {
         await widget.onUpdate!();
@@ -220,8 +249,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
 
   Future<void> _saveRoutine(Map<String, String> selectedDays) async {
     final userId = FirebaseAuth.instance.currentUser!.uid;
-    final docRef = FirebaseFirestore.instance.collection('daily_routines').doc();
-
+    final docRef = _paths.dailyRoutines(userId).doc();
     final routine = Routine(
       docId: docRef.id,
       title: _entry.content,
@@ -230,19 +258,12 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
       createdAt: DateTime.now(),
     );
 
-    await RoutineService.saveRoutine(routine);
-
-    await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(userId)
-        .collection('logs')
-        .doc(_entry.docId)
-        .update({
-      'routineInfo': {
-        'docId': routine.docId,
-        'days': routine.days,
-      }
-    });
+    await context.read<RoutineRepo>().addOrUpdate(userId, routine);
+    // 루틴 연결 저장
+    await _paths.messages(userId).doc(_entry.docId!).set({
+      'routineInfo': {'docId': routine.docId, 'days': routine.days},
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));;
 
     widget.gameController.addPoints(10);
 

@@ -1,147 +1,379 @@
+// chat_message_card.dart
 
-import 'dart:io'; // ✅ 추가
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'kakao_chat_style.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ChatMessageCard extends StatelessWidget {
-  final Map<String, dynamic> msg;
-  final void Function(Map<String, dynamic>) onOpenDetail;
-  const ChatMessageCard({super.key, required this.msg, required this.onOpenDetail});
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// 버킷 문자열 교정(.firebasestorage.app → .appspot.com)
+String _fixBucketOnce(String url) {
+  return url.replaceFirst(
+    '/v0/b/chatdo-48bf4.firebasestorage.app',
+    '/v0/b/chatdo-48bf4.appspot.com',
+  );
+}
+
+/// URL에서 Storage 경로(/o/<encodedPath>)만 뽑아서 디코딩
+/// 예) https://.../o/chat_images%2Fuid%2FmsgId%2F0.jpg?alt=media&token=...
+///   → chat_images/uid/msgId/0.jpg
+String? _storagePathFromUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  url = _fixBucketOnce(url);
+  final m = RegExp(r'/o/([^?]+)').firstMatch(url);
+  if (m == null) return null;
+  final encoded = m.group(1)!;
+  return Uri.decodeComponent(encoded);
+}
+
+/// 경로에서 확장자 대체 후보를 만든다 (jpg → jpeg/png/heic도 시도)
+List<String> _altExtensionCandidates(String path) {
+  final exts = ['.jpg', '.jpeg', '.png', '.heic', '.webp'];
+  final dot = path.lastIndexOf('.');
+  if (dot < 0) return [path]; // 확장자 없음
+  final base = path.substring(0, dot);
+  final curExt = path.substring(dot).toLowerCase();
+
+  // 현 확장자 먼저, 나머지 대체
+  final ordered = [
+    curExt,
+    ...exts.where((e) => e != curExt),
+  ];
+  return ordered.map((e) => '$base$e').toList();
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// 원래 URL은 아예 로드하지 않고:
+/// 1) URL에서 path만 추출
+/// 2) 그 path로 getDownloadURL() 시도
+/// 3) 실패하면 확장자 대체 시도
+/// 4) 그래도 실패면, 폴더(listAll)에서 아무 파일이나 대표로 선택
+class StorageImage extends StatefulWidget {
+  final String? originalUrl;
+  final double? width;
+  final double? height;
+  final BoxFit? fit;
+  final BorderRadius? borderRadius;
+
+  const StorageImage({
+    super.key,
+    required this.originalUrl,
+    this.width,
+    this.height,
+    this.fit,
+    this.borderRadius,
+  });
+
+  @override
+  State<StorageImage> createState() => _StorageImageState();
+}
+
+class _StorageImageState extends State<StorageImage> {
+  String? _resolvedUrl;
+  bool _resolving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolve();
+  }
+
+  @override
+  void didUpdateWidget(covariant StorageImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.originalUrl != widget.originalUrl) {
+      _resolvedUrl = null;
+      _resolve();
+    }
+  }
+
+  Future<void> _resolve() async {
+    if (_resolving) return;
+    final raw = widget.originalUrl;
+    if (raw == null || raw.isEmpty) return;
+
+    setState(() => _resolving = true);
+
+    final path = _storagePathFromUrl(raw);
+    if (path == null) {
+      setState(() => _resolving = false);
+      return;
+    }
+
+    String? url;
+
+    // 1) 해당 경로 그대로 시도 (확장자 유지)
+    try {
+      url = await FirebaseStorage.instance.ref(path).getDownloadURL();
+    } catch (_) {
+      url = null;
+    }
+
+    // 2) 확장자 대체 시도
+    if (url == null) {
+      for (final candidate in _altExtensionCandidates(path)) {
+        try {
+          url = await FirebaseStorage.instance.ref(candidate).getDownloadURL();
+          if (url != null) break;
+        } catch (_) {
+          // 계속 시도
+        }
+      }
+    }
+
+    // 3) 폴더로 간주해 listAll()에서 첫 파일 선택
+    if (url == null) {
+      final asDir = path.endsWith('/') ? path : '$path/'; // 폴더처럼
+      try {
+        final result = await FirebaseStorage.instance.ref(asDir).listAll();
+        if (result.items.isNotEmpty) {
+          final picked = result.items.first;
+          url = await picked.getDownloadURL();
+        }
+      } catch (_) {
+        // 폴더가 아닐 수도 있음
+      }
+    }
+
+    // 4) 실패한 이전 URL 캐시 제거 (혹시 남아있다면)
+    try {
+      if (_resolvedUrl != null) {
+        await DefaultCacheManager().removeFile(_resolvedUrl!);
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      _resolvedUrl = url; // null이면 아래 errorWidget 뜸
+      _resolving = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final content   = (msg['content'] as String? ?? '').trim();
-    final tags      = (msg['tags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
-    final imageUrls = (msg['imageUrls'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
-    final firstUrl  = (msg['imageUrl'] as String?) ?? (imageUrls.isNotEmpty ? imageUrls.first : null);
+    final image = (_resolvedUrl == null)
+        ? Container(
+      width: widget.width ?? 200,
+      height: widget.height ?? 120,
+      color: Colors.black12,
+      alignment: Alignment.center,
+      child: _resolving
+          ? const CircularProgressIndicator(strokeWidth: 2)
+          : const Text('이미지 없음/경로 오류(404)', style: TextStyle(fontSize: 12)),
+    )
+        : CachedNetworkImage(
+      imageUrl: _resolvedUrl!,
+      width: widget.width,
+      height: widget.height,
+      fit: widget.fit,
+      placeholder: (_, __) => SizedBox(
+        width: widget.width ?? 200,
+        height: widget.height ?? 120,
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      errorWidget: (_, __, ___) => Container(
+        width: widget.width ?? 200,
+        height: widget.height ?? 120,
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const Text('이미지 없음/경로 오류(404)', style: TextStyle(fontSize: 12)),
+      ),
+    );
 
-    // ✅ 로컬 경로들(업로드 전 미리보기용)
-    final localPaths = (msg['localImagePaths'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+    if (widget.borderRadius != null) {
+      return ClipRRect(borderRadius: widget.borderRadius!, child: image);
+    }
+    return image;
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+class ChatMessageCard extends StatelessWidget {
+  final Map<String, dynamic> msg;
+  final void Function(Map<String, dynamic>) onOpenDetail;
+
+  const ChatMessageCard({
+    super.key,
+    required this.msg,
+    required this.onOpenDetail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // --- 데이터 파싱 (그대로) ---
+    final content = (msg['content'] as String? ?? '').trim();
+    final tags = (msg['tags'] as List?)
+        ?.map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList() ??
+        const <String>[];
+
+    final rawImageUrls = (msg['imageUrls'] as List?)
+        ?.map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList() ??
+        const <String>[];
+    final imageUrls = rawImageUrls.map(_fixBucketOnce).where((e) => e.isNotEmpty).toList();
+
+    final firstUrlRaw =
+        (msg['imageUrl'] as String?) ?? (imageUrls.isNotEmpty ? imageUrls.first : null);
+    final firstUrl = firstUrlRaw != null ? _fixBucketOnce(firstUrlRaw) : null;
+
+    final localPaths = (msg['localImagePaths'] as List?)
+        ?.map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList() ??
+        const <String>[];
     final firstLocal = localPaths.isNotEmpty ? localPaths.first : null;
 
     final uploadState = (msg['uploadState'] ?? 'done').toString();
     final uploading = uploadState == 'queued' || uploadState == 'uploading';
 
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => onOpenDetail(msg),
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // 1) 제목(텍스트) — 항상 보이게
-                if (content.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.teal.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(content),
-                  ),
+    final bool isMe = (msg['isMe'] as bool?) ?? false;
 
-                // ✅ 대표 이미지: 원격URL > 로컬파일 순
-                if (firstUrl != null || firstLocal != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: (firstUrl != null)
-                              ? CachedNetworkImage(
-                            imageUrl: firstUrl,
-                            width: 200, fit: BoxFit.cover,
-                            placeholder: (_, __) => const SizedBox(
-                              width: 200, height: 120,
-                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            ),
-                            errorWidget: (_, __, ___) => (firstLocal != null)
-                                ? Image.file(File(firstLocal), width: 200, fit: BoxFit.cover)
-                                : const Icon(Icons.broken_image),
-                          )
-                              : Image.file( // 원격이 아직 없으면 로컬 먼저
-                            File(firstLocal!),
-                            width: 200, fit: BoxFit.cover,
-                          ),
-                        ),
-                        if (uploading)
-                          Container(
-                            width: 200, height: 120,
-                            decoration: BoxDecoration(
-                              color: Colors.black26, borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(
-                              child: SizedBox(width: 22, height: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+    DateTime? createdAt;
+    final rawCreatedAt = msg['createdAt'];
+    if (rawCreatedAt is Timestamp) {
+      createdAt = rawCreatedAt.toDate();
+    } else if (rawCreatedAt is int) {
+      createdAt = DateTime.fromMillisecondsSinceEpoch(rawCreatedAt);
+    } else if (rawCreatedAt is String) {
+      try { createdAt = DateTime.parse(rawCreatedAt); } catch (_) {}
+    }
+    final String? timeText = createdAt != null ? formatKakaoTime(createdAt!) : null;
 
-                // ✅ 썸네일(두 번째 장부터): 원격 없으면 로컬로 보조
-                if (imageUrls.length + localPaths.length > 1)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: SizedBox(
-                      height: 110,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemCount: (imageUrls.length > 1 ? imageUrls.length - 1 : 0)
-                            + (localPaths.length > 1 ? localPaths.length - 1 : 0),
-                        itemBuilder: (_, i) {
-                          // 먼저 원격 썸네일부터 채우고, 모자라면 로컬 썸네일로 메움
-                          final remoteCount = (imageUrls.length > 1) ? (imageUrls.length - 1) : 0;
-                          final isRemote = i < remoteCount;
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: isRemote
-                                ? CachedNetworkImage(
-                              imageUrl: imageUrls[i + 1],
-                              width: 110, height: 110, fit: BoxFit.cover,
-                              placeholder: (_, __) => const ColoredBox(color: Colors.black12),
-                              errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 20),
-                            )
-                                : Image.file(
-                              File(localPaths[i - remoteCount + 1]),
-                              width: 110, height: 110, fit: BoxFit.cover,
-                            )
-                          );
-                        },
+    // --- 말풍선 내부 컨텐츠 구축 ---
+    final List<Widget> bubbleChildren = [];
+
+    // 본문
+    if (content.isNotEmpty) {
+      bubbleChildren.add(KakaoMessageBox(content));
+    }
+
+    // 대표 이미지
+    if (firstUrl != null || firstLocal != null) {
+      final Widget main = firstUrl != null
+          ? StorageImage(originalUrl: firstUrl, fit: KakaoTokens.imageFit)
+          : Image.file(File(firstLocal!), fit: KakaoTokens.imageFit);
+
+      bubbleChildren.add(
+        Padding(
+          // const 빼도 됩니다. (const 유지해도 컴파일 OK)
+          padding: EdgeInsets.only(top: KakaoTokens.gap6),
+          child: Stack(
+            children: [
+              KakaoMainImageFrame(child: main),
+              if (uploading) const Positioned.fill(child: KakaoUploadOverlay()),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 썸네일(두 번째 장부터)
+    final int remoteExtra = imageUrls.length > 1 ? imageUrls.length - 1 : 0;
+    final int localExtra  = localPaths.length > 1 ? localPaths.length - 1 : 0;
+    final int additionalCount = remoteExtra + localExtra;
+
+    if (additionalCount > 0) {
+      bubbleChildren.add(
+        Padding(
+          padding: EdgeInsets.only(top: KakaoTokens.gap6),
+          child: SizedBox(
+            height: KakaoTokens.thumbSize,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              separatorBuilder: (_, __) => KakaoGap.h8,
+              itemCount: additionalCount,
+              itemBuilder: (_, int i) {
+                final bool isRemote = i < remoteExtra;
+                if (isRemote) {
+                  // 원격 썸네일(대표 제외 → i+1)
+                  return KakaoThumbFrame(
+                    child: StorageImage(
+                      originalUrl: imageUrls[i + 1],
+                      fit: KakaoTokens.imageFit,
+                    ),
+                  );
+                } else {
+                  // 로컬 썸네일(대표 제외 → +1부터)
+                  final int localIdx = (i - remoteExtra) + 1;
+                  if (localIdx >= 0 && localIdx < localPaths.length) {
+                    return KakaoThumbFrame(
+                      child: Image.file(
+                        File(localPaths[localIdx]),
+                        fit: KakaoTokens.imageFit,
                       ),
-                    ),
-                  ),
-
-                // 4) 태그
-                if (tags.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Wrap(
-                      spacing: 6, runSpacing: -6,
-                      children: tags.map((t) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black12, borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(t, style: const TextStyle(fontSize: 12)),
-                      )).toList(),
-                    ),
-                  ),
-              ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }
+              },
             ),
           ),
         ),
+      );
+    }
+
+    // 태그
+    if (tags.isNotEmpty) {
+      bubbleChildren
+        ..add(KakaoGap.v6)
+        ..add(
+          Wrap(
+            spacing: KakaoTokens.gap6,
+            runSpacing: -KakaoTokens.gap6,
+            children: tags.map((t) => KakaoTagChip(t)).toList(),
+          ),
+        );
+    }
+
+    // 말풍선 + 시간
+    final bubble = KakaoBubble(
+      isMe: isMe,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: bubbleChildren,
       ),
     );
+
+    final line = Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: isMe
+          ? [
+        if (timeText != null) KakaoTime(timeText!),
+        Flexible(
+          child: ConstrainedBox(
+            constraints: kakaoMaxBubbleConstraints(context),
+            child: bubble,
+          ),
+        ),
+      ]
+          : [
+        Flexible(
+          child: ConstrainedBox(
+            constraints: kakaoMaxBubbleConstraints(context),
+            child: bubble,
+          ),
+        ),
+        if (timeText != null) KakaoTime(timeText!),
+      ],
+    );
+
+    return GestureDetector(
+      onTap: () => onOpenDetail(msg),
+      child: KakaoLine(isMe: isMe, child: line),
+    );
   }
+
+
+
 }

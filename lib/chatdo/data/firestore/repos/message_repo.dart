@@ -9,6 +9,9 @@ class MessageRepo {
   final UserStorePaths paths;
   MessageRepo(this.paths);
 
+  Future<DocumentSnapshot<Map<String,dynamic>>> getDoc(String uid, String id) =>
+      paths.messages(uid).doc(id).get();
+
   /// 새 문서 ID 미리 뽑고 싶을 때
   String newId(String uid) => paths.messages(uid).doc().id;
 

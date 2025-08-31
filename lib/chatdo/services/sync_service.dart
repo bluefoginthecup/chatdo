@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import '../models/message.dart';
+import '../data/firestore/paths.dart';
 
 class SyncService {
   static Box<Map>? _box; // 지연 오픈
@@ -94,18 +95,16 @@ class SyncService {
     final id = data['id'] as String?; // 메시지 문서 id
     if (id == null || id.isEmpty) throw 'no id';
 
-    final col = FirebaseFirestore.instance
-        .collection('users').doc(uid).collection('messages');
-    final doc = col.doc(id);
+    final paths = FirestorePathsV1(FirebaseFirestore.instance);
+    await paths.messages(uid).doc(id).set(data, SetOptions(merge: true));
 
-    await doc.set(data, SetOptions(merge: true));
   }
 
   // Storage 업로드 → Firestore URL 패치 → Hive 업데이트
   static Future<void> _handleUploadImages(Map<String, dynamic> data) async {
     final uid = data['uid'] as String?;
     final messageId = data['messageId'] as String?;
-    final paths = (data['paths'] as List).cast<String>();
+    final localPaths = (data['paths'] as List).cast<String>();
     if (uid == null || messageId == null) throw 'upload_images: bad payload';
 
     // 1) 업로드 진행 표시 (Hive 상태 uploading)
@@ -120,23 +119,25 @@ class SyncService {
     }
     // 2) Storage 업로드
     final urls = <String>[];
-    for (var i = 0; i < paths.length; i++) {
-      final file = File(paths[i]);
+    for (var i = 0; i < localPaths.length; i++) {
+      final file = File(localPaths[i]);
       final ref = FirebaseStorage.instance
           .ref('chat_images/$uid/$messageId/$i.jpg');
       await ref.putFile(file);
       urls.add(await ref.getDownloadURL());
     }
-
-    // 3) Firestore에 URL 반영
-    final doc = FirebaseFirestore.instance
-        .collection('users').doc(uid).collection('messages').doc(messageId);
-
-    await doc.set({
-      'imageUrls': FieldValue.arrayUnion(urls),
-      'imageUrl' : urls.isNotEmpty ? urls.first : null,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+// 3) Firestore에 URL 반영 (기존 URL과 머지)
+       final store = FirestorePathsV1(FirebaseFirestore.instance);
+        final existingUrls = (old?.imageUrls ?? const <String>[]);
+        // 중복 제거해서 합치기
+        final mergedUrls = [...{...existingUrls, ...urls}];
+        await store.messages(uid).doc(messageId).set(
+          {
+            'imageUrls': mergedUrls,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
 
     // 4) Hive 패치(상태 done + URL 치환)
     if (targetKey != null && old != null) {

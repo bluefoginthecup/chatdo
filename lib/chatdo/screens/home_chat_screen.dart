@@ -17,6 +17,8 @@ import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 import '../models/enums.dart'; // Mode, DateTag 가져오기
 import '../widgets/chat_message_card.dart';
 import '../data/firestore/repos/message_repo.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 
 
@@ -215,6 +217,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       )
           : const SizedBox.shrink();
 
+
       widgets.add(ChatMessageCard(
         msg: msg,
         onOpenDetail: _openScheduleDetail,
@@ -297,12 +300,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
 
+   final snap = await context.read<MessageRepo>().getDoc(uid, id);
 
-      // ✅ 정식 경로로 교체
-      final col = FirebaseFirestore.instance
-          .collection('users').doc(uid).collection('messages');
-
-      DocumentSnapshot<Map<String, dynamic>> snap = await col.doc(id).get();
 
       final data = snap.data() as Map<String, dynamic>;
 

@@ -6,6 +6,8 @@ import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
 import '../data/tag_repository.dart';
 import '/game/core/game_controller.dart';
+import 'package:provider/provider.dart';
+import '../data/firestore/paths.dart';
 
 class TagLogScreen extends StatefulWidget {
   final GameController gameController;
@@ -54,14 +56,12 @@ class _TagLogScreenState extends State<TagLogScreen> {
       return;
     }
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('messages')
-        .doc(uid)
-        .collection('logs')
-        .where('tags', arrayContains: tagName)
-        .orderBy('timestamp', descending: true)
-        .limit(100)
-        .get();
+    final paths = context.read<UserStorePaths>();
+     final snapshot = await paths.messages(uid)
+       .where('tags', arrayContains: tagName)
+       .orderBy('timestamp', descending: true)
+       .limit(100)
+       .get();
 
     setState(() {
       _entries =
