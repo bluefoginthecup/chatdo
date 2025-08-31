@@ -1,3 +1,6 @@
+
+import 'dart:io'; // ✅ 추가
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -8,17 +11,24 @@ class ChatMessageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = (msg['content'] as String? ?? '').trim();
-    final tags = (msg['tags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
-    final imageUrls = (msg['imageUrls'] as List?)?.cast<String>() ?? const <String>[];
-    final firstUrl = (msg['imageUrl'] as String?) ?? (imageUrls.isNotEmpty ? imageUrls.first : null);
+    final content   = (msg['content'] as String? ?? '').trim();
+    final tags      = (msg['tags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+    final imageUrls = (msg['imageUrls'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+    final firstUrl  = (msg['imageUrl'] as String?) ?? (imageUrls.isNotEmpty ? imageUrls.first : null);
+
+    // ✅ 로컬 경로들(업로드 전 미리보기용)
+    final localPaths = (msg['localImagePaths'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+    final firstLocal = localPaths.isNotEmpty ? localPaths.first : null;
+
+    final uploadState = (msg['uploadState'] ?? 'done').toString();
+    final uploading = uploadState == 'queued' || uploadState == 'uploading';
 
     return Align(
       alignment: Alignment.centerRight,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => onOpenDetail(msg), // 메시지 어디를 눌러도 상세 열기
+          onTap: () => onOpenDetail(msg),
           borderRadius: BorderRadius.circular(10),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 4),
@@ -36,45 +46,76 @@ class ChatMessageCard extends StatelessWidget {
                     child: Text(content),
                   ),
 
-                // 2) 대표 이미지(첫 장)
-                if (firstUrl != null)
+                // ✅ 대표 이미지: 원격URL > 로컬파일 순
+                if (firstUrl != null || firstLocal != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: firstUrl,
-                        width: 200,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => SizedBox(
-                          width: 200, height: 120,
-                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: (firstUrl != null)
+                              ? CachedNetworkImage(
+                            imageUrl: firstUrl,
+                            width: 200, fit: BoxFit.cover,
+                            placeholder: (_, __) => const SizedBox(
+                              width: 200, height: 120,
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            ),
+                            errorWidget: (_, __, ___) => (firstLocal != null)
+                                ? Image.file(File(firstLocal), width: 200, fit: BoxFit.cover)
+                                : const Icon(Icons.broken_image),
+                          )
+                              : Image.file( // 원격이 아직 없으면 로컬 먼저
+                            File(firstLocal!),
+                            width: 200, fit: BoxFit.cover,
+                          ),
                         ),
-                        errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
-                      ),
+                        if (uploading)
+                          Container(
+                            width: 200, height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.black26, borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: SizedBox(width: 22, height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
 
-                // 3) 썸네일(두 번째 장부터)
-                if (imageUrls.length > 1)
+                // ✅ 썸네일(두 번째 장부터): 원격 없으면 로컬로 보조
+                if (imageUrls.length + localPaths.length > 1)
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: SizedBox(
                       height: 110,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: imageUrls.length - 1,
                         separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemCount: (imageUrls.length > 1 ? imageUrls.length - 1 : 0)
+                            + (localPaths.length > 1 ? localPaths.length - 1 : 0),
                         itemBuilder: (_, i) {
-                          final url = imageUrls[i + 1];
+                          // 먼저 원격 썸네일부터 채우고, 모자라면 로컬 썸네일로 메움
+                          final remoteCount = (imageUrls.length > 1) ? (imageUrls.length - 1) : 0;
+                          final isRemote = i < remoteCount;
                           return ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: CachedNetworkImage(
-                              imageUrl: url,
+                            child: isRemote
+                                ? CachedNetworkImage(
+                              imageUrl: imageUrls[i + 1],
                               width: 110, height: 110, fit: BoxFit.cover,
                               placeholder: (_, __) => const ColoredBox(color: Colors.black12),
                               errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 20),
-                            ),
+                            )
+                                : Image.file(
+                              File(localPaths[i - remoteCount + 1]),
+                              width: 110, height: 110, fit: BoxFit.cover,
+                            )
                           );
                         },
                       ),

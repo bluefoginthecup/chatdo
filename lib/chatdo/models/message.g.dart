@@ -23,15 +23,17 @@ class MessageAdapter extends TypeAdapter<Message> {
       date: fields[3] as String,
       timestamp: fields[4] as int,
       imageUrl: fields[5] as String?,
-      tags: (fields[6] as List?)?.cast<String>() ?? [],
-
+      tags: (fields[6] as List?)?.cast<String>(),
+      imageUrls: (fields[7] as List?)?.cast<String>(),
+      localImagePaths: (fields[8] as List?)?.cast<String>(),
+      uploadState: fields[9] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Message obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -45,7 +47,13 @@ class MessageAdapter extends TypeAdapter<Message> {
       ..writeByte(5)
       ..write(obj.imageUrl)
       ..writeByte(6)
-      ..write(obj.tags);
+      ..write(obj.tags)
+      ..writeByte(7)
+      ..write(obj.imageUrls)
+      ..writeByte(8)
+      ..write(obj.localImagePaths)
+      ..writeByte(9)
+      ..write(obj.uploadState);
   }
 
   @override

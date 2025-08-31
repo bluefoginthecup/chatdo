@@ -55,25 +55,35 @@ class ImageUploadPreview extends StatelessWidget {
                 Positioned.fill(
                   child: Container(
                     color: Colors.black45,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: item.progress,
-                          strokeWidth: 4,
-                          backgroundColor: Colors.black26,
-                          color: Colors.tealAccent,
-                        ),
-                        Text(
-                          '${(item.progress * 100).toStringAsFixed(0)}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                    child: Builder(builder: (_) {
+                      // ✅ NaN/Infinity/범위초과 방어
+                      final raw = item.progress; // double? 이어도 됨
+                      final double? safe = (raw != null && raw.isFinite)
+                          ? (raw < 0.0 ? 0.0 : (raw > 1.0 ? 1.0 : raw))
+                          : null;
+                      final int? percent = safe != null ? (safe * 100).round() : null;
+
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: safe,                 // ✅ invalid면 null → 무한 로딩
+                            strokeWidth: 4,
+                            backgroundColor: Colors.black26,
+                            color: Colors.tealAccent,
                           ),
-                        ),
-                      ],
-                    ),
+                          if (percent != null)
+                            Text(
+                              '$percent%',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
                   ),
                 ),
               Positioned(

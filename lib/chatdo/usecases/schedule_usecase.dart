@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/schedule_entry.dart';
 import '../providers/schedule_provider.dart';
 import '../../game/core/game_controller.dart';
+import '../data/firestore/paths.dart';
 
 class ScheduleUseCase {
   static Future<void> updateEntry({
@@ -13,13 +14,17 @@ class ScheduleUseCase {
     required FirebaseFirestore firestore,
     required String userId,
   }) async {
+    final paths = FirestorePathsV1(firestore);
+    // id 보장
+    final id = entry.docId ?? paths.messages(userId).doc().id;
+
     final oldType = entry.type;
     final updated = ScheduleEntry(
       content: entry.content,
       date: entry.date,
       type: newType,
       createdAt: entry.createdAt,
-      docId: entry.docId,
+      docId: id,
       tags: entry.tags,
       imageUrl: entry.imageUrl,
       imageUrls: entry.imageUrls,
@@ -39,25 +44,25 @@ class ScheduleUseCase {
     }
 
     try {
-      final docRef = firestore
-          .collection('messages')
-          .doc(userId)
-          .collection('logs')
-          .doc(entry.docId);
+      // 🔧 스키마 통일: text/type/date(Timestamp)
+      final utcDay = DateTime.utc(
+          updated.date.year, updated.date.month, updated.date.day);
 
-      await docRef.set({
-        'content': updated.content,
-        'date': updated.date.toIso8601String().substring(0, 10),
-        'mode': updated.type.name,
-        'timestamp': Timestamp.fromDate(updated.createdAt),
-        'docId': updated.docId,
-        'order': 0, // 기본 order. 나중에 지정 가능
-        'tags': entry.tags,
+      await paths.messages(userId).doc(id).set({
+        'uid': userId,
+        'docId': id,
+        'text': updated.content,                 // ← content → text
+        'type': updated.type.name,               // ← type 고정
+        'date': Timestamp.fromDate(utcDay),      // ← 문자열 말고 Timestamp(자정)
+        'createdAt': updated.createdAt != null
+            ? Timestamp.fromDate(updated.createdAt!)
+            : FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'tags': updated.tags ?? const <String>[],
         if (updated.imageUrl != null) 'imageUrl': updated.imageUrl,
         if (updated.imageUrls != null) 'imageUrls': updated.imageUrls,
         if (updated.body != null) 'body': updated.body,
       }, SetOptions(merge: true));
-
 
       print('✅ Firestore 문서 생성 또는 업데이트 완료: ${updated.content}');
     } catch (e) {

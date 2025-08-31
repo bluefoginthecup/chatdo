@@ -10,19 +10,15 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/schedule_entry.dart';
 import '../models/message.dart';
-import '../providers/schedule_provider.dart';
 import '../services/sync_service.dart';
-import '../usecases/schedule_usecase.dart';
 import '../widgets/chat_input_box.dart';
 import '/game/core/game_controller.dart';
 import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 import '../models/enums.dart'; // Mode, DateTag 가져오기
 import '../widgets/chat_message_card.dart';
+import '../data/firestore/repos/message_repo.dart';
 
-// 맨 위 아무 데나
-CollectionReference<Map<String, dynamic>> _userSubCol(String uid, String sub) {
-  return FirebaseFirestore.instance.collection('users').doc(uid).collection(sub);
-}
+
 
 
 class HomeChatScreen extends StatefulWidget {
@@ -45,12 +41,15 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   late final Stream<ConnectivityResult> _connectivityStream;
   late final StreamSubscription<ConnectivityResult> _subscription;
   bool _shouldRefocusOnResume = true;
+  late MessageRepo _messageRepo;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _userId = FirebaseAuth.instance.currentUser?.uid;
+    _messageRepo = context.read<MessageRepo>();
+
     _loadMessagesFromHive();
     SyncService.uploadAllIfConnected();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,6 +86,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         'id': m.id,
         'content': m.text,
         'date': m.date.toString(),
+        'type': m.type,
         if (firstUrl != null) 'imageUrl': firstUrl,      // ✅ 채팅 UI가 이 필드만 봐도 이미지 뜸
         'imageUrls': listUrls,                            // (유지)
         'tags': m.tags ?? const <String>[],              // (널 안전)
@@ -101,63 +101,69 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     await Future.delayed(const Duration(milliseconds: 100));
     _scrollToBottom();
   }
-  void _handleSendMessage(String text, Mode mode, DateTime date, List<String> tags)
- async {
+  void _handleSendMessage(
+      String text, Mode mode, DateTime date, List<String> tags,{
+  List<String> localPaths = const [],
+
+      }) async {
 
     if (text.trim().isEmpty || _userId == null) return;
     final now = DateTime.now();
+    final id = _messageRepo.newId(_userId!); // ✅ repo에서 ID 발급
 
-    String newId;
-   if (_userId != null) {
-   newId = _userSubCol(_userId!, 'messages').doc().id;
-   } else {
-   // 오프라인/비로그인일 때 로컬용 임시 ID
-   newId = now.microsecondsSinceEpoch.toString();
-   }
-
-   final entry = ScheduleEntry(
+    final entry = ScheduleEntry(
+      docId: id,
       content: text,
-      date: date,
+      date: date,                                  // 사용자가 고른 로컬 날짜
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
-     docId: newId,
+      timestamp: now,                              // 화면 정렬 기준
       tags: tags,
-      timestamp: DateTime.now(),
     );
-    if (_userId != null) {
-      await ScheduleUseCase.updateEntry(
-        entry: entry,
-        newType: entry.type,
-        provider: context.read<ScheduleProvider>(),
-        gameController: widget.gameController,
-        firestore: FirebaseFirestore.instance,
-        userId: _userId!,
-      );
-    }
+    // ✅ Firestore 저장 (있으면 업데이트, 없으면 생성)
+    await _messageRepo.upsertEntry(_userId!, entry);
+    // ✅ 로컬(Hive)에도 반영
     final box = await Hive.openBox<Message>('messages');
     await box.add(Message(
-      id: entry.docId ?? UniqueKey().toString(),
+      id: id,
       text: entry.content,
       type: entry.type.name,
       date: DateFormat('yyyy-MM-dd').format(entry.date),
       timestamp: now.millisecondsSinceEpoch,
       imageUrl: entry.imageUrl,
+      imageUrls: entry.imageUrls,
+      tags: entry.tags,
+      localImagePaths: localPaths,
+      uploadState: localPaths.isEmpty ? 'done' : 'queued', // 🔹 상태
     ));
 
+    // ✅ 화면 목록 갱신
     setState(() {
       _messages.add(entry);
       _messageLog.add({
-        'id': entry.docId ?? '',
+        'id': id,
         'content': entry.content,
         'date': entry.date.toIso8601String(),
         if (entry.imageUrl != null) 'imageUrl': entry.imageUrl!,
+        'imageUrls': entry.imageUrls ?? const <String>[],
         'tags': entry.tags,
+        'localImagePaths': localPaths,
+        'uploadState': localPaths.isEmpty ? 'done' : 'queued',
       });
     });
     _controller.clear();
     _focusNode.unfocus();
     _shouldRefocusOnResume = true;
     _scrollToBottom();
+    // _handleSendMessage 끝부분에 추가
+    if (localPaths.isNotEmpty) {
+      SyncService.enqueueImageUpload(
+        uid: _userId!,
+        messageId: id,
+        localPaths: localPaths,
+      );
+    }
+
   }
 
   void _scrollToBottom() {
@@ -219,11 +225,12 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   }
 
   Future<void> _openScheduleDetail(Map<String, dynamic> msg) async {
+    final typeName = (msg['type'] ?? 'todo').toString();
     final entry = ScheduleEntry(
       docId: msg['id'],
       content: msg['content'] ?? '',
-      date: DateTime.tryParse(msg['date'] ?? '') ?? DateTime.now(),
-      type: ScheduleType.todo,
+      date: DateTime.tryParse(msg['date'] ?? '')?.toLocal() ?? DateTime.now(),
+      type: typeName == 'done' ? ScheduleType.done : ScheduleType.todo, // ✅
       createdAt: DateTime.now(),
       tags: msg['tags'] != null
           ? (msg['tags'] as List<dynamic>).map((e) => e.toString()).toList()
@@ -275,7 +282,9 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
                 gameController: widget.gameController,
                 controller: _controller,
                 focusNode: _focusNode,
-                onSubmitted: _handleSendMessage,
+                onSubmitted: (text, mode, date, tags, {localPaths = const []}) {
+                  _handleSendMessage(text, mode, date, tags, localPaths: localPaths);
+                },
               ),
             ),
           ],
@@ -288,57 +297,49 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
 
-      // ⚠️ 네가 ScheduleUseCase에서 쓰는 컬렉션 경로가 다르면 이 줄만 바꿔라.
 
-    // 1) 새 경로
-    final newRef = _userSubCol(uid, 'messages').doc(id);
-    var snap = await newRef.get();
-    if (!snap.exists) {
-      // 2) 구경로(루트 messages)
-      final oldDailyRef = FirebaseFirestore.instance.collection('messages').doc(id);
-       snap = await oldDailyRef.get();
-     }
-     if (!snap.exists) {
-       // 3) 아주 옛날 경로(messages/{uid}/logs/{id})
-       final veryOldRef = FirebaseFirestore.instance
-           .collection('messages').doc(uid).collection('logs').doc(id);
-       snap = await veryOldRef.get();
-     }
+      // ✅ 정식 경로로 교체
+      final col = FirebaseFirestore.instance
+          .collection('users').doc(uid).collection('messages');
 
-      if (!snap.exists) return;
+      DocumentSnapshot<Map<String, dynamic>> snap = await col.doc(id).get();
+
       final data = snap.data() as Map<String, dynamic>;
 
+      // 2) 원격 데이터 파싱
+      final updatedText = (data['text'] ?? data['content'] ?? '').toString();
 
-      final updatedText = (data['content'] ?? '').toString();
+      // ✅ 날짜는 로컬로
       final ts = data['date'];
-      final updatedDate = ts is Timestamp ? ts.toDate() : DateTime.now();
+      final updatedDate = ts is Timestamp
+          ? ts.toDate().toLocal()
+          : DateTime.tryParse(ts?.toString() ?? '')?.toLocal() ?? DateTime.now();
       final updatedTags = (data['tags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
       final updatedImageUrl = data['imageUrl'] as String?;
-      final updatedImageUrls = (data['imageUrls'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+      final updatedImageUrls = (data['imageUrls'] as List?)?.map((e) => e.toString()).toList()
+          ?? const <String>[];
+      final remoteTypeStr = (data['type'] ?? data['mode'] ?? '').toString();
+
 
       final box = Hive.box<Message>('messages');
-
-      // 키를 찾아서 그 슬롯만 교체(putAt 말고 put(키)로 안전하게)
       dynamic targetKey;
+      Message? old;
       for (final k in box.keys) {
         final m = box.get(k);
-        if (m is Message && m.id == id) {
-          targetKey = k;
-          break;
-        }
+        if (m is Message && m.id == id) { targetKey = k; old = m; break; }
       }
-      if (targetKey == null) return;
+      if (targetKey == null || old == null) return;
 
-      final old = box.get(targetKey) as Message;
+      final typeForHive = remoteTypeStr.isNotEmpty ? remoteTypeStr
+          : (old.type.isNotEmpty ? old.type : 'todo');
 
-      // Message 모델에 copyWith가 있으면 그걸 쓰고,
-      // 없으면 생성자로 새로 만들어도 됨. (여기서는 안전하게 새로 생성)
+      // 5) 패치해서 저장
       final patched = Message(
         id: old.id,
         text: updatedText,
-        type: old.type,                       // 기존 것 유지
+        type: typeForHive, // ← 여기서 old를 이미 확보했으니 오류 없음
         date: DateFormat('yyyy-MM-dd').format(updatedDate),
-        timestamp: old.timestamp,             // 정렬 안 틀어지게 기존 유지
+        timestamp: old.timestamp, // 정렬 유지
         imageUrl: updatedImageUrl,
         imageUrls: updatedImageUrls.isEmpty ? old.imageUrls : updatedImageUrls,
         tags: updatedTags.isEmpty ? old.tags : updatedTags,
@@ -349,6 +350,5 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       debugPrint('syncOneFromRemote error: $e');
     }
   }
-
 
 }

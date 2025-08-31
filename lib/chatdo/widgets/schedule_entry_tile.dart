@@ -31,6 +31,8 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
   bool _isTapped = false;
+  bool _alive = true; // 👈 mounted 가드 보조 플래그
+
   String extractPreviewText(String? body) {
     try {
       final raw = body ?? '[]';
@@ -50,6 +52,7 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
   @override
   void initState() {
     super.initState();
+    _alive = true;
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 100),
@@ -65,32 +68,45 @@ class _ScheduleEntryTileState extends State<ScheduleEntryTile>
 
   @override
   void dispose() {
+    _alive = false;
     _controller.dispose();
     super.dispose();
   }
 
   Future<void> _onIconTap() async {
+    if (!mounted) return;           // 초장 가드
+    setState(() => _isTapped = true);
     HapticFeedback.lightImpact();
-    setState(() => _isTapped = true);
-    await _controller.reverse();
-    await Future.delayed(const Duration(milliseconds: 80));
 
-    if (!mounted) return;
+    try {
+      // 애니메이션
+      await _controller.reverse();
+      if (!mounted || !_alive) return;
+      await Future.delayed(const Duration(milliseconds: 80));
+      if (!mounted || !_alive) return;
 
-    await markAsOtherType(
-      docId: widget.entry.docId!,
-      currentMode: widget.entry.type.name,
-      gameController: widget.gameController,
-      currentDate: widget.entry.date,
-      onRefresh: widget.onRefresh,
-      context: context,
-    );
+      // 상태 전환 (todo <-> done)
+      await markAsOtherType(
+        docId: widget.entry.docId!,
+        currentMode: widget.entry.type.name,
+        gameController: widget.gameController,
+        currentDate: widget.entry.date,
+        onRefresh: widget.onRefresh, // ⛳️ markAsOtherType 안에서 이미 refresh 호출
+        context: context,
+      );
 
-    if (!mounted) return;
 
-    await widget.onRefresh();
-    setState(() => _isTapped = true);
-    _controller.forward();
+      // 추가 refresh가 꼭 필요하면 아래 한 번만.
+      // await widget.onRefresh();
+    } catch (e) {
+      // 필요 시 로그
+      debugPrint('ScheduleEntryTile _onIconTap error: $e');
+    } finally {
+      if (!mounted || !_alive) return;
+      setState(() => _isTapped = false);
+      // 컨트롤러가 dispose됐을 수도 있으니 alive/mounted 가드 뒤에 호출
+      await _controller.forward();
+    }
   }
 
   @override
