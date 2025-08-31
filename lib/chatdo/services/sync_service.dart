@@ -118,7 +118,6 @@ class SyncService {
     if (targetKey != null && old != null) {
       await mbox.put(targetKey, old.copyWith(uploadState: 'uploading'));
     }
-
     // 2) Storage 업로드
     final urls = <String>[];
     for (var i = 0; i < paths.length; i++) {
