@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '/chatdo/features/text_dictionary/text_dictinary_screen.dart';
+
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -62,7 +64,19 @@ class _MenuScreenState extends State<MenuScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('더보기')),
       body: Column(
-        children: [
+        children: [ ListTile(
+          title: const Text('텍스트 사전 관리'),
+          trailing: const Icon(Icons.arrow_forward_ios),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const TextDictionaryScreen(),
+              ),
+            );
+          },
+        ),
+
           SwitchListTile(
             title: const Text('자동 미루기'),
             subtitle: const Text('하루가 지나면 완료되지 않은 일정을 자동으로 다음날로 옮깁니다'),

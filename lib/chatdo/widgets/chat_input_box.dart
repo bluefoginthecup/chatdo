@@ -11,6 +11,8 @@ import '../widgets/mode_date_selector.dart';
 import '../utils/image_source_selector.dart';
 import '../widgets/image_upload_preview.dart';
 import '../models/upload_item.dart';
+import '../features/text_dictionary/custom_typeahead_textfield.dart';
+
 
 
 class ChatInputBox extends StatefulWidget {
@@ -152,14 +154,10 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               onPressed: _showImageSourceSelector,
             ),
             Expanded(
-              child: TextField(
+              child: CustomTypeAheadTextField(
                 controller: widget.controller,
-                focusNode: widget.focusNode,
+                hintText: '메시지를 입력하세요',
                 onSubmitted: (_) => _handleSubmit(),
-                decoration: const InputDecoration(
-                  hintText: '메시지를 입력하세요',
-                  border: OutlineInputBorder(),
-                ),
               ),
             ),
             const SizedBox(width: 8),
