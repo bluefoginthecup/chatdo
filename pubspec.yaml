@@ -67,6 +67,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   build_runner: ^2.4.6
   hive_generator: ^2.0.1
+  flutter_lints: ^2.0.0
 
 flutter_launcher_icons:
   image_path: "assets/app_icon.png"   # 아이콘으로 사용할 이미지 경로

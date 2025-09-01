@@ -5,6 +5,8 @@ abstract class UserStorePaths {
   CollectionReference<Map<String, dynamic>> messages(String uid);
   CollectionReference<Map<String, dynamic>> dailyRoutines(String uid);
   CollectionReference<Map<String, dynamic>> customTags(String uid); // ← 컬렉션(문서=태그)
+  DocumentReference<Map<String, dynamic>> textDictionary(String uid); // ✅ 추가
+
 }
 
 class FirestorePathsV1 implements UserStorePaths {
@@ -22,6 +24,11 @@ class FirestorePathsV1 implements UserStorePaths {
   @override
   CollectionReference<Map<String, dynamic>> customTags(String uid) =>
       db.collection('users').doc(uid).collection('custom_tags');
+
+  @override
+  DocumentReference<Map<String, dynamic>> textDictionary(String uid) =>
+      db.collection('users').doc(uid).collection('text_dictionary').doc('default');
+
 }
  /// 현재 활성 경로 버전 선택기
  UserStorePaths currentPaths(FirebaseFirestore db) {
@@ -29,3 +36,5 @@ class FirestorePathsV1 implements UserStorePaths {
      // 경로 바꾸면 여기만 V2로 갈아끼우면 됨:
      // return FirestorePathsV2(db);
    }
+
+

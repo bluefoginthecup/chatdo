@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/routine_model.dart';
 import '../models/schedule_entry.dart';
 import '../models/content_block.dart';
@@ -12,14 +11,13 @@ import '../widgets/routine_edit_form.dart';
 import '../widgets/blocks/block_editor.dart';
 import '../../game/core/game_controller.dart';
 import '../widgets/tags/tag_selector.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart'; // ✅ 날짜 포맷용 (DateFormat)
 import '../data/firestore/paths.dart';
 import '../data/firestore/repos/routine_repo.dart';
-import '../data/firestore/repos/message_repo.dart';
 import 'package:provider/provider.dart';
 import '../utils/weekdays.dart'; // kWeekdaysKo, sortWeekdayKeys()
-import '../data/storage/paths.dart';
+import '../usecases/schedule_delete_entry.dart';
+import '../services/image_upload_service.dart';
 
 
 class ScheduleDetailScreen extends StatefulWidget {
@@ -48,10 +46,35 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   List<ContentBlock> _blocks = [];
   List<String> _selectedTags = [];
 
-  final ImagePicker _picker = ImagePicker();
   final GlobalKey<BlockEditorState> _blockEditorKey = GlobalKey<BlockEditorState>();
 
   String _ymd(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+
+  // _ScheduleDetailScreenState 안에 추가
+  Future<List<String>> _uploadNewImagesAndReturnPaths(List<String> inputs) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final files = <File>[];
+    for (final src in inputs) {
+      if (src.startsWith('http://') || src.startsWith('https://')) continue;
+      final f = File(src);
+      if (await f.exists()) files.add(f);
+    }
+    if (files.isEmpty) return const [];
+
+    return ImageUploadService.uploadAndAttachImages(
+      collectionPathForUser: 'users/$uid/messages',
+      docId: _entry.docId,
+      files: files,
+      currentImagePaths: _entry.imagePaths,
+    );
+  }
+
+  Future<String?> _firstUrlFromPaths(List<String> paths) async {
+    if (paths.isEmpty) return null;
+    final ref = FirebaseStorage.instance.ref(paths.first);
+    return await ref.getDownloadURL();
+  }
+
 
   @override
   void initState() {
@@ -91,8 +114,9 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
 
       setState(() {
         _entry = _entry.copyWith(
-          content: data['content'] ?? '',
-          tags: List<String>.from(data['tags'] ?? []),
+          content: (data['text'] ?? data['content'] ?? '').toString(),
+        tags: List<String>.from(data['tags'] ?? []),
+          imagePaths: List<String>.from(data['imagePaths'] ?? const []),
           imageUrls: List<String>.from(data['imageUrls'] ?? []),
           body: raw,
           // ✅ 여기 추가
@@ -115,39 +139,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     _titleController.dispose();
     super.dispose();
   }
-  Future<List<String>> _ensureDownloadUrls({
-    required String uid,
-    required String messageId,
-    required List<String> inputs,
-  }) async {
-    final out = <String>[];
-    var uploadIndex = 0;
-    final storage = currentStoragePaths(FirebaseStorage.instance);
-        final root = storage.chatImagesRoot(uid, messageId);
 
-    for (final src in inputs) {
-      // 이미 URL이면 그대로 사용
-      if (src.startsWith('http://') || src.startsWith('https://')) {
-        out.add(src);
-        continue;
-      }
-      // 로컬 파일이면 업로드
-      final f = File(src);
-      if (await f.exists()) {
-        final ref = root.child('$uploadIndex.jpg');
-        await ref.putFile(
-          f,
-          SettableMetadata(contentType: 'image/jpeg'),
-        );
-        final url = await ref.getDownloadURL();
-        out.add(url);
-        uploadIndex  ;
-      } else {
-        debugPrint('⚠️ 로컬 이미지 경로가 없음: $src');
-      }
-    }
-    return out;
-  }
 
   Future<void> _saveChanges() async {
     debugPrint("🧪 [_saveChanges] 시작");
@@ -160,33 +152,37 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     debugPrint("📝 encodedBody: $encodedBody");
 
     final previousImagesEmpty = _entry.imageUrls == null || _entry.imageUrls!.isEmpty;
-    final newImages = currentBlocks
+     final newImages = currentBlocks
          .where((e) => e.type == 'image')
-          .map((e) => e.data.toString())
-          .toList();
-      // 로컬 경로는 업로드하여 downloadURL로 교체
-      final uploadedUrls = await _ensureDownloadUrls(
-        uid: userId,
-        messageId: _entry.docId!,
-        inputs: newImages,
-      );
-      // 네가 썸네일로 첫 장만 쓰는 로직 유지하려면 그대로
-      final isFirstImageAdded = previousImagesEmpty && uploadedUrls.isNotEmpty;
-      final imageUrlsToSave = isFirstImageAdded ? [uploadedUrls.first] : uploadedUrls;
+         .map((e) => e.data.toString())
+         .toList();
+     // 로컬 경로만 골라서 업로드 → storage 경로 받음
+     final newPaths = await _uploadNewImagesAndReturnPaths(newImages);
+     // (과도기) 첫 장만 URL로 썸네일 저장하고 싶으면
+     String? thumbUrl;
+     if (previousImagesEmpty && newPaths.isNotEmpty) {
+       thumbUrl = await _firstUrlFromPaths(newPaths);
+     }
+
+
     debugPrint("📤 Firestore 업데이트 시작");
     await _paths.messages(userId).doc(_entry.docId!).set({
       'content': _titleController.text.trim(),
       'body': encodedBody,
       'tags': _selectedTags,
-      'imageUrls': imageUrlsToSave,
-      'updatedAt': FieldValue.serverTimestamp(),
+      if (newPaths.isNotEmpty) 'imagePaths': FieldValue.arrayUnion(newPaths), // ✅ paths 반영
+      if (thumbUrl != null)   'imageUrls': FieldValue.arrayUnion([thumbUrl]), // (과도기) 썸네일 1장만
+    'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
     setState(() {
       _entry = _entry.copyWith(
         content: _titleController.text.trim(),
         body: encodedBody,
-        imageUrls: imageUrlsToSave,
+          imagePaths: [..._entry.imagePaths, ...newPaths],
+             imageUrls:  thumbUrl != null
+             ? [...(_entry.imageUrls ?? []), thumbUrl]
+             : _entry.imageUrls,
         timestamp: DateTime.now(),
       );
       _blocks = currentBlocks;
@@ -207,8 +203,7 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
     final userId = FirebaseAuth.instance.currentUser!.uid;
     if (_entry.docId == null) return;
 
-    final dateString = "${newDate.year.toString().padLeft(4, '0')}-${newDate.month.toString().padLeft(2, '0')}-${newDate.day.toString().padLeft(2, '0')}";
-    final utcMid = DateTime.utc(newDate.year, newDate.month, newDate.day);
+     final utcMid = DateTime.utc(newDate.year, newDate.month, newDate.day);
     await _paths.messages(userId).doc(_entry.docId!).set({
       'date': Timestamp.fromDate(utcMid),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -222,32 +217,11 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
   }
 
   Future<void> _deleteEntry() async {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    if (_entry.docId == null) return;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('삭제하시겠습니까?'),
-        content: const Text('이 할일을 정말 삭제할까요?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('삭제')),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await _paths.messages(userId).doc(_entry.docId!).delete();
-
-
-      if (widget.onUpdate != null) {
-        await widget.onUpdate!();
-      }
-
-      Navigator.pop(context);
-    }
-  }
+       final deleted = await deleteEntryUnified(context, _entry);
+       if (!deleted) return; // 취소시 그대로
+       if (widget.onUpdate != null) await widget.onUpdate!();
+       if (mounted) Navigator.pop(context);
+     }
 
   Future<void> _saveRoutine(Map<String, String> selectedDays) async {
     final userId = FirebaseAuth.instance.currentUser!.uid;

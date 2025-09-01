@@ -12,6 +12,7 @@ import '../utils/image_source_selector.dart';
 import '../widgets/image_upload_preview.dart';
 import '../models/upload_item.dart';
 import '../features/text_dictionary/custom_typeahead_textfield.dart';
+import '../data/firestore/repos/text_dictionary_repo.dart';
 
 
 
@@ -45,6 +46,23 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   Mode _selectedMode = Mode.todo;
   DateTime _selectedDate = DateTime.now();
   bool _isSending = false;
+  List<String> _dictionary = [];
+  bool _dictionaryLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDictionary();
+  }
+
+  Future<void> _loadDictionary() async {
+    final dict = await TextDictionaryRepo.load();
+    setState(() {
+      _dictionary = dict;
+      _dictionaryLoaded = true;
+    });
+  }
+
 
   void _showImageSourceSelector() async {
     final source = await showImageSourceModal(context);
@@ -154,12 +172,21 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               onPressed: _showImageSourceSelector,
             ),
             Expanded(
-              child: CustomTypeAheadTextField(
+              child: _dictionaryLoaded
+                  ? CustomTypeAheadTextField(
                 controller: widget.controller,
+                dictionary: _dictionary,
                 hintText: '메시지를 입력하세요',
                 onSubmitted: (_) => _handleSubmit(),
+              )
+                  : const TextField(
+                decoration: InputDecoration(
+                  hintText: '로딩 중...',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
+
             const SizedBox(width: 8),
             _isSending
                 ? Padding(
