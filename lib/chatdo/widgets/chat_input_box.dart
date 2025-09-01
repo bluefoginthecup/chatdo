@@ -13,10 +13,13 @@ import '../widgets/image_upload_preview.dart';
 import '../models/upload_item.dart';
 import '../features/text_dictionary/custom_typeahead_textfield.dart';
 import '../data/firestore/repos/text_dictionary_repo.dart';
+import '../features/text_dictionary/text_dictionary_provider.dart';
+import 'package:provider/provider.dart';
 
 
 
 class ChatInputBox extends StatefulWidget {
+
   final TextEditingController controller;
   final FocusNode? focusNode;
   final void Function(
@@ -46,22 +49,8 @@ class _ChatInputBoxState extends State<ChatInputBox> {
   Mode _selectedMode = Mode.todo;
   DateTime _selectedDate = DateTime.now();
   bool _isSending = false;
-  List<String> _dictionary = [];
-  bool _dictionaryLoaded = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDictionary();
-  }
 
-  Future<void> _loadDictionary() async {
-    final dict = await TextDictionaryRepo.load();
-    setState(() {
-      _dictionary = dict;
-      _dictionaryLoaded = true;
-    });
-  }
 
 
   void _showImageSourceSelector() async {
@@ -95,6 +84,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
     }
   }
   Future<void> _handleSubmit() async {
+
     final text = widget.controller.text.trim();
     if (text.isEmpty && _pendingUploads.isEmpty) return;
 
@@ -124,6 +114,8 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
   @override
   Widget build(BuildContext context) {
+    final dictionary = context.watch<TextDictionaryProvider>().entries;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,12 +164,14 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               onPressed: _showImageSourceSelector,
             ),
             Expanded(
-              child: _dictionaryLoaded
+              child: dictionary.isNotEmpty
                   ? CustomTypeAheadTextField(
                 controller: widget.controller,
-                dictionary: _dictionary,
-                hintText: '메시지를 입력하세요',
-                onSubmitted: (_) => _handleSubmit(),
+                dictionary: dictionary,
+                hintText: '내용 입력',
+                onSubmitted: (text) {
+                  context.read<TextDictionaryProvider>().add(text);
+                },
               )
                   : const TextField(
                 decoration: InputDecoration(
@@ -186,12 +180,11 @@ class _ChatInputBoxState extends State<ChatInputBox> {
                 ),
               ),
             ),
-
             const SizedBox(width: 8),
             _isSending
-                ? Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: const CircularProgressIndicator(strokeWidth: 2),
+                ? const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(strokeWidth: 2),
             )
                 : IconButton(
               icon: const Icon(Icons.send),

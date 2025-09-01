@@ -17,7 +17,8 @@ import '../data/firestore/repos/routine_repo.dart';
 import 'package:provider/provider.dart';
 import '../utils/weekdays.dart'; // kWeekdaysKo, sortWeekdayKeys()
 import '../usecases/schedule_delete_entry.dart';
-import '../services/image_upload_service.dart';
+import '/chatdo/services/image_upload_service.dart';
+
 
 
 class ScheduleDetailScreen extends StatefulWidget {

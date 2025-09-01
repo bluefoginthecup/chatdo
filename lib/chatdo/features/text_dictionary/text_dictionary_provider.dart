@@ -1,6 +1,6 @@
 // lib/features/text_dictionary/text_dictionary_provider.dart
 import 'package:flutter/material.dart';
-import 'text_dictionary_repo.dart';
+import '../../data/firestore/repos/text_dictionary_repo.dart';
 
 class TextDictionaryProvider extends ChangeNotifier {
   List<String> _entries = [];

@@ -15,6 +15,11 @@ import 'chatdo/data/firestore/paths.dart';
 import 'chatdo/data/firestore/repos/routine_repo.dart';
 import 'chatdo/data/firestore/repos/message_repo.dart';
 import 'chatdo/data/firestore/repos/tags_repo.dart';
+import 'chatdo/data/firestore/repos/text_dictionary_repo.dart';
+import 'package:provider/provider.dart';
+import 'chatdo/features/text_dictionary/text_dictionary_provider.dart';
+
+
 
 
 
@@ -42,7 +47,8 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [
+      providers: [ ChangeNotifierProvider(create: (_) => TextDictionaryProvider()..load()
+      ),
         ChangeNotifierProvider(create: (_) => ScheduleProvider()),
         Provider<AudioManager>(create: (_) => AudioManager()), // 🔥 추가된 줄
         // 🔽 여기부터 Firestore 경로/레포 주입
@@ -59,6 +65,7 @@ void main() async {
    ProxyProvider<UserStorePaths, TagRepo>(
      update:  (_, paths, __) => TagRepo(paths),
    ),
+
       ],
       child: const ChatDoApp(),
     ),
