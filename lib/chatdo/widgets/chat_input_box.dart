@@ -15,6 +15,7 @@ import '../features/text_dictionary/custom_typeahead_textfield.dart';
 import '../data/firestore/repos/text_dictionary_repo.dart';
 import '../features/text_dictionary/text_dictionary_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:provider/provider.dart';
 
 
 
@@ -114,7 +115,7 @@ class _ChatInputBoxState extends State<ChatInputBox> {
 
   @override
   Widget build(BuildContext context) {
-    final dictionary = context.watch<TextDictionaryProvider>().entries;
+    final dictProv = context.watch<TextDictionaryProvider>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,10 +165,10 @@ class _ChatInputBoxState extends State<ChatInputBox> {
               onPressed: _showImageSourceSelector,
             ),
             Expanded(
-              child: dictionary.isNotEmpty
+              child: dictProv.isReady
                   ? CustomTypeAheadTextField(
                 controller: widget.controller,
-                dictionary: dictionary,
+                index: dictProv.index!,
                 hintText: '내용 입력',
                 onSubmitted: (text) {
                   context.read<TextDictionaryProvider>().add(text);

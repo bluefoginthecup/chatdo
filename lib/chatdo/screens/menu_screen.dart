@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '/chatdo/features/text_dictionary/text_dictinary_screen.dart';
 
+import '/chatdo/features/text_dictionary/text_dictionary_screen.dart';
+import 'hilohilo_game_view.dart';           // (HTML5 WebView)
+import '../godot/godot_embed_screen.dart';          // ⬅️ 추가: iOS 임베디드 화면
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -63,35 +65,73 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('더보기')),
-      body: Column(
-        children: [ ListTile(
-          title: const Text('텍스트 사전 관리'),
-          trailing: const Icon(Icons.arrow_forward_ios),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const TextDictionaryScreen(),
-              ),
-            );
-          },
-        ),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          // ⬆️ 여기 추가: iOS 임베디드 Godot 실행 버튼
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.play_circle_outline),
+              label: const Text('iOS 임베디드 Godot 실행'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GodotEmbedScreen()),
+                );
+              },
+            ),
+          ),
 
+          // 🔝 기존: 게임 테스트 (HTML5 WebView)
+          ListTile(
+            leading: const Icon(Icons.videogame_asset_outlined),
+            title: const Text('게임 테스트 (Hilo Hilo)'),
+            subtitle: const Text('Godot HTML5 → WebView'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HilohiloGameView()),
+              );
+            },
+          ),
+
+          // 📚 텍스트 사전 관리
+          ListTile(
+            leading: const Icon(Icons.menu_book_outlined),
+            title: const Text('텍스트 사전 관리'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TextDictionaryScreen()),
+              );
+            },
+          ),
+
+          const Divider(),
+
+          // 🔁 자동 미루기 스위치
           SwitchListTile(
             title: const Text('자동 미루기'),
             subtitle: const Text('하루가 지나면 완료되지 않은 일정을 자동으로 다음날로 옮깁니다'),
             value: _isAutoPostponeEnabled,
             onChanged: _toggleAutoPostpone,
           ),
+
           const Divider(),
-          Center(
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.logout),
-              label: const Text('로그아웃'),
-              onPressed: () => _confirmAndLogout(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
+
+          // 🚪 로그아웃
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.logout),
+                label: const Text('로그아웃'),
+                onPressed: () => _confirmAndLogout(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ),
           ),

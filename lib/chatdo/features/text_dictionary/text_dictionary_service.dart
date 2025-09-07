@@ -3,9 +3,15 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/firestore/repos/text_dictionary_repo.dart';
+import 'package:hive/hive.dart';
+import 'dart:convert';
+
 
 class TextDictionaryService {
   static const _key = 'text_dictionary_entries';
+  static const _usageBox = 'textDictUsage';
+  static const _usageKey = 'usage';
+
 
   Future<List<String>> getSuggestions() async {
     final prefs = await SharedPreferences.getInstance();
@@ -37,5 +43,19 @@ class TextDictionaryService {
     final entries = await TextDictionaryRepo.load(); // ✅ Firebase 불러오기
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_key, entries);
+  }
+
+  /// 최근 사용 가중치 로드
+  static Future<Map<String, dynamic>?> loadUsage() async {
+    final box = await Hive.openBox<String>(_usageBox);
+    final raw = box.get(_usageKey);
+    if (raw == null || raw.isEmpty) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
+  }
+
+  /// 최근 사용 가중치 저장
+  static Future<void> saveUsage(Map<String, dynamic> json) async {
+    final box = await Hive.openBox<String>(_usageBox);
+    await box.put(_usageKey, jsonEncode(json));
   }
 }
