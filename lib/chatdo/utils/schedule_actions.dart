@@ -8,6 +8,10 @@ import '../providers/schedule_provider.dart';
 import '../usecases/schedule_usecase.dart';
 import '../../game/core/game_controller.dart';
 import '../data/firestore/paths.dart';
+import 'package:provider/provider.dart'; // context.read<T>()
+import '/game/progress/progress_provider.dart'; // ← 네가 만든 ChangeNotifier
+import '/game/progress/progress_models.dart';   // RewardEvent
+
 
 final _store = FirestorePathsV1(FirebaseFirestore.instance);
 DocumentReference<Map<String, dynamic>> _newRef(String uid, String id) =>
@@ -93,6 +97,8 @@ Future<void> markAsOtherType({
   required Future<void> Function() onRefresh,
   required BuildContext context,
 }) async {
+  final prov = context.read<ProgressProvider>();
+  await prov.award(RewardEvent.scheduleCompleted);
   final uid = FirebaseAuth.instance.currentUser?.uid;
   if (uid == null) return;
 
@@ -153,6 +159,7 @@ Future<void> markAsOtherType({
     gameController: gameController,
     firestore: FirebaseFirestore.instance,
     userId: uid,
+    progress: context.read<ProgressProvider>(),
   );
 
   // 5) (선택) originDate 기록: done이 되는 첫 순간에만

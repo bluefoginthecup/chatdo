@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '/chatdo/features/text_dictionary/text_dictionary_screen.dart';
 import 'hilohilo_game_view.dart';           // (HTML5 WebView)
 import '../godot/godot_embed_screen.dart';          // ⬅️ 추가: iOS 임베디드 화면
+import 'profile_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -68,6 +69,14 @@ class _MenuScreenState extends State<MenuScreen> {
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('프로필 / 계정'),
+            subtitle: const Text('경험치 · 골드 확인'),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            ),
+          ),
           // ⬆️ 여기 추가: iOS 임베디드 Godot 실행 버튼
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),

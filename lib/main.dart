@@ -18,6 +18,11 @@ import 'chatdo/data/firestore/repos/tags_repo.dart';
 import 'chatdo/data/firestore/repos/text_dictionary_repo.dart';
 import 'package:provider/provider.dart';
 import 'chatdo/features/text_dictionary/text_dictionary_provider.dart';
+// progress 모듈 (캔버스에 올려둔 경로 기준)
+import '/game/progress/progress_provider.dart';
+import '/game/progress/progress_service.dart';
+import '/game/progress/progress_repo.dart';
+
 
 
 
@@ -66,6 +71,10 @@ void main() async {
      update:  (_, paths, __) => TagRepo(paths),
    ),
 
+        // 🔥 추가
+        ChangeNotifierProvider(
+          create: (_) => ProgressProvider(ProgressService(ProgressRepo()))..init(),
+        ),
       ],
       child: const ChatDoApp(),
     ),

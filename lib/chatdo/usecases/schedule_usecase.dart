@@ -4,6 +4,9 @@ import '../models/schedule_entry.dart';
 import '../providers/schedule_provider.dart';
 import '../../game/core/game_controller.dart';
 import '../data/firestore/paths.dart';
+import '/game/progress/progress_provider.dart';
+import '/game/progress/progress_models.dart';
+
 
 class ScheduleUseCase {
   static Future<void> updateEntry({
@@ -13,10 +16,22 @@ class ScheduleUseCase {
     required GameController gameController,
     required FirebaseFirestore firestore,
     required String userId,
+    required ProgressProvider progress,
   }) async {
     final paths = FirestorePathsV1(firestore);
     // id 보장
     final id = entry.docId ?? paths.messages(userId).doc().id;
+
+    // updateEntry() 내부 — id 결정 직후
+    final isDocIdMissing = (entry.docId == null);
+
+// (선택, 더 안전) 파이어스토어에 실제로 있는지 확인
+    final docRef = paths.messages(userId).doc(id);
+    bool existed = false;
+    if (!isDocIdMissing) {
+      final snap = await docRef.get();
+      existed = snap.exists;
+    }
 
     final oldType = entry.type;
     final updated = ScheduleEntry(
@@ -63,6 +78,13 @@ class ScheduleUseCase {
         if (updated.imageUrls != null) 'imageUrls': updated.imageUrls,
         if (updated.body != null) 'body': updated.body,
       }, SetOptions(merge: true));
+
+
+// ✅ 생성 보상: 기존 문서가 없던 경우에만
+      final isCreated = isDocIdMissing || !existed;
+      if (isCreated) {
+        await progress.award(RewardEvent.scheduleCreated);
+      }
 
       print('✅ Firestore 문서 생성 또는 업데이트 완료: ${updated.content}');
     } catch (e) {

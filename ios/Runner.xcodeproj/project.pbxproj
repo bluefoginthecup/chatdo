@@ -221,6 +221,7 @@
 			buildPhases = (
 				317873D65D0C22189C27E817 /* [CP] Check Pods Manifest.lock */,
 				9740EEB61CF901F6004384FC /* Run Script */,
+				FFA5FB792E707929001BCF71 /* New Run Script */,
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
@@ -313,13 +314,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -399,7 +396,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build\n";
 		};
 		B4145BF5991B91C88865A318 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -409,18 +406,36 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		FFA5FB792E707929001BCF71 /* New Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"",
+			);
+			inputPaths = (
+				/Users/bluefog/hilohilo/build/ios2/hilohilo_ios.pck,
+			);
+			name = "New Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"${PROJECT_DIR}/Runner/GodotAssets/hilohilo_ios.pck",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Godot PCK Auto-Copy (update project file only)\nset -euo pipefail\n\nSRC_PCK=\"/Users/bluefog/hilohilo/build/ios2/hilohilo_ios.pck\"\nDST_DIR=\"${PROJECT_DIR}/Runner/GodotAssets\"\nDST_PCK=\"${DST_DIR}/hilohilo_ios.pck\"\n\necho \">>> [GodotPCK] SRC=$SRC_PCK\"\necho \">>> [GodotPCK] DST=$DST_PCK\"\n\nif [ ! -f \"$SRC_PCK\" ]; then\n  echo \"warning: [GodotPCK] Source not found, skipping\"\n  exit 0\nfi\n\nmkdir -p \"$DST_DIR\"\n# 변경 없으면 건너뛰기(선택)\nif [ -f \"$DST_PCK\" ] && command -v shasum >/dev/null 2>&1; then\n  s1=$(shasum \"$SRC_PCK\" | awk '{print $1}')\n  s2=$(shasum \"$DST_PCK\" | awk '{print $1}')\n  if [ \"$s1\" = \"$s2\" ]; then\n    echo \">>> [GodotPCK] unchanged, skip copy\"\n    exit 0\n  fi\nfi\n\ncp -f \"$SRC_PCK\" \"$DST_PCK\"\necho \">>> [GodotPCK] copied to project folder\"\n\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
