@@ -20,6 +20,7 @@ rewrite () {
   sed "${SED_INPLACE[@]}" "s#package:[^\"']*/$from#package:chatdo/$to#g" $(git ls-files '*.dart') || true
   sed "${SED_INPLACE[@]}" "s#\"$from#\"$to#g" $(git ls-files '*.dart') || true
   sed "${SED_INPLACE[@]}" "s#'$from#'$to#g" $(git ls-files '*.dart') || true
+
 }
 
 # Root/app
@@ -131,6 +132,8 @@ rewrite "chatdo/stock/stock_item.manual.dart"       "features/stock/domain/model
 # Game
 rewrite "game/"                                     "features/game/"
 rewrite "chatdo/godot/godot_embed_screen.dart"      "features/game/godot/godot_embed_screen.dart"
+
+
 
 echo "✅ Imports rewritten. Now run:"
 echo "   flutter analyze"

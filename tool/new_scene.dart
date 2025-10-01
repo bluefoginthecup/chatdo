@@ -18,8 +18,8 @@ void main(List<String> args) {
   final dialogueVarName = 'dialogue$className';
 
   final sceneCode = '''
-import 'package:chatdo/game/scenes/dialogue_scene_base.dart';
-import 'package:chatdo/game/story/dialogue_$name.dart';
+import 'package:chatdo/features/game/scenes/dialogue_scene_base.dart';
+import 'package:chatdo/features/game/story/dialogue_$name.dart';
 
 class $sceneClassName extends DialogueSceneBase {
   $sceneClassName({super.onCompleted});
@@ -53,9 +53,12 @@ final List<Map<String, String>> $dialogueVarName = [
 ''';
 
   final base = Directory.current.path;
-  File('$base/lib/game/scenes/day_events/${name}_scene.dart').writeAsStringSync(sceneCode);
-  File('$base/lib/game/scene_conditions/day_events/${name}_scene_condition.dart').writeAsStringSync(conditionCode);
-  File('$base/lib/game/story/dialogue_$name.dart').writeAsStringSync(dialogueCode);
+  File('$base/lib/game/scenes/day_events/${name}_scene.dart')
+      .writeAsStringSync(sceneCode);
+  File('$base/lib/game/scene_conditions/day_events/${name}_scene_condition.dart')
+      .writeAsStringSync(conditionCode);
+  File('$base/lib/game/story/dialogue_$name.dart')
+      .writeAsStringSync(dialogueCode);
 
   final registryPath = '$base/lib/game/registry/scene_registry_day_events.dart';
   final registryFile = File(registryPath);
@@ -66,15 +69,16 @@ final List<Map<String, String>> $dialogueVarName = [
 
   final registryLines = registryFile.readAsLinesSync();
 
-  final insertIndex = registryLines.indexWhere((line) => line.contains('List<MapEntry'));
+  final insertIndex =
+      registryLines.indexWhere((line) => line.contains('List<MapEntry'));
   if (insertIndex == -1) {
     print('❌ scene 목록 시작점을 찾을 수 없습니다.');
     exit(1);
   }
 
   final importLines = [
-    "import 'package:chatdo/game/scenes/day_events/${name}_scene.dart';",
-    "import 'package:chatdo/game/scene_conditions/day_events/${name}_scene_condition.dart';",
+    "import 'package:chatdo/features/game/scenes/day_events/${name}_scene.dart';",
+    "import 'package:chatdo/features/game/scene_conditions/day_events/${name}_scene_condition.dart';",
   ];
 
   final entryBlock = '''  MapEntry(
@@ -97,7 +101,8 @@ final List<Map<String, String>> $dialogueVarName = [
   ];
 
   // append entryBlock to the list manually (naive but safe)
-  final insertPos = updatedLines.lastIndexWhere((line) => line.trim().endsWith('],'));
+  final insertPos =
+      updatedLines.lastIndexWhere((line) => line.trim().endsWith('],'));
   if (insertPos != -1) {
     updatedLines.insert(insertPos, entryBlock);
   }

@@ -6,18 +6,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'firebase_options.dart';
-import 'tab_nav.dart';
-import 'chatdo/screens/login_screen.dart';
+import 'bootstrap/firebase_options.dart';
+import 'app/tab_nav.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
 
 // Providers & repos
-import 'chatdo/providers/schedule_provider.dart';
-import 'chatdo/providers/audio_manager.dart';
+import 'shared/providers/schedule_provider.dart';
+import 'shared/providers/audio_manager.dart';
 import 'chatdo/data/firestore/paths.dart';
-import 'chatdo/data/firestore/repos/routine_repo.dart';
-import 'chatdo/data/firestore/repos/message_repo.dart';
-import 'chatdo/data/firestore/repos/tags_repo.dart';
-import 'chatdo/data/firestore/repos/text_dictionary_repo.dart';
+import 'features/routine/data/routine_repo.dart';
+import 'features/chat/data/message_repo.dart';
+import 'features/tags/data/tags_repo.dart';
+import 'features/text_dictionary/data/text_dictionary_repo.dart';
 import 'chatdo/features/text_dictionary/text_dictionary_provider.dart';
 
 // progress 모듈
@@ -27,7 +27,7 @@ import '/game/progress/progress_repo.dart';
 
 // Hive
 import 'package:hive_flutter/hive_flutter.dart';
-import 'chatdo/models/message.dart';
+import 'shared/data/models/message.dart';
 import 'chatdo/stock/models/stock_item.dart'; // StockItemAdapter 등록용
 
 Future<void> main() async {

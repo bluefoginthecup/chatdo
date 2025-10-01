@@ -1,14 +1,13 @@
 // tab_nav.dart
 import 'package:flutter/material.dart';
-import 'chatdo/screens/home_chat_screen.dart';
-import 'chatdo/screens/room_screen.dart';
-import 'chatdo/screens/schedule_overview_screen.dart';
-import 'chatdo/screens/menu_screen.dart';
+import 'features/chat/presentation/screens/home_chat_screen.dart';
+import 'features/game/presentation/screens/room_screen.dart';
+import 'features/routine/presentation/screens/schedule_overview_screen.dart';
+import 'app/menu/menu_screen.dart';
 import '../../game/core/game_controller.dart';
-import 'chatdo/providers/audio_manager.dart';
+import 'shared/providers/audio_manager.dart';
 import '/game/components/flame/room_game.dart';
 import '/game/progress/widgets/totals_chip.dart';
-
 
 class TabNav extends StatefulWidget {
   const TabNav({super.key});
@@ -45,11 +44,11 @@ class _TabNavState extends State<TabNav> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       AudioManager.instance.stop(); // 🔇 앱이 백그라운드로 가면 음악 멈춤
     }
   }
-
 
   void _onItemTapped(int index) {
     // 방 탭(2)에서 나갈 때 음악 정지
@@ -65,7 +64,6 @@ class _TabNavState extends State<TabNav> with WidgetsBindingObserver {
       }
     });
   }
-
 
   @override
   Widget build(BuildContext context) {

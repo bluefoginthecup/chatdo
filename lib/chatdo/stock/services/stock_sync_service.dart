@@ -3,7 +3,7 @@ import '../repo/stock_repo.dart';
 
 /// Push local dirty changes to Firestore.
 class StockSyncService {
-  final StockRepo local;  // Hive
+  final StockRepo local; // Hive
   final StockRepo remote; // Firebase
 
   StockSyncService({required this.local, required this.remote});

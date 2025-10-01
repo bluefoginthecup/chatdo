@@ -7,7 +7,6 @@ import '../data/firestore/paths.dart';
 import '/game/progress/progress_provider.dart';
 import '/game/progress/progress_models.dart';
 
-
 class ScheduleUseCase {
   static Future<void> updateEntry({
     required ScheduleEntry entry,
@@ -60,15 +59,15 @@ class ScheduleUseCase {
 
     try {
       // 🔧 스키마 통일: text/type/date(Timestamp)
-      final utcDay = DateTime.utc(
-          updated.date.year, updated.date.month, updated.date.day);
+      final utcDay =
+          DateTime.utc(updated.date.year, updated.date.month, updated.date.day);
 
       await paths.messages(userId).doc(id).set({
         'uid': userId,
         'docId': id,
-        'text': updated.content,                 // ← content → text
-        'type': updated.type.name,               // ← type 고정
-        'date': Timestamp.fromDate(utcDay),      // ← 문자열 말고 Timestamp(자정)
+        'text': updated.content, // ← content → text
+        'type': updated.type.name, // ← type 고정
+        'date': Timestamp.fromDate(utcDay), // ← 문자열 말고 Timestamp(자정)
         'createdAt': updated.createdAt != null
             ? Timestamp.fromDate(updated.createdAt!)
             : FieldValue.serverTimestamp(),
@@ -78,7 +77,6 @@ class ScheduleUseCase {
         if (updated.imageUrls != null) 'imageUrls': updated.imageUrls,
         if (updated.body != null) 'body': updated.body,
       }, SetOptions(merge: true));
-
 
 // ✅ 생성 보상: 기존 문서가 없던 경우에만
       final isCreated = isDocIdMissing || !existed;

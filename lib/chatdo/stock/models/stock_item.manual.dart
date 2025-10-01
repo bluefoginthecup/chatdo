@@ -14,6 +14,7 @@ class StockItemAdapter extends TypeAdapter<StockItem> {
     if (v is String) return int.tryParse(v) ?? 0;
     return 0;
   }
+
   bool _asBool(dynamic v) {
     if (v is bool) return v;
     if (v is int) return v != 0;
@@ -34,12 +35,12 @@ class StockItemAdapter extends TypeAdapter<StockItem> {
     };
 
     return StockItem(
-      id: _asString(fields[0]),         // 기존엔 as String이었음 → 안전 캐스팅
+      id: _asString(fields[0]), // 기존엔 as String이었음 → 안전 캐스팅
       folder: _asString(fields[1]),
       sub: _asString(fields[2]),
       name: _asString(fields[3]),
       qty: _asInt(fields[4]),
-      updatedAt: _asInt(fields[5]),     // millis 등 int로 저장되었다면 그대로 int 유지
+      updatedAt: _asInt(fields[5]), // millis 등 int로 저장되었다면 그대로 int 유지
       deleted: _asBool(fields[6]),
       dirty: _asBool(fields[7]),
     );
@@ -49,13 +50,21 @@ class StockItemAdapter extends TypeAdapter<StockItem> {
   void write(BinaryWriter writer, StockItem obj) {
     writer
       ..writeByte(8)
-      ..writeByte(0)..write(obj.id)
-      ..writeByte(1)..write(obj.folder)
-      ..writeByte(2)..write(obj.sub)
-      ..writeByte(3)..write(obj.name)
-      ..writeByte(4)..write(obj.qty)
-      ..writeByte(5)..write(obj.updatedAt)
-      ..writeByte(6)..write(obj.deleted)
-      ..writeByte(7)..write(obj.dirty);
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.folder)
+      ..writeByte(2)
+      ..write(obj.sub)
+      ..writeByte(3)
+      ..write(obj.name)
+      ..writeByte(4)
+      ..write(obj.qty)
+      ..writeByte(5)
+      ..write(obj.updatedAt)
+      ..writeByte(6)
+      ..write(obj.deleted)
+      ..writeByte(7)
+      ..write(obj.dirty);
   }
 }

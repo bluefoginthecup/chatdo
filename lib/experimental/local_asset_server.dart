@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:mime/mime.dart';
 import 'package:flutter/services.dart'; // ✅ ByteData, rootBundle 여기 들어있음
 
-
 class LocalAssetServer {
   HttpServer? _server;
   int? port;
@@ -15,10 +14,11 @@ class LocalAssetServer {
     _server!.listen((HttpRequest req) async {
       try {
         // 요청 경로 매핑: /assets/... -> Flutter 에셋 경로
-        final String path = req.uri.path; // e.g. /assets/hilohilo/hilohilo_ios.html
+        final String path =
+            req.uri.path; // e.g. /assets/hilohilo/hilohilo_ios.html
         final String assetPath = path.startsWith('/assets/')
             ? path.substring(1) // "assets/..." 형태로
-            : 'assets$path';     // 혹시 "/hilohilo/..."로 오면 "assets/hilohilo/..."로
+            : 'assets$path'; // 혹시 "/hilohilo/..."로 오면 "assets/hilohilo/..."로
 
         final ByteData data = await rootBundle.load(assetPath);
         final bytes = data.buffer.asUint8List();

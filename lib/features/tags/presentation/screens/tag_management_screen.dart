@@ -56,8 +56,8 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final exists = _tags.any((t) =>
-    t.name.toLowerCase() == cleaned.toLowerCase());
+    final exists =
+        _tags.any((t) => t.name.toLowerCase() == cleaned.toLowerCase());
     if (exists) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('이미 존재하는 태그입니다')),

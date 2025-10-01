@@ -9,7 +9,8 @@ import 'tag_list_screen.dart';
 class ScheduleOverviewScreen extends StatelessWidget {
   final GameController gameController;
 
-  const ScheduleOverviewScreen({Key? key, required this.gameController}) : super(key: key);
+  const ScheduleOverviewScreen({Key? key, required this.gameController})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {

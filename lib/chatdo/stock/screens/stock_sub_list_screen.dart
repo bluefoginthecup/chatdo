@@ -5,7 +5,8 @@ import 'stock_items_screen.dart';
 class StockSubListScreen extends StatelessWidget {
   final StockRepo repo;
   final String folder;
-  const StockSubListScreen({super.key, required this.repo, required this.folder});
+  const StockSubListScreen(
+      {super.key, required this.repo, required this.folder});
 
   Future<void> _newSub(BuildContext context) async {
     final c = TextEditingController();
@@ -13,14 +14,20 @@ class StockSubListScreen extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: Text('[$folder] 하위 폴더 만들기'),
-        content: TextField(controller: c, autofocus: true, decoration: const InputDecoration(hintText: '예) 에리카 화이트')),
+        content: TextField(
+            controller: c,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: '예) 에리카 화이트')),
         actions: [
-          TextButton(onPressed: ()=>Navigator.pop(context), child: const Text('취소')),
-          TextButton(onPressed: ()=>Navigator.pop(context, c.text.trim()), child: const Text('확인')),
+          TextButton(
+              onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, c.text.trim()),
+              child: const Text('확인')),
         ],
       ),
     );
-    if (name!=null && name.isNotEmpty) await repo.createSub(folder, name);
+    if (name != null && name.isNotEmpty) await repo.createSub(folder, name);
   }
 
   Future<void> _deleteFolder(BuildContext context) async {
@@ -30,12 +37,16 @@ class StockSubListScreen extends StatelessWidget {
         title: const Text('폴더 삭제'),
         content: const Text('정말 삭제하시겠습니까? (하위 폴더 및 아이템이 모두 삭제됩니다)'),
         actions: [
-          TextButton(onPressed: ()=>Navigator.pop(context,false), child: const Text('취소')),
-          FilledButton(onPressed: ()=>Navigator.pop(context,true), child: const Text('삭제')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('취소')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('삭제')),
         ],
       ),
     );
-    if (ok==true) {
+    if (ok == true) {
       await repo.deleteFolder(folder);
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
@@ -48,18 +59,21 @@ class StockSubListScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(folder),
         actions: [
-          IconButton(icon: const Icon(Icons.delete), onPressed: ()=>_deleteFolder(context)),
+          IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () => _deleteFolder(context)),
         ],
       ),
       body: StreamBuilder<List<String>>(
         stream: repo.watchSubs(folder),
         builder: (context, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snap.hasData)
+            return const Center(child: CircularProgressIndicator());
           final subs = snap.data!;
           if (subs.isEmpty) {
             return Center(
               child: TextButton.icon(
-                onPressed: ()=>_newSub(context),
+                onPressed: () => _newSub(context),
                 icon: const Icon(Icons.create_new_folder),
                 label: const Text('하위 폴더 만들기'),
               ),
@@ -85,20 +99,28 @@ class StockSubListScreen extends StatelessWidget {
                             title: const Text('하위 폴더 삭제'),
                             content: const Text('정말 삭제하시겠습니까?'),
                             actions: [
-                              TextButton(onPressed: ()=>Navigator.pop(context,false), child: const Text('취소')),
-                              FilledButton(onPressed: ()=>Navigator.pop(context,true), child: const Text('삭제')),
+                              TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('취소')),
+                              FilledButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('삭제')),
                             ],
                           ),
                         );
-                        if (ok==true) await repo.deleteSub(folder, s);
+                        if (ok == true) await repo.deleteSub(folder, s);
                       },
                     ),
                     IconButton(
                       icon: const Icon(Icons.chevron_right),
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => StockItemsScreen(repo: repo, folder: folder, sub: s),
-                        ));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => StockItemsScreen(
+                                  repo: repo, folder: folder, sub: s),
+                            ));
                       },
                     ),
                   ],
@@ -109,7 +131,7 @@ class StockSubListScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: ()=>_newSub(context),
+        onPressed: () => _newSub(context),
         icon: const Icon(Icons.create_new_folder),
         label: const Text('새폴더+'),
       ),

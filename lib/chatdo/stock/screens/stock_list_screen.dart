@@ -12,14 +12,21 @@ class StockListScreen extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('새 폴더 만들기'),
-        content: TextField(controller: c, autofocus: true, decoration: const InputDecoration(hintText: '예) goods / raw material / sub material')),
+        content: TextField(
+            controller: c,
+            autofocus: true,
+            decoration: const InputDecoration(
+                hintText: '예) goods / raw material / sub material')),
         actions: [
-          TextButton(onPressed: ()=>Navigator.pop(context), child: const Text('취소')),
-          TextButton(onPressed: ()=>Navigator.pop(context, c.text.trim()), child: const Text('확인')),
+          TextButton(
+              onPressed: () => Navigator.pop(context), child: const Text('취소')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, c.text.trim()),
+              child: const Text('확인')),
         ],
       ),
     );
-    if (name!=null && name.isNotEmpty) await repo.createFolder(name);
+    if (name != null && name.isNotEmpty) await repo.createFolder(name);
   }
 
   @override
@@ -29,12 +36,13 @@ class StockListScreen extends StatelessWidget {
       body: StreamBuilder<List<String>>(
         stream: repo.watchFolders(),
         builder: (context, snap) {
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snap.hasData)
+            return const Center(child: CircularProgressIndicator());
           final folders = snap.data!;
           if (folders.isEmpty) {
             return Center(
               child: TextButton.icon(
-                onPressed: ()=>_newFolder(context),
+                onPressed: () => _newFolder(context),
                 icon: const Icon(Icons.create_new_folder),
                 label: const Text('첫 폴더 만들기'),
               ),
@@ -59,9 +67,12 @@ class StockListScreen extends StatelessWidget {
                 trailing: IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => StockSubListScreen(repo: repo, folder: f),
-                    ));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              StockSubListScreen(repo: repo, folder: f),
+                        ));
                   },
                 ),
               );
@@ -70,7 +81,7 @@ class StockListScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: ()=>_newFolder(context),
+        onPressed: () => _newFolder(context),
         icon: const Icon(Icons.create_new_folder),
         label: const Text('새폴더+'),
       ),

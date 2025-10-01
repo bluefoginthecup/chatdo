@@ -16,7 +16,8 @@ class HiveStockRepo implements StockRepo {
     yield* foldersBox.watch(key: 'folders').map((_) => _getFolders());
   }
 
-  List<String> _getFolders() => (foldersBox.get('folders') ?? <String>[]).toList();
+  List<String> _getFolders() =>
+      (foldersBox.get('folders') ?? <String>[]).toList();
 
   @override
   Future<void> createFolder(String folder) async {
@@ -32,8 +33,11 @@ class HiveStockRepo implements StockRepo {
     // delete subs & items in this folder
     final subs = _getSubs(folder);
     for (final s in subs) {
-      final items = box.values.where((e) => e.folder == folder && e.sub == s).toList();
-      for (final it in items) { await it.delete(); }
+      final items =
+          box.values.where((e) => e.folder == folder && e.sub == s).toList();
+      for (final it in items) {
+        await it.delete();
+      }
     }
     await foldersBox.delete('subs:$folder');
     final f = _getFolders()..remove(folder);
@@ -47,7 +51,8 @@ class HiveStockRepo implements StockRepo {
     yield* foldersBox.watch(key: 'subs:$folder').map((_) => _getSubs(folder));
   }
 
-  List<String> _getSubs(String folder) => (foldersBox.get('subs:$folder') ?? <String>[]).toList();
+  List<String> _getSubs(String folder) =>
+      (foldersBox.get('subs:$folder') ?? <String>[]).toList();
 
   @override
   Future<void> createSub(String folder, String sub) async {
@@ -60,8 +65,11 @@ class HiveStockRepo implements StockRepo {
 
   @override
   Future<void> deleteSub(String folder, String sub) async {
-    final items = box.values.where((e) => e.folder == folder && e.sub == sub).toList();
-    for (final it in items) { await it.delete(); }
+    final items =
+        box.values.where((e) => e.folder == folder && e.sub == sub).toList();
+    for (final it in items) {
+      await it.delete();
+    }
     final list = _getSubs(folder)..remove(sub);
     await foldersBox.put('subs:$folder', list);
   }
@@ -73,9 +81,10 @@ class HiveStockRepo implements StockRepo {
     yield* box.watch().map((_) => _items(folder, sub));
   }
 
-  List<StockItem> _items(String folder, String sub) =>
-      box.values.where((e) => e.folder == folder && e.sub == sub && !e.deleted).toList()
-         ..sort((a,b)=> b.updatedAt.compareTo(a.updatedAt));
+  List<StockItem> _items(String folder, String sub) => box.values
+      .where((e) => e.folder == folder && e.sub == sub && !e.deleted)
+      .toList()
+    ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
   @override
   Future<void> addItem(StockItem item) async {

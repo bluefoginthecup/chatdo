@@ -57,11 +57,12 @@ class _TagLogScreenState extends State<TagLogScreen> {
     }
 
     final paths = context.read<UserStorePaths>();
-     final snapshot = await paths.messages(uid)
-       .where('tags', arrayContains: tagName)
-       .orderBy('timestamp', descending: true)
-       .limit(100)
-       .get();
+    final snapshot = await paths
+        .messages(uid)
+        .where('tags', arrayContains: tagName)
+        .orderBy('timestamp', descending: true)
+        .limit(100)
+        .get();
 
     setState(() {
       _entries =
@@ -73,40 +74,40 @@ class _TagLogScreenState extends State<TagLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Column(
-        children: [
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: _tags.map((tag) {
-              final isSelected = tag.name == _selectedTag;
-              return ChoiceChip(
-                label: Text(tag.name),
-                selected: isSelected,
-                onSelected: (_) => _loadEntries(tag.name),
-                selectedColor: Colors.orange,
-                backgroundColor: tag.isFavorite ? Colors.amber[100] : Colors
-                    .grey[200],
-              );
-            }).toList(),
-          ),
-          const Divider(height: 16),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _entries.isEmpty
-                ? const Center(child: Text('해당 태그의 일정이 없습니다'))
-                : ListView.builder(
-              itemCount: _entries.length,
-              itemBuilder: (context, index) {
-                return ScheduleEntryTile(
-                  entry: _entries[index],
-                  gameController: widget.gameController,
-                  onRefresh: () => _loadEntries(_selectedTag!),
-                );
-              },
-            ),
-          ),
-        ],
-      );
+      children: [
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: _tags.map((tag) {
+            final isSelected = tag.name == _selectedTag;
+            return ChoiceChip(
+              label: Text(tag.name),
+              selected: isSelected,
+              onSelected: (_) => _loadEntries(tag.name),
+              selectedColor: Colors.orange,
+              backgroundColor:
+                  tag.isFavorite ? Colors.amber[100] : Colors.grey[200],
+            );
+          }).toList(),
+        ),
+        const Divider(height: 16),
+        Expanded(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _entries.isEmpty
+                  ? const Center(child: Text('해당 태그의 일정이 없습니다'))
+                  : ListView.builder(
+                      itemCount: _entries.length,
+                      itemBuilder: (context, index) {
+                        return ScheduleEntryTile(
+                          entry: _entries[index],
+                          gameController: widget.gameController,
+                          onRefresh: () => _loadEntries(_selectedTag!),
+                        );
+                      },
+                    ),
+        ),
+      ],
+    );
   }
 }

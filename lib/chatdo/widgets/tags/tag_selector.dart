@@ -9,13 +9,15 @@ class TagSelector extends StatefulWidget {
   final List<String>? initialSelectedTags;
   final void Function(List<String> selectedTags)? onTagChanged;
 
-  const TagSelector({super.key, required this.initialSelectedTags, this.onTagChanged});
+  const TagSelector(
+      {super.key, required this.initialSelectedTags, this.onTagChanged});
 
   @override
   State<TagSelector> createState() => _TagSelectorState();
 }
 
-class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStateMixin {
+class _TagSelectorState extends State<TagSelector>
+    with SingleTickerProviderStateMixin {
   OverlayEntry? _overlayEntry;
   bool _isMenuOpen = false;
   late final AnimationController _controller;
@@ -50,7 +52,8 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
       begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    _opacityAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _opacityAnimation =
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _selectedTags = List.from(widget.initialSelectedTags ?? []);
     _loadCustomTagsFromFirestore();
   }
@@ -60,18 +63,17 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
     if (uid == null) return;
 
     // ✅ 직접 경로 생성 금지. Provider로 주입된 paths 사용.
-        final store = context.read<UserStorePaths>();
-        final snapshot = await store.customTags(uid).get();
-
+    final store = context.read<UserStorePaths>();
+    final snapshot = await store.customTags(uid).get();
 
     setState(() {
       for (final doc in snapshot.docs) {
-              final tag = UserTag.fromFirestore(doc.id, doc.data());
-              final exists = _tags.any(
-                (t) => t.name.toLowerCase() == tag.name.toLowerCase(),
-              );
-              if (!exists) _tags.add(tag);
-            }
+        final tag = UserTag.fromFirestore(doc.id, doc.data());
+        final exists = _tags.any(
+          (t) => t.name.toLowerCase() == tag.name.toLowerCase(),
+        );
+        if (!exists) _tags.add(tag);
+      }
     });
   }
 
@@ -117,45 +119,54 @@ class _TagSelectorState extends State<TagSelector> with SingleTickerProviderStat
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           ...chunks.map((row) => Row(
-                            children: row.map((tag) {
-                              final isSelected = _selectedTags.contains(tag.name);
-                              return Padding(
-                                padding: const EdgeInsets.all(2),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      if (isSelected) {
-                                        _selectedTags.remove(tag.name);
-                                      } else {
-                                        _selectedTags.add(tag.name);
-                                      }
-                                      widget.onTagChanged?.call(List.from(_selectedTags));
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: isSelected ? Colors.orangeAccent : Colors.grey[200],
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    textStyle: const TextStyle(fontSize: 12),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
+                                children: row.map((tag) {
+                                  final isSelected =
+                                      _selectedTags.contains(tag.name);
+                                  return Padding(
+                                    padding: const EdgeInsets.all(2),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          if (isSelected) {
+                                            _selectedTags.remove(tag.name);
+                                          } else {
+                                            _selectedTags.add(tag.name);
+                                          }
+                                          widget.onTagChanged
+                                              ?.call(List.from(_selectedTags));
+                                        });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isSelected
+                                            ? Colors.orangeAccent
+                                            : Colors.grey[200],
+                                        foregroundColor: Colors.black,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 6),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        textStyle:
+                                            const TextStyle(fontSize: 12),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: Text(tag.name),
                                     ),
-                                  ),
-                                  child: Text(tag.name),
-                                ),
-                              );
-                            }).toList(),
-                          )),
+                                  );
+                                }).toList(),
+                              )),
                           const SizedBox(height: 8),
                           ElevatedButton(
                             onPressed: _removeOverlay,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.teal,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               textStyle: const TextStyle(fontSize: 12),

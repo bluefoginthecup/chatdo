@@ -57,12 +57,14 @@ class _RoutineListScreenState extends State<RoutineListScreen> {
               final docId = doc.id;
               final title = (data['title'] ?? data['name'] ?? '').toString();
               // 🔧 days 안전 캐스팅 (dynamic → Map<String,String>)
-                            final rawDays = Map<String, dynamic>.from(
-                              data['days'] ?? const <String, dynamic>{},
-                            );
-                            final days = rawDays.map((k, v) => MapEntry(k.toString(), v.toString()));
-                            // 🔒 요일 고정 순서로 표시
-                            final orderedDayKeys = sortWeekdayKeys(days.keys); return Column(
+              final rawDays = Map<String, dynamic>.from(
+                data['days'] ?? const <String, dynamic>{},
+              );
+              final days =
+                  rawDays.map((k, v) => MapEntry(k.toString(), v.toString()));
+              // 🔒 요일 고정 순서로 표시
+              final orderedDayKeys = sortWeekdayKeys(days.keys);
+              return Column(
                 children: [
                   ListTile(
                     title: Text(title),
@@ -74,7 +76,8 @@ class _RoutineListScreenState extends State<RoutineListScreen> {
                           icon: const Icon(Icons.edit),
                           onPressed: () {
                             setState(() {
-                              _editingRoutineId = (_editingRoutineId == docId) ? null : docId;
+                              _editingRoutineId =
+                                  (_editingRoutineId == docId) ? null : docId;
                             });
                           },
                         ),
@@ -88,28 +91,32 @@ class _RoutineListScreenState extends State<RoutineListScreen> {
                                 content: const Text('정말 이 루틴을 삭제할까요?'),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
                                     child: const Text('취소'),
                                   ),
                                   TextButton(
-                                    onPressed: () => Navigator.pop(context, true),
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
                                     child: const Text('삭제'),
                                   ),
                                 ],
                               ),
                             );
                             if (confirm == true) {
-                              await context.read<RoutineRepo>().remove(uid, docId); // ✅ repo 삭제
+                              await context
+                                  .read<RoutineRepo>()
+                                  .remove(uid, docId); // ✅ repo 삭제
                             }
                           },
                         ),
                       ],
                     ),
                   ),
-
                   if (_editingRoutineId == docId)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       child: RoutineEditForm(
                         initialDays: days,
                         onSave: (newDays) async {
@@ -121,7 +128,9 @@ class _RoutineListScreenState extends State<RoutineListScreen> {
                             userId: uid,
                             createdAt: DateTime.now(),
                           );
-                          await context.read<RoutineRepo>().addOrUpdate(uid, updated);
+                          await context
+                              .read<RoutineRepo>()
+                              .addOrUpdate(uid, updated);
                           setState(() {
                             _editingRoutineId = null;
                           });

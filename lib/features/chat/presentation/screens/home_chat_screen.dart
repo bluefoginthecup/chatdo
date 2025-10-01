@@ -18,7 +18,6 @@ import '../models/enums.dart'; // Mode, DateTag 가져오기
 import '../widgets/chat_message_card.dart';
 import '../data/firestore/repos/message_repo.dart';
 
-
 late final Connectivity _connectivity;
 late final Stream<ConnectivityResult> _connectivityStream;
 
@@ -30,7 +29,8 @@ class HomeChatScreen extends StatefulWidget {
   State<HomeChatScreen> createState() => _HomeChatScreenState();
 }
 
-class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObserver {
+class _HomeChatScreenState extends State<HomeChatScreen>
+    with WidgetsBindingObserver {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
@@ -59,8 +59,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
 
 // initState 안
     _connectivity = Connectivity();
-    _connectivityStream = _connectivity.onConnectivityChanged
-        .map<ConnectivityResult>((event) {
+    _connectivityStream =
+        _connectivity.onConnectivityChanged.map<ConnectivityResult>((event) {
       if (event is List<ConnectivityResult>) {
         // ✅ 리스트 -> 단일 값으로 정규화
         return event.isNotEmpty ? event.first : ConnectivityResult.none;
@@ -72,8 +72,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       if (result != ConnectivityResult.none) {
         // ✅ 메시지 동기화
         SyncService.uploadAllIfConnected();
-
-
       }
     });
   }
@@ -86,7 +84,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     super.dispose();
   }
 
-
   @override
   Future<void> _loadMessagesFromHive() async {
     final box = Hive.box<Message>('messages');
@@ -95,32 +92,33 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
 
     final newLog = loaded.map((m) {
       final listUrls = (m.imageUrls ?? const <String>[]);
-      final firstUrl = m.imageUrl ?? (listUrls.isNotEmpty ? listUrls.first : null);
+      final firstUrl =
+          m.imageUrl ?? (listUrls.isNotEmpty ? listUrls.first : null);
       return {
         'id': m.id,
         'content': m.text,
         'date': m.date.toString(),
         'type': m.type,
-        if (firstUrl != null) 'imageUrl': firstUrl,      // ✅ 채팅 UI가 이 필드만 봐도 이미지 뜸
-        'imageUrls': listUrls,                            // (유지)
-        'tags': m.tags ?? const <String>[],              // (널 안전)
+        if (firstUrl != null) 'imageUrl': firstUrl, // ✅ 채팅 UI가 이 필드만 봐도 이미지 뜸
+        'imageUrls': listUrls, // (유지)
+        'tags': m.tags ?? const <String>[], // (널 안전)
       };
     }).toList();
 
-
     setState(() {
       _messageLog = List<Map<String, dynamic>>.from(newLog);
-
     });
     await Future.delayed(const Duration(milliseconds: 100));
     _scrollToBottom();
   }
+
   void _handleSendMessage(
-      String text, Mode mode, DateTime date, List<String> tags,{
-  List<String> localPaths = const [],
-
-      }) async {
-
+    String text,
+    Mode mode,
+    DateTime date,
+    List<String> tags, {
+    List<String> localPaths = const [],
+  }) async {
     if (text.trim().isEmpty || _userId == null) return;
     final now = DateTime.now();
     final id = _messageRepo.newId(_userId!); // ✅ repo에서 ID 발급
@@ -128,10 +126,10 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     final entry = ScheduleEntry(
       docId: id,
       content: text,
-      date: date,                                  // 사용자가 고른 로컬 날짜
+      date: date, // 사용자가 고른 로컬 날짜
       type: mode == Mode.todo ? ScheduleType.todo : ScheduleType.done,
       createdAt: now,
-      timestamp: now,                              // 화면 정렬 기준
+      timestamp: now, // 화면 정렬 기준
       tags: tags,
     );
     // ✅ Firestore 저장 (있으면 업데이트, 없으면 생성)
@@ -158,7 +156,7 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         'id': id,
         'content': entry.content,
         'date': entry.date.toIso8601String(),
-        'createdAt': now.millisecondsSinceEpoch,   // ✅ 시간 표시용
+        'createdAt': now.millisecondsSinceEpoch, // ✅ 시간 표시용
         'role': 'me',
         if (entry.imageUrl != null) 'imageUrl': entry.imageUrl!,
         'imageUrls': entry.imageUrls ?? const <String>[],
@@ -179,7 +177,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         localPaths: localPaths,
       );
     }
-
   }
 
   void _scrollToBottom() {
@@ -222,15 +219,14 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       final hasText = (content.trim().isNotEmpty);
       Widget messageContent = hasText
           ? Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.teal.shade100,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(content),
-      )
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.teal.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(content),
+            )
           : const SizedBox.shrink();
-
 
       widgets.add(ChatMessageCard(
         msg: msg,
@@ -254,9 +250,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
           : [],
       timestamp: DateTime.now(),
       imageUrl: msg['imageUrl'],
-      imageUrls: msg['imageUrls'] != null
-          ? List<String>.from(msg['imageUrls'])
-          : [],
+      imageUrls:
+          msg['imageUrls'] != null ? List<String>.from(msg['imageUrls']) : [],
     );
     await Navigator.push(
       context,
@@ -272,7 +267,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       await _syncOneFromRemote(scheduleId);
       await _loadMessagesFromHive(); // 화면 다시 로드
     }
-
   }
 
   @override
@@ -281,7 +275,6 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('ChatDo'),
-
       ),
       body: SafeArea(
         child: Column(
@@ -289,7 +282,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
             Expanded(
               child: ListView(
                 controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 children: _buildMessageWidgets(),
               ),
             ),
@@ -300,7 +294,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
                 controller: _controller,
                 focusNode: _focusNode,
                 onSubmitted: (text, mode, date, tags, {localPaths = const []}) {
-                  _handleSendMessage(text, mode, date, tags, localPaths: localPaths);
+                  _handleSendMessage(text, mode, date, tags,
+                      localPaths: localPaths);
                 },
               ),
             ),
@@ -309,13 +304,13 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       ),
     );
   }
+
   Future<void> _syncOneFromRemote(String id) async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
 
-   final snap = await context.read<MessageRepo>().getDoc(uid, id);
-
+      final snap = await context.read<MessageRepo>().getDoc(uid, id);
 
       final data = snap.data() as Map<String, dynamic>;
 
@@ -326,24 +321,32 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       final ts = data['date'];
       final updatedDate = ts is Timestamp
           ? ts.toDate().toLocal()
-          : DateTime.tryParse(ts?.toString() ?? '')?.toLocal() ?? DateTime.now();
-      final updatedTags = (data['tags'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+          : DateTime.tryParse(ts?.toString() ?? '')?.toLocal() ??
+              DateTime.now();
+      final updatedTags =
+          (data['tags'] as List?)?.map((e) => e.toString()).toList() ??
+              const <String>[];
       final updatedImageUrl = data['imageUrl'] as String?;
-      final updatedImageUrls = (data['imageUrls'] as List?)?.map((e) => e.toString()).toList()
-          ?? const <String>[];
+      final updatedImageUrls =
+          (data['imageUrls'] as List?)?.map((e) => e.toString()).toList() ??
+              const <String>[];
       final remoteTypeStr = (data['type'] ?? data['mode'] ?? '').toString();
-
 
       final box = Hive.box<Message>('messages');
       dynamic targetKey;
       Message? old;
       for (final k in box.keys) {
         final m = box.get(k);
-        if (m is Message && m.id == id) { targetKey = k; old = m; break; }
+        if (m is Message && m.id == id) {
+          targetKey = k;
+          old = m;
+          break;
+        }
       }
       if (targetKey == null || old == null) return;
 
-      final typeForHive = remoteTypeStr.isNotEmpty ? remoteTypeStr
+      final typeForHive = remoteTypeStr.isNotEmpty
+          ? remoteTypeStr
           : (old.type.isNotEmpty ? old.type : 'todo');
 
       // 5) 패치해서 저장
@@ -363,5 +366,4 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       debugPrint('syncOneFromRemote error: $e');
     }
   }
-
 }

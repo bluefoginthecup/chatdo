@@ -31,17 +31,36 @@ mkdir -p lib/{app,bootstrap,experimental,platform/webview,shared/{auth,data/{fir
 mkdir -p lib/features/stock/{services,domain/models}
 mkdir -p lib/features/chat/presentation/widgets/blocks
 mkdir -p lib/features/game/{core,flame,godot,overlay,progress,room,presentation/screens}
+mkdir -p \
+  lib/app \
+  lib/bootstrap \
+  lib/experimental \
+  lib/features/chat/presentation/screens \
+  lib/features/routine/presentation/screens \
+  lib/features/tags/presentation/screens \
+  lib/features/auth/presentation/screens \
+  lib/features/profile/presentation/screens \
+  lib/features/menu/presentation/screens \
+  lib/features/webview/presentation/screens \
+  lib/features/game/presentation/screens
 
 move_if_exists () {
-  src="$1"
-  dst="$2"
-  if [ -e "$src" ]; then
-    echo "➡️  git mv $src $dst"
-    git mv "$src" "$dst"
+  local SRC="$1"
+  local DST="$2"
+  local DSTDIR
+  DSTDIR="$(dirname "$DST")"
+  mkdir -p "$DSTDIR"
+  if git ls-files --error-unmatch "$SRC" >/dev/null 2>&1; then
+    echo "➡️  git mv $SRC $DST"
+    git mv "$SRC" "$DST"
+  elif [ -e "$SRC" ]; then
+    echo "➡️  mv $SRC $DST (untracked)"
+    mv "$SRC" "$DST"
+    git add "$DST" 2>/dev/null || true
   else
-    echo "… skip (not found): $src"
-  fi
-}
+    echo "… skip (not found): $SRC"
+    fi
+    }
 
 echo "🚚 Moving root/app files..."
 move_if_exists lib/main.dart                          lib/bootstrap/

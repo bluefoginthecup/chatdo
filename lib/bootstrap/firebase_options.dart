@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart'
 ///
 /// Example:
 /// ```dart
-/// import 'firebase_options.dart';
+/// import 'bootstrap/firebase_options.dart';
 /// // ...
 /// await Firebase.initializeApp(
 ///   options: DefaultFirebaseOptions.currentPlatform,
@@ -63,7 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '610847873364',
     projectId: 'chatdo-48bf4',
     storageBucket: 'chatdo-48bf4.firebasestorage.app',
-    iosClientId: '610847873364-29sif406plhe4tsfh6cqg3333h8m8a8a.apps.googleusercontent.com',
+    iosClientId:
+        '610847873364-29sif406plhe4tsfh6cqg3333h8m8a8a.apps.googleusercontent.com',
     iosBundleId: 'com.chatdo.chatdo',
   );
 
@@ -73,7 +74,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '610847873364',
     projectId: 'chatdo-48bf4',
     storageBucket: 'chatdo-48bf4.firebasestorage.app',
-    iosClientId: '610847873364-uggi11ksp33is64p119sbhr5430pufue.apps.googleusercontent.com',
+    iosClientId:
+        '610847873364-uggi11ksp33is64p119sbhr5430pufue.apps.googleusercontent.com',
     iosBundleId: 'com.example.chatdo',
   );
 

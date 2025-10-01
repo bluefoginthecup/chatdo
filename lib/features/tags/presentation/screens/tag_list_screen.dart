@@ -28,7 +28,8 @@ class TagListScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
             indicatorSize: TabBarIndicatorSize.tab,
-            indicatorPadding: const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
+            indicatorPadding:
+                const EdgeInsets.symmetric(horizontal: 1, vertical: 1),
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           ),
 

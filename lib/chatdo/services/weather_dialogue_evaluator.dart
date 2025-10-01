@@ -36,7 +36,6 @@ class WeatherDialogueEvaluator {
     }
   }
 
-
   dynamic _getFieldValue(String target) {
     switch (target) {
       case 'temp':
@@ -61,7 +60,7 @@ class WeatherDialogueEvaluator {
         return data.wind;
       case 'description':
         return data.description;
-    // 👇 계산된 조건 필드들
+      // 👇 계산된 조건 필드들
       case 'isBigTempGap':
         return data.isBigTempGap;
       case 'isHotDay':
@@ -80,6 +79,4 @@ class WeatherDialogueEvaluator {
         return null;
     }
   }
-
-
 }

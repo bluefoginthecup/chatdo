@@ -28,7 +28,8 @@ class TagTile extends StatelessWidget {
             selected: isSelected,
             onSelected: (_) => onSelect?.call(),
             selectedColor: Colors.orange,
-            backgroundColor: tag.isFavorite ? Colors.amber[100] : Colors.grey[200],
+            backgroundColor:
+                tag.isFavorite ? Colors.amber[100] : Colors.grey[200],
             labelStyle: TextStyle(
               color: isSelected ? Colors.white : Colors.black,
             ),

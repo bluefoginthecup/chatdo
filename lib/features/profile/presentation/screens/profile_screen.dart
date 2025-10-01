@@ -34,7 +34,8 @@ class ProfileScreen extends StatelessWidget {
                       const Icon(Icons.stars, size: 28),
                       const SizedBox(height: 6),
                       Text('XP', style: Theme.of(context).textTheme.labelLarge),
-                      Text('${p.totals.xp}', style: Theme.of(context).textTheme.headlineSmall),
+                      Text('${p.totals.xp}',
+                          style: Theme.of(context).textTheme.headlineSmall),
                     ],
                   ),
                   Column(
@@ -42,8 +43,10 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.monetization_on, size: 28),
                       const SizedBox(height: 6),
-                      Text('Gold', style: Theme.of(context).textTheme.labelLarge),
-                      Text('${p.totals.gold}', style: Theme.of(context).textTheme.headlineSmall),
+                      Text('Gold',
+                          style: Theme.of(context).textTheme.labelLarge),
+                      Text('${p.totals.gold}',
+                          style: Theme.of(context).textTheme.headlineSmall),
                     ],
                   ),
                 ],
