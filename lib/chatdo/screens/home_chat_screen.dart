@@ -17,11 +17,10 @@ import '../screens/schedule_detail_screen.dart'; // ✅ 추가됨
 import '../models/enums.dart'; // Mode, DateTag 가져오기
 import '../widgets/chat_message_card.dart';
 import '../data/firestore/repos/message_repo.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 
-
-
+late final Connectivity _connectivity;
+late final Stream<ConnectivityResult> _connectivityStream;
 
 class HomeChatScreen extends StatefulWidget {
   final GameController gameController;
@@ -57,11 +56,24 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
+
+// initState 안
     _connectivity = Connectivity();
-    _connectivityStream = _connectivity.onConnectivityChanged;
-    _subscription = _connectivityStream.listen((result) {
+    _connectivityStream = _connectivity.onConnectivityChanged
+        .map<ConnectivityResult>((event) {
+      if (event is List<ConnectivityResult>) {
+        // ✅ 리스트 -> 단일 값으로 정규화
+        return event.isNotEmpty ? event.first : ConnectivityResult.none;
+      }
+      return ConnectivityResult.none;
+    });
+
+    _subscription = _connectivityStream.listen((result) async {
       if (result != ConnectivityResult.none) {
+        // ✅ 메시지 동기화
         SyncService.uploadAllIfConnected();
+
+
       }
     });
   }

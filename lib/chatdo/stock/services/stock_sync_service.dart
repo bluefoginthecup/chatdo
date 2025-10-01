@@ -1,33 +1,32 @@
 import '../models/stock_item.dart';
-import '../repo/hive_stock_repo.dart';
-import '../repo/firebase_stock_repo.dart';
+import '../repo/stock_repo.dart';
 
+/// Push local dirty changes to Firestore.
 class StockSyncService {
-  final HiveStockRepo hiveRepo;
-  final FirebaseStockRepo firebaseRepo;
+  final StockRepo local;  // Hive
+  final StockRepo remote; // Firebase
 
-  StockSyncService(this.hiveRepo, this.firebaseRepo);
+  StockSyncService({required this.local, required this.remote});
 
-  Future<void> sync(List<String> categories) async {
-    for (final category in categories) {
-      // 1. 로컬 dirty 아이템 → 서버 업로드
-      final dirtyItems = hiveRepo.getAll(category).where((i) => i.dirty).toList();
-      for (final item in dirtyItems) {
-        if (item.deleted) {
-          await firebaseRepo.delete(item);
-        } else {
-          await firebaseRepo.upsert(item);
-        }
-        item.dirty = false;
-        await hiveRepo.update(item);
-      }
-
-      // 2. 서버 아이템 → 로컬 갱신
-      final serverItems = await firebaseRepo.fetch(category);
-      for (final s in serverItems) {
-        final local = hiveRepo.getAll(category).where((i) => i.id == s.id).toList();
-        if (local.isEmpty || s.updatedAt > local.first.updatedAt) {
-          await hiveRepo.add(s);
+  Future<void> sync() async {
+    final folders = await local.watchFolders().first;
+    for (final f in folders) {
+      await remote.createFolder(f);
+      final subs = await local.watchSubs(f).first;
+      for (final s in subs) {
+        await remote.createSub(f, s);
+        final items = await local.watchItems(f, s).first;
+        for (final it in items) {
+          if (it.dirty) {
+            if (it.deleted) {
+              await remote.deleteItem(f, s, it.id);
+            } else {
+              it.updatedAt = DateTime.now().millisecondsSinceEpoch;
+              await remote.updateItem(it);
+            }
+            it.dirty = false;
+            await local.updateItem(it);
+          }
         }
       }
     }

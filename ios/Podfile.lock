@@ -1213,7 +1213,6 @@ PODS:
     - Flutter
   - connectivity_plus (0.0.1):
     - Flutter
-    - ReachabilitySwift
   - Firebase/Auth (11.10.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 11.10.0)
@@ -1464,7 +1463,6 @@ PODS:
   - permission_handler_apple (9.3.0):
     - Flutter
   - PromisesObjC (2.4.0)
-  - ReachabilitySwift (5.2.4)
   - RecaptchaInterop (101.0.0)
   - SDWebImage (5.21.2):
     - SDWebImage/Core (= 5.21.2)
@@ -1535,7 +1533,6 @@ SPEC REPOS:
     - Mantle
     - nanopb
     - PromisesObjC
-    - ReachabilitySwift
     - RecaptchaInterop
     - SDWebImage
     - SDWebImageWebPCoder
@@ -1590,7 +1587,7 @@ SPEC CHECKSUMS:
   BoringSSL-GRPC: dded2a44897e45f28f08ae87a55ee4bcd19bc508
   BSImagePicker: 57900b323f951711608acaf97d52e9183530cb6d
   cloud_firestore: d959b9b44fb0619e8c88e1b7436d3b1d36b4984e
-  connectivity_plus: bf0076dd84a130856aa636df1c71ccaff908fa1d
+  connectivity_plus: 2a701ffec2c0ae28a48cf7540e279787e77c447d
   Firebase: 1fe1c0a7d9aaea32efe01fbea5f0ebd8d70e53a2
   firebase_auth: e37065f3f80ff90580c13ad0e5a48e3bb8d2ad77
   firebase_core: 432718558359a8c08762151b5f49bb0f093eb6e0
@@ -1626,7 +1623,6 @@ SPEC CHECKSUMS:
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  ReachabilitySwift: 32793e867593cfc1177f5d16491e3a197d2fccda
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   SDWebImage: 9f177d83116802728e122410fb25ad88f5c7608a
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
