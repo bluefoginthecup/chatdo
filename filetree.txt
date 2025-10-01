@@ -1,0 +1,68 @@
+.
+├── README.md
+├── analysis_options.yaml
+├── android
+│   ├── app
+│   ├── build.gradle
+│   ├── chatdo_android.iml
+│   ├── gradle
+│   ├── gradle.properties
+│   ├── gradlew
+│   ├── gradlew.bat
+│   ├── local.properties
+│   └── settings.gradle
+├── assets
+│   ├── app_icon.png
+│   ├── images
+│   └── sounds
+├── build
+│   ├── 580932a742af02784d88d6d5644d6271
+│   ├── f872507f30e2ff2523f0f1d19160266e.cache.dill.track.dill
+│   ├── ios
+│   ├── last_build_run.json
+│   └── native_assets
+├── chatdo.iml
+├── filetree.txt
+├── firebase.json
+├── ios
+│   ├── Flutter
+│   ├── Podfile
+│   ├── Podfile.lock
+│   ├── Pods
+│   ├── Runner
+│   ├── Runner.xcodeproj
+│   ├── Runner.xcworkspace
+│   └── RunnerTests
+├── lib
+│   ├── chatdo
+│   ├── firebase_options.dart
+│   ├── game
+│   ├── main.dart
+│   ├── tab_nav.dart
+│   └── test_image_editor.dart
+├── linux
+│   ├── CMakeLists.txt
+│   ├── flutter
+│   └── runner
+├── macos
+│   ├── Flutter
+│   ├── Podfile
+│   ├── Runner
+│   ├── Runner.xcodeproj
+│   ├── Runner.xcworkspace
+│   └── RunnerTests
+├── pubspec.lock
+├── pubspec.yaml
+├── test
+│   └── widget_test.dart
+├── web
+│   ├── favicon.png
+│   ├── icons
+│   ├── index.html
+│   └── manifest.json
+└── windows
+    ├── CMakeLists.txt
+    ├── flutter
+    └── runner
+
+36 directories, 30 files
