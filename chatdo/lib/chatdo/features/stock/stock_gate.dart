@@ -1,7 +1,6 @@
 // lib/features/stock/stock_gate.dart
+import 'package:chatdo/chatdo/features/stock/screens/stock_list_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '/tab_nav.dart';
 import 'package:chatdo/chatdo/features/stock/stock.dart';
 
 class StockGate extends StatefulWidget {
@@ -15,6 +14,7 @@ class StockGate extends StatefulWidget {
 
 class _StockGateState extends State<StockGate> {
   late final Future<StockLayer> _boot = StockLayer.init(uid: widget.uid);
+  bool _syncStarted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +29,17 @@ class _StockGateState extends State<StockGate> {
         }
 
         final stock = snap.data!;
-        stock.sync.start(); // 자동 동기화 시작 (로그인 후 1회)
+        // 자동 동기화 시작은 빌드 직후 "1회만" 호출
+                if (!_syncStarted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted || _syncStarted) return;
+                    stock.sync.start();
+                    _syncStarted = true;
+                  });
+                }
 
-        return MultiProvider(
-          providers: [
-            Provider<StockRepo>.value(value: stock.repo),
-            Provider<StockSyncService>.value(value: stock.sync),
-          ],
-          child: widget.child ?? const TabNav(),
-        );
+        return widget.child ?? StockListScreen(repo: stock.repo, sync: stock.sync);
+
       },
     );
   }
