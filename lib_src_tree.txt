@@ -1,0 +1,108 @@
+lib
+├── A.java
+├── chatdo
+│   ├── data
+│   │   ├── firestore
+│   │   ├── storage
+│   │   ├── tag_repository.dart
+│   │   └── weather_repository.dart
+│   ├── features
+│   │   └── text_dictionary
+│   ├── godot
+│   │   ├── godot_embed_screen.dart
+│   │   └── godot_view.dart
+│   ├── models
+│   │   ├── content_block.dart
+│   │   ├── enums.dart
+│   │   ├── game_sync_data.dart
+│   │   ├── message.dart
+│   │   ├── message.g.dart
+│   │   ├── routine_model.dart
+│   │   ├── schedule_entry.dart
+│   │   ├── upload_item.dart
+│   │   ├── user_tag.dart
+│   │   └── weather_data.dart
+│   ├── providers
+│   │   ├── audio_manager.dart
+│   │   └── schedule_provider.dart
+│   ├── screens
+│   │   ├── calendar_screen.dart
+│   │   ├── day_schedule_list_screen.dart
+│   │   ├── done_list_screen.dart
+│   │   ├── hilohilo_game_view.dart
+│   │   ├── home_chat_screen.dart
+│   │   ├── login_screen.dart
+│   │   ├── menu_screen.dart
+│   │   ├── profile_screen.dart
+│   │   ├── room_screen.dart
+│   │   ├── routine_list_screen.dart
+│   │   ├── schedule_detail_screen.dart
+│   │   ├── schedule_list_screen.dart
+│   │   ├── schedule_overview_screen.dart
+│   │   ├── tag_list_screen.dart
+│   │   ├── tag_log_screen.dart
+│   │   ├── todo_list_screen.dart
+│   │   └── webview_flutter.dart
+│   ├── services
+│   │   ├── auth_service.dart
+│   │   ├── firestore_service.dart
+│   │   ├── image_upload_service.dart
+│   │   ├── message_service.dart
+│   │   ├── sync_service.dart
+│   │   ├── weather_dialogue_evaluator.dart
+│   │   └── weather_service.dart
+│   ├── usecases
+│   │   ├── schedule_delete_entry.dart
+│   │   └── schedule_usecase.dart
+│   ├── utils
+│   │   ├── friendly_date_utils.dart
+│   │   ├── image_source_selector.dart
+│   │   ├── image_uploader.dart
+│   │   ├── nlp_parser.dart
+│   │   ├── schedule_actions.dart
+│   │   ├── schedule_sorter.dart
+│   │   └── weekdays.dart
+│   └── widgets
+│       ├── blocks
+│       ├── chat_input_box.dart
+│       ├── chat_message_card.dart
+│       ├── image_upload_preview.dart
+│       ├── kakao_chat_style.dart
+│       ├── mode_date_selector.dart
+│       ├── routine_edit_form.dart
+│       ├── schedule_entry_tile.dart
+│       └── tags
+├── game
+│   ├── components
+│   │   ├── flame
+│   │   └── speech_bubble_component.dart
+│   ├── core
+│   │   ├── game_controller.dart
+│   │   ├── scene_conditions.dart
+│   │   └── weather_scene_controller.dart
+│   ├── overlay
+│   │   ├── events
+│   │   ├── registry
+│   │   ├── scene_conditions
+│   │   ├── scenes
+│   │   └── story
+│   ├── progress
+│   │   ├── progress_models.dart
+│   │   ├── progress_provider.dart
+│   │   ├── progress_repo.dart
+│   │   ├── progress_rules.dart
+│   │   ├── progress_service.dart
+│   │   ├── screens
+│   │   └── widgets
+│   └── room
+│       ├── day_event.dart
+│       ├── day_event_loader.dart
+│       ├── dialogue_helper.dart
+│       ├── girl_sprite.dart
+│       ├── jordy_sprite.dart
+│       └── room_scene.dart
+├── local_asset_server.dart
+├── main.dart
+└── tab_nav.dart
+
+31 directories, 75 files
