@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/image_uploader.dart';
 import '../../models/content_block.dart';
-import 'package:uuid/uuid.dart';
 
 class SelectImageAndAdd extends StatelessWidget {
   final void Function(List<ContentBlock>) onImagesAdded;

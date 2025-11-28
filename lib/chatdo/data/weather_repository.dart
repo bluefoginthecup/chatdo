@@ -1,5 +1,4 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
+
 import '/chatdo/services/weather_service.dart';
 
 

@@ -1,7 +1,6 @@
 // lib/features/text_dictionary/text_dictionary_service.dart
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../data/firestore/repos/text_dictionary_repo.dart';
 import 'package:hive/hive.dart';
 import 'dart:convert';

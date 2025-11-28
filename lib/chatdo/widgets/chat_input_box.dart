@@ -12,9 +12,7 @@ import '../utils/image_source_selector.dart';
 import '../widgets/image_upload_preview.dart';
 import '../models/upload_item.dart';
 import '../features/text_dictionary/custom_typeahead_textfield.dart';
-import '../data/firestore/repos/text_dictionary_repo.dart';
 import '../features/text_dictionary/text_dictionary_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:provider/provider.dart';
 
 

@@ -17,7 +17,6 @@ import 'chatdo/data/firestore/paths.dart';
 import 'chatdo/data/firestore/repos/routine_repo.dart';
 import 'chatdo/data/firestore/repos/message_repo.dart';
 import 'chatdo/data/firestore/repos/tags_repo.dart';
-import 'chatdo/data/firestore/repos/text_dictionary_repo.dart';
 import 'chatdo/features/text_dictionary/text_dictionary_provider.dart';
 
 // progress 모듈
@@ -28,8 +27,6 @@ import '/game/progress/progress_repo.dart';
 // Hive
 import 'package:hive_flutter/hive_flutter.dart';
 import 'chatdo/models/message.dart';
-import 'chatdo/stock/models/stock_item.dart'; // StockItemAdapter 등록용
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -54,9 +51,6 @@ Future<void> main() async {
   // Hive 어댑터 등록 (중복 등록 방지)
   if (!Hive.isAdapterRegistered(MessageAdapter().typeId)) {
     Hive.registerAdapter(MessageAdapter());
-  }
-  if (!Hive.isAdapterRegistered(StockItemAdapter().typeId)) {
-    Hive.registerAdapter(StockItemAdapter());
   }
 
   // 필요한 박스 오픈 (커스텀 타입/큐 등)

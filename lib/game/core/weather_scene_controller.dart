@@ -1,13 +1,8 @@
 import 'package:chatdo/chatdo/data/weather_repository.dart';
-import 'package:chatdo/game/components/speech_bubble_component.dart';
-import 'package:flame/components.dart';
-import 'package:chatdo/game/room/jordy_sprite.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import 'package:chatdo/chatdo/services/weather_service.dart';
 import 'package:chatdo/chatdo/models/weather_data.dart';
 import 'package:chatdo/chatdo/services/weather_dialogue_evaluator.dart';
-import 'package:chatdo/chatdo/data/weather_repository.dart';
 
 class WeatherSceneController {
   final WeatherRepository _repository = WeatherRepository();

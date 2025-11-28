@@ -8,7 +8,6 @@ import '../providers/schedule_provider.dart';
 import '../usecases/schedule_usecase.dart';
 import '../../game/core/game_controller.dart';
 import '../data/firestore/paths.dart';
-import 'package:provider/provider.dart'; // context.read<T>()
 import '/game/progress/progress_provider.dart'; // ← 네가 만든 ChangeNotifier
 import '/game/progress/progress_models.dart';   // RewardEvent
 

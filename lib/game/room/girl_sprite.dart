@@ -2,7 +2,6 @@ import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/animation.dart';
 
 enum _Phase { idleLeft, walkingRight, idleRight, walkingLeft }
 

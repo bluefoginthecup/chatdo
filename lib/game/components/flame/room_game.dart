@@ -1,8 +1,5 @@
 import 'package:flame/game.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chatdo/game/overlay/events/scene_event_manager.dart';
-import 'package:chatdo/game/overlay/scenes/scene_selector.dart';
-import 'package:flutter/foundation.dart';
 class RoomGame extends FlameGame {
   late final SceneEventManager sceneEventManager;
   bool _hasRunScenes = false;

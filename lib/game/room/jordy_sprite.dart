@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 import '/game/components/speech_bubble_component.dart';
 
 class JordySprite extends SpriteComponent with HasGameRef {

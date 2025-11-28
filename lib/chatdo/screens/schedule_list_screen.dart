@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 
 import '../models/schedule_entry.dart';
 import '../widgets/schedule_entry_tile.dart';
-import '../widgets/tags/tag_filter_bar.dart';
 import '../../game/core/game_controller.dart';
 import '../utils/friendly_date_utils.dart';
 import '../models/enums.dart';

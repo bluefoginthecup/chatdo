@@ -8,11 +8,6 @@ import 'hilohilo_game_view.dart';                 // (HTML5 WebView)
 import '../godot/godot_embed_screen.dart';        // iOS 임베디드 화면
 import 'profile_screen.dart';
 
-// 재고 모듈
-import 'package:hive_flutter/hive_flutter.dart';
-import '../stock/models/stock_item.dart';
-import '../stock/repo/hive_stock_repo.dart';
-import '../stock/screens/stock_list_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -70,40 +65,6 @@ class _MenuScreenState extends State<MenuScreen> {
     }
   }
 
-  Future<void> _openStockModule(BuildContext context) async {
-    // ✅ Hive 초기화 (이미 main.dart에서 했어도 안전)
-    try {
-      await Hive.initFlutter();
-    } catch (_) {
-      // 이미 초기화 된 경우 등은 무시
-    }
-
-    // ✅ 어댑터 등록 (중복등록 방지)
-    if (!Hive.isAdapterRegistered(StockItemAdapter().typeId)) {
-      Hive.registerAdapter(StockItemAdapter());
-    }
-
-    // ✅ 박스 오픈
-    final itemsBox = await Hive.openBox<StockItem>('stock_items');
-    final metaBox  = await Hive.openBox<List<String>>('stock_meta');
-
-    final repo = HiveStockRepo(itemsBox, metaBox);
-
-    // ✅ 기본 상위 폴더 보장
-    final existing = await repo.watchFolders().first;
-    if (existing.isEmpty) {
-      for (final f in const ['goods', 'raw material', 'sub material']) {
-        await repo.createFolder(f);
-      }
-    }
-
-    if (!context.mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => StockListScreen(repo: repo)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,14 +119,6 @@ class _MenuScreenState extends State<MenuScreen> {
                 MaterialPageRoute(builder: (_) => const TextDictionaryScreen()),
               );
             },
-          ),
-
-          // 재고관리
-          ListTile(
-            leading: const Icon(Icons.inventory_2_outlined),
-            title: const Text('재고관리'),
-            subtitle: const Text('완/반/원/부 간단 재고'),
-            onTap: () => _openStockModule(context),
           ),
 
           const Divider(),

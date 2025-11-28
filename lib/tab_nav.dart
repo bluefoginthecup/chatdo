@@ -7,7 +7,6 @@ import 'chatdo/screens/menu_screen.dart';
 import '../../game/core/game_controller.dart';
 import 'chatdo/providers/audio_manager.dart';
 import '/game/components/flame/room_game.dart';
-import '/game/progress/widgets/totals_chip.dart';
 
 
 class TabNav extends StatefulWidget {

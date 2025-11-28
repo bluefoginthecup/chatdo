@@ -9,7 +9,6 @@ import 'package:image_editor_plus/image_editor_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:chatdo/chatdo/widgets/check_image_format.dart';
 import 'package:image/image.dart' as img;
 
 Future<File?> compressImageIsolate(Map<String, dynamic> args) async {

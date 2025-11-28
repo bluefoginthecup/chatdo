@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'tag_log_screen.dart';
-import 'tag_management_screen.dart';
 import '/game/core/game_controller.dart';
 
 class TagListScreen extends StatelessWidget {
@@ -37,7 +36,6 @@ class TagListScreen extends StatelessWidget {
             child: TabBarView(
               children: [
                 TagLogScreen(gameController: gameController),
-                TagManagementScreen(gameController: gameController),
               ],
             ),
           ),

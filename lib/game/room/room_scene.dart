@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
 import 'package:chatdo/game/room/day_event.dart';
 import 'package:chatdo/game/room/girl_sprite.dart';
 import 'package:chatdo/game/room/jordy_sprite.dart';

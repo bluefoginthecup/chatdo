@@ -1,5 +1,3 @@
-import 'package:chatdo/game/overlay/scenes/day_events/tue_am_scene.dart';
-import 'package:chatdo/game/overlay/scene_conditions/day_events/tue_am_scene_condition.dart';
 import 'package:flutter/foundation.dart';
 import 'package:chatdo/game/overlay/scenes/day_events/sat_night_scene.dart';
 import 'package:chatdo/game/overlay/scene_conditions/day_events/sat_night_scene_condition.dart';
@@ -40,13 +38,6 @@ List<MapEntry<Future<bool> Function(), SceneBuilder>> buildDayEventScenes() => [
         (onCompleted) {
       print("🎯 MonNoonScene builder 실행됨");
       return MonNoonScene(onCompleted: onCompleted);
-    },
-  ),
-  MapEntry(
-    TueAmSceneCondition.shouldShow,
-        (onCompleted) {
-      print("🎯 TueAmScene builder 실행됨");
-      return TueAmScene(onCompleted: onCompleted);
     },
   ),
 ];
