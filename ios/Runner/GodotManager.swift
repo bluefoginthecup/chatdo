@@ -34,8 +34,8 @@ final class GodotManager {
       app = existing
     } else {
       // 번들 안의 hilohilo_ios.pck 존재 여부 확인
-      guard let _ = Bundle.main.path(forResource: "hilohilo_ios", ofType: "pck") else {
-        NSLog("⚠️ hilohilo_ios.pck not found in bundle. Please add it to Copy Bundle Resources.")
+      guard let _ = Bundle.main.path(forResource: "hilohilo_ios100", ofType: "pck") else {
+        NSLog("⚠️ hilohilo_ios100.pck not found in bundle. Please add it to Copy Bundle Resources.")
         let placeholder = UIView(frame: container.bounds)
         placeholder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         placeholder.backgroundColor = .systemBlue
@@ -45,7 +45,7 @@ final class GodotManager {
       }
 
       // ✅ packFile 인자로 파일 이름만 전달 (경로 X)
-      app = GodotApp(packFile: "hilohilo_ios.pck")
+      app = GodotApp(packFile: "hilohilo_ios100.pck")
       self.godotApp = app
     }
 
