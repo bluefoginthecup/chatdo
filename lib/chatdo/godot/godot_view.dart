@@ -8,7 +8,7 @@ class GodotView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return UiKitView(
+      return const UiKitView(
         viewType: 'GodotView', // iOS AppDelegate에서 등록한 ID
         creationParams: null,
         creationParamsCodec: StandardMessageCodec(),

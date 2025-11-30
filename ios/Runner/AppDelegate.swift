@@ -1,3 +1,4 @@
+// ios/Runner/AppDelegate.swift
 import UIKit
 import Flutter
 
@@ -9,23 +10,20 @@ import Flutter
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
 
-    // 1) 플러그인 자동 등록
+    // 기본 엔진에 플러그인 등록
     GeneratedPluginRegistrant.register(with: self)
 
-    // 2) Godot PlatformView 등록 (부모 VC 주입)
-    if let controller = window?.rootViewController as? FlutterViewController {
-      if let registrar = controller.registrar(forPlugin: "GodotPlatformView") {
-        registrar.register(
-          GodotPlatformViewFactory(parentViewController: controller),
-          withId: "GodotView"
-        )
-      } else {
-        NSLog("⚠️ Failed to get registrar for GodotPlatformView")
-      }
-    } else {
-      NSLog("⚠️ Root VC is not FlutterViewController; skipping GodotView registration.")
-    }
-
+      // ✅ controller 대신 self에서 registrar를 받아 등록
+          if let registrar = self.registrar(forPlugin: "GodotPlatformView") {
+            let parent = window?.rootViewController  // UIViewController?
+            registrar.register(
+              GodotPlatformViewFactory(parentViewController: parent),
+              withId: "GodotView"
+            )
+            NSLog("GodotView registered ✅")
+          } else {
+            NSLog("GodotView registration failed: registrar nil on AppDelegate.")
+          }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

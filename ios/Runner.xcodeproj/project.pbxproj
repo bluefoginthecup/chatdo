@@ -3,30 +3,31 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
-		2613CA6EDB1BD7E91F6E865A /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F95E7115DA7F100C8D976085 /* Pods_Runner.framework */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		418B6A89643B0D24A4B86417 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EA11EA5A530F71326CCAA69C /* Pods_RunnerTests.framework */; };
+		70D57FFAE5A0915B973346B5 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F968C57446175E38C87E5F4 /* Pods_Runner.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
-		C4EE64619D4085D3CF15EA78 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 107CDCC520698F013F756C7A /* Pods_RunnerTests.framework */; };
-		FF2D02262E6C72C300AED999 /* GodotContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2D02252E6C72B300AED999 /* GodotContainer.swift */; };
-		FF4021F32E6C59310097BC9F /* GodotPlatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF4021F22E6C591B0097BC9F /* GodotPlatformView.swift */; };
-		FF52947B2E6D4D5300CF3097 /* GodotManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF52947A2E6D4D5300CF3097 /* GodotManager.swift */; };
+		FF610C032EDB477F00A74A25 /* GodotPlatformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF4021F22E6C591B0097BC9F /* GodotPlatformView.swift */; };
+		FF610C042EDB47C500A74A25 /* GodotManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF52947A2E6D4D5300CF3097 /* GodotManager.swift */; };
+		FF610C052EDB47C500A74A25 /* GodotContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF2D02252E6C72B300AED999 /* GodotContainer.swift */; };
+		FF610C082EDB4B6100A74A25 /* SwiftGodotKit in Frameworks */ = {isa = PBXBuildFile; productRef = FF610C072EDB4B6100A74A25 /* SwiftGodotKit */; };
+		FF610C0A2EDB4B6100A74A25 /* TrivialSample in Frameworks */ = {isa = PBXBuildFile; productRef = FF610C092EDB4B6100A74A25 /* TrivialSample */; };
+		FF610C0C2EDB510F00A74A25 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = FF610C0B2EDB510E00A74A25 /* libc++.tbd */; };
+		FF610C0E2EDB521600A74A25 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF610C0D2EDB521600A74A25 /* Metal.framework */; };
+		FF610C102EDB522500A74A25 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF610C0F2EDB522500A74A25 /* MetalKit.framework */; };
+		FF610C122EDB525800A74A25 /* libc++abi.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = FF610C112EDB525700A74A25 /* libc++abi.tbd */; };
 		FF8B0B022E6C52160014CD76 /* hilohilo_ios.pck in Resources */ = {isa = PBXBuildFile; fileRef = FF8B0B012E6C52160014CD76 /* hilohilo_ios.pck */; };
 		FFB18F032DAB9B6E00F6DAFE /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FFB18F022DAB9B6E00F6DAFE /* GoogleService-Info.plist */; };
-		FFB2A4472E6C8235005E07F1 /* SwiftGodotKit in Frameworks */ = {isa = PBXBuildFile; productRef = FFB2A4462E6C8235005E07F1 /* SwiftGodotKit */; };
-		FFB2A4492E6C8D69005E07F1 /* MetalFX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFB2A4482E6C8D69005E07F1 /* MetalFX.framework */; };
-		FFB2A44B2E6C8F8F005E07F1 /* SwiftGodotKit in Frameworks */ = {isa = PBXBuildFile; productRef = FFB2A44A2E6C8F8F005E07F1 /* SwiftGodotKit */; };
-		FFB2A44D2E6C9000005E07F1 /* SwiftGodotKit in Frameworks */ = {isa = PBXBuildFile; productRef = FFB2A44C2E6C9000005E07F1 /* SwiftGodotKit */; };
-		FFB2A4502E6C909E005E07F1 /* SwiftGodot in Frameworks */ = {isa = PBXBuildFile; productRef = FFB2A44F2E6C909E005E07F1 /* SwiftGodot */; };
-		FFD7DB222E6CA9EA00DBA2C3 /* SwiftGodot in Embed Frameworks */ = {isa = PBXBuildFile; productRef = FFB2A44F2E6C909E005E07F1 /* SwiftGodot */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		FFB2A4492E6C8D69005E07F1 /* MetalFX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFB2A4482E6C8D69005E07F1 /* MetalFX.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,7 +47,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				FFD7DB222E6CA9EA00DBA2C3 /* SwiftGodot in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -54,19 +54,19 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0F2390EC30DEB811DE490662 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
-		107CDCC520698F013F756C7A /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		0DCDBA2BE0F4207BE875616B /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
-		15C02401E4C259E3ECD8D225 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
-		20EDC14C474CB9A24C140C6C /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
-		2668C6342A9B57D3EE4DE0E0 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		426804D12051F038EE12258F /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		65A0AF1884A12B65AEF3DBCB /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		6F968C57446175E38C87E5F4 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
+		925B92B830A46545541C19F7 /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -74,12 +74,21 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		DF74E0671B41DCD1A39662FB /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
-		E28AE6DDCD9DB5BD83B05312 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
-		F95E7115DA7F100C8D976085 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9B5E51CC44ED4FB9102A73DD /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		EA11EA5A530F71326CCAA69C /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		EA9986AA739218B1B685FD29 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		FF2D02252E6C72B300AED999 /* GodotContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GodotContainer.swift; sourceTree = "<group>"; };
 		FF4021F22E6C591B0097BC9F /* GodotPlatformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GodotPlatformView.swift; sourceTree = "<group>"; };
 		FF52947A2E6D4D5300CF3097 /* GodotManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GodotManager.swift; sourceTree = "<group>"; };
+		FF610BFC2EDB3D6B00A74A25 /* make_swiftgodot_xcframework.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = make_swiftgodot_xcframework.sh; path = ../make_swiftgodot_xcframework.sh; sourceTree = "<group>"; };
+		FF610BFD2EDB3ED600A74A25 /* swift-argument-parser */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = "swift-argument-parser"; sourceTree = "<group>"; };
+		FF610BFE2EDB3ED600A74A25 /* swift-docc-plugin */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = "swift-docc-plugin"; sourceTree = "<group>"; };
+		FF610BFF2EDB3ED600A74A25 /* swift-docc-symbolkit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = "swift-docc-symbolkit"; sourceTree = "<group>"; };
+		FF610C002EDB3ED600A74A25 /* swift-syntax */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = "swift-syntax"; sourceTree = "<group>"; };
+		FF610C0B2EDB510E00A74A25 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		FF610C0D2EDB521600A74A25 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		FF610C0F2EDB522500A74A25 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		FF610C112EDB525700A74A25 /* libc++abi.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++abi.tbd"; path = "usr/lib/libc++abi.tbd"; sourceTree = SDKROOT; };
 		FF8B0B012E6C52160014CD76 /* hilohilo_ios.pck */ = {isa = PBXFileReference; lastKnownFileType = file; name = hilohilo_ios.pck; path = Runner/GodotAssets/hilohilo_ios.pck; sourceTree = "<group>"; };
 		FFB18F022DAB9B6E00F6DAFE /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		FFB2A4482E6C8D69005E07F1 /* MetalFX.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalFX.framework; path = System/Library/Frameworks/MetalFX.framework; sourceTree = SDKROOT; };
@@ -90,12 +99,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FF610C122EDB525800A74A25 /* libc++abi.tbd in Frameworks */,
+				FF610C102EDB522500A74A25 /* MetalKit.framework in Frameworks */,
+				FF610C0E2EDB521600A74A25 /* Metal.framework in Frameworks */,
+				FF610C0C2EDB510F00A74A25 /* libc++.tbd in Frameworks */,
 				FFB2A4492E6C8D69005E07F1 /* MetalFX.framework in Frameworks */,
-				2613CA6EDB1BD7E91F6E865A /* Pods_Runner.framework in Frameworks */,
-				FFB2A44D2E6C9000005E07F1 /* SwiftGodotKit in Frameworks */,
-				FFB2A4472E6C8235005E07F1 /* SwiftGodotKit in Frameworks */,
-				FFB2A4502E6C909E005E07F1 /* SwiftGodot in Frameworks */,
-				FFB2A44B2E6C8F8F005E07F1 /* SwiftGodotKit in Frameworks */,
+				FF610C082EDB4B6100A74A25 /* SwiftGodotKit in Frameworks */,
+				FF610C0A2EDB4B6100A74A25 /* TrivialSample in Frameworks */,
+				70D57FFAE5A0915B973346B5 /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,7 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C4EE64619D4085D3CF15EA78 /* Pods_RunnerTests.framework in Frameworks */,
+				418B6A89643B0D24A4B86417 /* Pods_RunnerTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -121,12 +132,12 @@
 		57C35AD4289795A0A11C7036 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				0F2390EC30DEB811DE490662 /* Pods-Runner.debug.xcconfig */,
-				E28AE6DDCD9DB5BD83B05312 /* Pods-Runner.release.xcconfig */,
-				2668C6342A9B57D3EE4DE0E0 /* Pods-Runner.profile.xcconfig */,
-				20EDC14C474CB9A24C140C6C /* Pods-RunnerTests.debug.xcconfig */,
-				15C02401E4C259E3ECD8D225 /* Pods-RunnerTests.release.xcconfig */,
-				DF74E0671B41DCD1A39662FB /* Pods-RunnerTests.profile.xcconfig */,
+				65A0AF1884A12B65AEF3DBCB /* Pods-Runner.debug.xcconfig */,
+				426804D12051F038EE12258F /* Pods-Runner.release.xcconfig */,
+				9B5E51CC44ED4FB9102A73DD /* Pods-Runner.profile.xcconfig */,
+				925B92B830A46545541C19F7 /* Pods-RunnerTests.debug.xcconfig */,
+				EA9986AA739218B1B685FD29 /* Pods-RunnerTests.release.xcconfig */,
+				0DCDBA2BE0F4207BE875616B /* Pods-RunnerTests.profile.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -186,11 +197,54 @@
 		BB421150551EE289A12E8893 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				FF610C112EDB525700A74A25 /* libc++abi.tbd */,
+				FF610C0F2EDB522500A74A25 /* MetalKit.framework */,
+				FF610C0D2EDB521600A74A25 /* Metal.framework */,
+				FF610C0B2EDB510E00A74A25 /* libc++.tbd */,
+				FF610C022EDB3F2100A74A25 /* Frameworks */,
+				FF610C012EDB3ED600A74A25 /* checkouts */,
+				FF610BFC2EDB3D6B00A74A25 /* make_swiftgodot_xcframework.sh */,
+				FF610BFB2EDB3D4100A74A25 /* build_swiftgodot_tmp */,
+				FF610BFA2EDB3D2600A74A25 /* Frameworks */,
 				FFB2A4482E6C8D69005E07F1 /* MetalFX.framework */,
-				F95E7115DA7F100C8D976085 /* Pods_Runner.framework */,
-				107CDCC520698F013F756C7A /* Pods_RunnerTests.framework */,
+				6F968C57446175E38C87E5F4 /* Pods_Runner.framework */,
+				EA11EA5A530F71326CCAA69C /* Pods_RunnerTests.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FF610BFA2EDB3D2600A74A25 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Frameworks;
+			sourceTree = "<group>";
+		};
+		FF610BFB2EDB3D4100A74A25 /* build_swiftgodot_tmp */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = build_swiftgodot_tmp;
+			path = ../build_swiftgodot_tmp;
+			sourceTree = "<group>";
+		};
+		FF610C012EDB3ED600A74A25 /* checkouts */ = {
+			isa = PBXGroup;
+			children = (
+				FF610BFD2EDB3ED600A74A25 /* swift-argument-parser */,
+				FF610BFE2EDB3ED600A74A25 /* swift-docc-plugin */,
+				FF610BFF2EDB3ED600A74A25 /* swift-docc-symbolkit */,
+				FF610C002EDB3ED600A74A25 /* swift-syntax */,
+			);
+			name = checkouts;
+			path = ../../../build_swiftgodot_dd/SourcePackages/checkouts;
+			sourceTree = "<group>";
+		};
+		FF610C022EDB3F2100A74A25 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -200,7 +254,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */;
 			buildPhases = (
-				3D88274D7D50F7D5A9F69157 /* [CP] Check Pods Manifest.lock */,
+				ABBC0B0C7CB52982DF4E848B /* [CP] Check Pods Manifest.lock */,
 				331C807D294A63A400263BE5 /* Sources */,
 				331C807F294A63A400263BE5 /* Resources */,
 				AA59B053E9CD4697D5F550D8 /* Frameworks */,
@@ -219,7 +273,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
 			buildPhases = (
-				317873D65D0C22189C27E817 /* [CP] Check Pods Manifest.lock */,
+				F628658AD32708B9638E581A /* [CP] Check Pods Manifest.lock */,
 				9740EEB61CF901F6004384FC /* Run Script */,
 				FFA5FB792E707929001BCF71 /* New Run Script */,
 				97C146EA1CF9000F007C117D /* Sources */,
@@ -227,7 +281,7 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
-				0A4BED769DCFEA2181F368B8 /* [CP] Copy Pods Resources */,
+				A626BAFB38FF89DA4F8C4887 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -268,8 +322,7 @@
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
 			packageReferences = (
-				FFB2A4452E6C8235005E07F1 /* XCRemoteSwiftPackageReference "SwiftGodotkit" */,
-				FFB2A44E2E6C909E005E07F1 /* XCRemoteSwiftPackageReference "SwiftGodot" */,
+				FF610C132EDB581D00A74A25 /* XCLocalSwiftPackageReference "../../../dev/SwiftGodotKit" */,
 			);
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
@@ -305,45 +358,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		0A4BED769DCFEA2181F368B8 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		317873D65D0C22189C27E817 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Runner-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
 		3B06AD1E1E4923F5004D2608 /* Thin Binary */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -360,7 +374,43 @@
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin";
 		};
-		3D88274D7D50F7D5A9F69157 /* [CP] Check Pods Manifest.lock */ = {
+		9740EEB61CF901F6004384FC /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build\n";
+		};
+		A626BAFB38FF89DA4F8C4887 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		ABBC0B0C7CB52982DF4E848B /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -382,20 +432,27 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		9740EEB61CF901F6004384FC /* Run Script */ = {
+		F628658AD32708B9638E581A /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
-			inputPaths = (
+			inputFileListPaths = (
 			);
-			name = "Run Script";
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
 			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Runner-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
 		};
 		FFA5FB792E707929001BCF71 /* New Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -434,11 +491,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FF4021F32E6C59310097BC9F /* GodotPlatformView.swift in Sources */,
+				FF610C042EDB47C500A74A25 /* GodotManager.swift in Sources */,
+				FF610C052EDB47C500A74A25 /* GodotContainer.swift in Sources */,
+				FF610C032EDB477F00A74A25 /* GodotPlatformView.swift in Sources */,
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
-				FF52947B2E6D4D5300CF3097 /* GodotManager.swift in Sources */,
-				FF2D02262E6C72C300AED999 /* GodotContainer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -477,6 +534,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -530,6 +588,7 @@
 			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -540,6 +599,13 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+					"-lc++abi",
+					"-lz",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.chatdo.chatdo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -552,7 +618,7 @@
 		};
 		331C8088294A63A400263BE5 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 20EDC14C474CB9A24C140C6C /* Pods-RunnerTests.debug.xcconfig */;
+			baseConfigurationReference = 925B92B830A46545541C19F7 /* Pods-RunnerTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -570,7 +636,7 @@
 		};
 		331C8089294A63A400263BE5 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 15C02401E4C259E3ECD8D225 /* Pods-RunnerTests.release.xcconfig */;
+			baseConfigurationReference = EA9986AA739218B1B685FD29 /* Pods-RunnerTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -586,7 +652,7 @@
 		};
 		331C808A294A63A400263BE5 /* Profile */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DF74E0671B41DCD1A39662FB /* Pods-RunnerTests.profile.xcconfig */;
+			baseConfigurationReference = 0DCDBA2BE0F4207BE875616B /* Pods-RunnerTests.profile.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -605,6 +671,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -663,6 +730,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = AppIcon;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -718,6 +786,7 @@
 			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -728,6 +797,13 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+					"-lc++abi",
+					"-lz",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.chatdo.chatdo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -744,6 +820,7 @@
 			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -754,6 +831,13 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-ObjC",
+					"-lc++",
+					"-lc++abi",
+					"-lz",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.chatdo.chatdo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -799,43 +883,34 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		FF610C132EDB581D00A74A25 /* XCLocalSwiftPackageReference "../../../dev/SwiftGodotKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../dev/SwiftGodotKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
-		FFB2A4452E6C8235005E07F1 /* XCRemoteSwiftPackageReference "SwiftGodotkit" */ = {
+		FF610C062EDB4B6100A74A25 /* XCRemoteSwiftPackageReference "SwiftGodotKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/migueldeicaza/SwiftGodotkit";
+			repositoryURL = "https://github.com/migueldeicaza/SwiftGodotKit.git";
 			requirement = {
 				branch = main;
 				kind = branch;
 			};
 		};
-		FFB2A44E2E6C909E005E07F1 /* XCRemoteSwiftPackageReference "SwiftGodot" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/migueldeicaza/SwiftGodot.git";
-			requirement = {
-				kind = exactVersion;
-				version = 4.4.1;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		FFB2A4462E6C8235005E07F1 /* SwiftGodotKit */ = {
+		FF610C072EDB4B6100A74A25 /* SwiftGodotKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = FFB2A4452E6C8235005E07F1 /* XCRemoteSwiftPackageReference "SwiftGodotkit" */;
+			package = FF610C062EDB4B6100A74A25 /* XCRemoteSwiftPackageReference "SwiftGodotKit" */;
 			productName = SwiftGodotKit;
 		};
-		FFB2A44A2E6C8F8F005E07F1 /* SwiftGodotKit */ = {
+		FF610C092EDB4B6100A74A25 /* TrivialSample */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = SwiftGodotKit;
-		};
-		FFB2A44C2E6C9000005E07F1 /* SwiftGodotKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = SwiftGodotKit;
-		};
-		FFB2A44F2E6C909E005E07F1 /* SwiftGodot */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = FFB2A44E2E6C909E005E07F1 /* XCRemoteSwiftPackageReference "SwiftGodot" */;
-			productName = SwiftGodot;
+			package = FF610C062EDB4B6100A74A25 /* XCRemoteSwiftPackageReference "SwiftGodotKit" */;
+			productName = TrivialSample;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

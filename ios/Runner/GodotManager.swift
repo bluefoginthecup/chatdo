@@ -1,89 +1,113 @@
+// ios/Runner/GodotManager.swift
 import UIKit
+#if canImport(SwiftUI)
 import SwiftUI
-import SwiftGodot
+#endif
+#if canImport(SwiftGodotKit)
 import SwiftGodotKit
+#endif
 
-/// 앱 전체에서 단 하나의 GodotApp을 유지하고, 재사용 가능한 HostingVC를 관리
 final class GodotManager {
-    static let shared = GodotManager()
+  static let shared = GodotManager()
 
-    private(set) var app: GodotApp!
-    // ✅ AnyView로 타입 지워서 environment 수정자 사용 가능하게
-    private var hostingVC: UIHostingController<AnyView>?
-    private var isStarted = false
-    private var isAttached = false
+  private weak var parentVC: UIViewController?
+  private var hostingController: UIViewController?
+  private weak var mountedView: UIView?
 
-    private init() {
-        // 엔진은 단 한 번만 생성
-        app = GodotApp(packFile: "hilohilo_ios.pck")
-        // (선택) 여기서 pck 존재 체크 1회
-        // guard Bundle.main.url(forResource: "hilohilo_ios", withExtension: "pck") != nil else {
-        //     assertionFailure("❌ hilohilo_ios.pck not found")
-        //     return
-        // }
+  #if canImport(SwiftGodotKit)
+  private var godotApp: GodotApp?
+  #endif
+
+  func attach(to parent: UIViewController?, in container: UIView) {
+    if !Thread.isMainThread {
+      DispatchQueue.main.async { self.attach(to: parent, in: container) }
+      return
+    }
+    if mountedView != nil { return }  // 중복 방지
+    self.parentVC = parent
+
+    #if canImport(SwiftGodotKit)
+    #if canImport(SwiftUI)
+    // 1️⃣ GodotApp 생성 (packFile: String → 파일명만 전달)
+    let app: GodotApp
+    if let existing = self.godotApp {
+      app = existing
+    } else {
+      // 번들 안의 hilohilo_ios.pck 존재 여부 확인
+      guard let _ = Bundle.main.path(forResource: "hilohilo_ios", ofType: "pck") else {
+        NSLog("⚠️ hilohilo_ios.pck not found in bundle. Please add it to Copy Bundle Resources.")
+        let placeholder = UIView(frame: container.bounds)
+        placeholder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        placeholder.backgroundColor = .systemBlue
+        container.addSubview(placeholder)
+        self.mountedView = placeholder
+        return
+      }
+
+      // ✅ packFile 인자로 파일 이름만 전달 (경로 X)
+      app = GodotApp(packFile: "hilohilo_ios.pck")
+      self.godotApp = app
     }
 
-    private func startIfNeeded() {
-        guard !isStarted else { return }
-        // SwiftGodot/Kit 쪽에서 별도 스타트 필요 시 여기에
-        isStarted = true
+    // 2️⃣ SwiftUI 호스팅 (Environment에 app 주입)
+    let rootView = GodotAppView()
+      .environment(\.godotApp, app)
+
+    let host = UIHostingController(rootView: rootView)
+    let hostedView = host.view!
+    hostedView.translatesAutoresizingMaskIntoConstraints = false
+
+    if let parent = parent {
+      parent.addChild(host)
     }
+    container.addSubview(hostedView)
+    NSLayoutConstraint.activate([
+      hostedView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+      hostedView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+      hostedView.topAnchor.constraint(equalTo: container.topAnchor),
+      hostedView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+    ])
+    host.didMove(toParent: parent)
 
-    /// 재사용 가능한 Hosting VC 제공 (최초 1회 생성)
-    private func getHostingVC() -> UIHostingController<AnyView> {
-        if hostingVC == nil {
-            // ✅ environment(\.godotApp, app) 적용 후 AnyView로 감싸기
-            let root = AnyView(
-                GodotSwiftUIView().environment(\.godotApp, app)
-            )
-            hostingVC = UIHostingController(rootView: root)
-        }
-        return hostingVC!
+    self.hostingController = host
+    self.mountedView = hostedView
+    #else
+    // SwiftUI 미지원 시
+    let placeholder = UIView(frame: container.bounds)
+    placeholder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    placeholder.backgroundColor = .systemBlue
+    container.addSubview(placeholder)
+    self.mountedView = placeholder
+    #endif
+    #else
+    // SwiftGodotKit 미존재 시
+    let placeholder = UIView(frame: container.bounds)
+    placeholder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    placeholder.backgroundColor = .systemBlue
+    container.addSubview(placeholder)
+    self.mountedView = placeholder
+    #endif
+  }
+
+  func detach() {
+    if !Thread.isMainThread {
+      DispatchQueue.main.async { self.detach() }
+      return
     }
-
-    /// 부모 VC와 컨테이너 뷰에 Godot 호스팅 뷰를 붙임
-    func attach(to parent: UIViewController, in containerView: UIView) {
-        startIfNeeded()
-        let vc = getHostingVC()
-
-        if vc.parent !== parent {
-            parent.addChild(vc)
-            vc.view.frame = containerView.bounds
-            vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            containerView.addSubview(vc.view)
-            vc.didMove(toParent: parent)
-        } else if vc.view.superview !== containerView {
-            // 동일 부모인데 다른 컨테이너에 붙어 있으면 재부착
-            vc.view.removeFromSuperview()
-            vc.view.frame = containerView.bounds
-            containerView.addSubview(vc.view)
-        }
-
-        isAttached = true
-        // ❌ GodotApp에는 resume/focusIn 없음 → 호출 제거
+    if let host = hostingController {
+      host.willMove(toParent: nil)
+      host.view.removeFromSuperview()
+      host.removeFromParent()
+    } else {
+      mountedView?.removeFromSuperview()
     }
+    hostingController = nil
+    mountedView = nil
+    parentVC = nil
 
-    /// 뷰만 안전하게 떼기(엔진은 유지)
-    func detach() {
-        guard isAttached, let vc = hostingVC else { return }
-
-        // ❌ GodotApp에는 focusOut/pause 없음 → 호출 제거
-
-        if let parent = vc.parent {
-            vc.willMove(toParent: nil)
-            vc.view.removeFromSuperview()
-            vc.removeFromParent()
-        } else {
-            vc.view.removeFromSuperview()
-        }
-        isAttached = false
-    }
-
-    /// 앱 종료 시 1회만 호출(정말 필요할 때만)
-    func shutdownOnce() {
-        guard isStarted else { return }
-        // app.shutdown() 제공 시 여기에
-        isStarted = false
-    }
+    #if canImport(SwiftGodotKit)
+    godotApp = nil
+    #endif
+  }
 }
 

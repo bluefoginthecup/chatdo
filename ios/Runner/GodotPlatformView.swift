@@ -2,46 +2,41 @@ import Flutter
 import UIKit
 
 final class GodotPlatformView: NSObject, FlutterPlatformView {
-private let container = UIView()
-private let parentVC: UIViewController
+  private let container = UIView()
+  private weak var parentVC: UIViewController?
 
-init(frame: CGRect, parentVC: UIViewController) {
-self.parentVC = parentVC
-super.init()
-container.frame = frame
-container.backgroundColor = .black
-GodotManager.shared.attach(to: parentVC, in: container)
-}
+  init(frame: CGRect, parentVC: UIViewController?) {
+    self.parentVC = parentVC
+    super.init()
+    container.frame = frame
+    container.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    container.backgroundColor = .black
+    // GodotManager는 parentVC가 nil이어도 안전하도록 처리되어 있어야 합니다.
+    GodotManager.shared.attach(to: parentVC, in: container)
+  }
 
-func view() -> UIView { container }
+  func view() -> UIView { container }
 
-deinit {
-GodotManager.shared.detach()
-}
+  deinit {
+    GodotManager.shared.detach()
+  }
 }
 
 final class GodotPlatformViewFactory: NSObject, FlutterPlatformViewFactory {
-private weak var parentViewController: UIViewController?
+  private weak var parentViewController: UIViewController?
 
-init(parentViewController: UIViewController) {
-self.parentViewController = parentViewController
-super.init()
-}
+  // ✅ UIViewController? 로 변경 (nil 허용)
+  init(parentViewController: UIViewController?) {
+    self.parentViewController = parentViewController
+    super.init()
+  }
 
-func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
-FlutterStandardMessageCodec.sharedInstance()
-}
+  func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
+    FlutterStandardMessageCodec.sharedInstance()
+  }
 
-func create(withFrame frame: CGRect, viewIdentifier viewId: Int64, arguments args: Any?) -> FlutterPlatformView {
-guard let parent = parentViewController else {
-return FallbackEmptyPlatformView(frame: frame)
-}
-return GodotPlatformView(frame: frame, parentVC: parent)
-}
-}
-
-private final class FallbackEmptyPlatformView: NSObject, FlutterPlatformView {
-private let v: UIView
-init(frame: CGRect) { v = UIView(frame: frame); super.init() }
-func view() -> UIView { v }
+  func create(withFrame frame: CGRect, viewIdentifier viewId: Int64, arguments args: Any?) -> FlutterPlatformView {
+    // parent가 nil이어도 생성 (attach 내부에서 nil-safe)
+    return GodotPlatformView(frame: frame, parentVC: parentViewController)
+  }
 }
