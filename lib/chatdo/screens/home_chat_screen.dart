@@ -17,6 +17,7 @@ import '../screens/schedule_detail_screen.dart';
 import '../models/enums.dart';
 import '../widgets/chat_message_card.dart';
 import '../data/firestore/repos/message_repo.dart';
+import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint용
 
 
 class HomeChatScreen extends StatefulWidget {
@@ -44,9 +45,19 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   bool _shouldRefocusOnResume = true;
 
   // 🔥 페이징 변수
-  static const int _pageSize = 50;
+  static const int _pageSize = 10;
   bool _isLoadingMore = false;
   int _loadedCount = 0;
+  int _totalCount = 0; // 전체 개수 추적 (디버그 표시용)
+  bool get _hasMoreLocal => _loadedCount < _totalCount;
+
+
+  // 디버그 출력 도우미
+    void _log(String msg) {
+        if (kDebugMode) {
+          debugPrint('[HomeChatPaging] $msg');
+        }
+      }
 
 
   @override
@@ -93,6 +104,8 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     final from = (len - _pageSize) < 0 ? 0 : (len - _pageSize);
     final to = len;
 
+    _log('INIT: total=$len, pageSize=$_pageSize, range=[$from, $to)');
+
     final List<Map<String, dynamic>> slice = [];
 
     for (int i = from; i < to; i++) {
@@ -120,7 +133,13 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
     setState(() {
       _messageLog = slice;
       _loadedCount = slice.length;
+      _totalCount = len;
     });
+    if (slice.isNotEmpty) {
+            _log('INIT: loaded=${slice.length}, firstTs=${slice.first['timestamp']}, lastTs=${slice.last['timestamp']}');
+        } else {
+          _log('INIT: loaded=0');
+        }
 
     await Future.delayed(const Duration(milliseconds: 100));
     _scrollToBottom();
@@ -138,14 +157,18 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       final keys = box.keys.toList();
       final len = keys.length;
 
-      if (_loadedCount >= len) return;
+      if (_loadedCount >= len) {
+                _log('LOAD_MORE: all loaded. loadedCount=$_loadedCount >= total=$len');
+            return;
+          }
 
       final remain = len - _loadedCount;
       final take = remain >= _pageSize ? _pageSize : remain;
       final from = (len - _loadedCount - take);
       final to = (len - _loadedCount);
 
-      final List<Map<String, dynamic>> more = [];
+    _log('LOAD_MORE: total=$len, loaded=$_loadedCount, remain=$remain, take=$take, range=[$from, $to)');
+    final List<Map<String, dynamic>> more = [];
 
       for (int i = from; i < to; i++) {
         final k = keys[i];
@@ -173,7 +196,11 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         setState(() {
           _messageLog = [...more, ..._messageLog];
           _loadedCount += more.length;
+          _totalCount = len;
         });
+    _log('LOAD_MORE: appended=${more.length}, newLoaded=$_loadedCount/${_totalCount}');
+    } else {
+        _log('LOAD_MORE: no more items found in range.');
       }
     } finally {
       _isLoadingMore = false;
@@ -182,9 +209,32 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
 
   void _onScroll() {
     if (_scrollController.position.pixels <= 150 && !_isLoadingMore) {
-      _loadMoreFromHive();
-    }
+            _log('SCROLL: near top (pixels=${_scrollController.position.pixels}), trigger load more');
+            _loadMoreFromHive();
+        }
+
   }
+
+  // 🔥 원격에서 과거 배치 1회 동기화 (Repo 호출)
+    Future<int> _syncOlderFromRemoteOnce() async {
+        final uid = _userId;
+        if (uid == null) return 0;
+        // 현재 화면에서 가장 오래된 ts 기준
+        int oldestTs = DateTime.now().millisecondsSinceEpoch;
+        if (_messageLog.isNotEmpty) {
+          final ts = _messageLog.first['timestamp'];
+          if (ts is int) oldestTs = ts;
+        }
+        final n = await _messageRepo.syncOlderToHive(
+          uid: uid,
+          olderThanTs: oldestTs,
+          limit: _pageSize,
+        );
+        if (n > 0) {
+          await _loadMoreFromHive(); // 갱신 반영
+        }
+        return n;
+      }
 
   // ─────────────────────────────────────────────
   // 메시지 전송 (기존 그대로 유지)
@@ -237,7 +287,11 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
         'uploadState': localPaths.isEmpty ? 'done' : 'queued',
       });
       _loadedCount++;
+      _totalCount++; // 새 메시지도 전체 개수 +1 로 간주
+
     });
+    _log('SEND: appended one. loadedCount=$_loadedCount / total=$_totalCount');
+
 
     _controller.clear();
     _scrollToBottom();
@@ -277,21 +331,61 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ChatDo')),
+        appBar: AppBar(
+                    title: const Text('ChatDo'),
+                actions: [
+              IconButton(
+                tooltip: '원격 동기화',
+                    icon: const Icon(Icons.sync),
+                onPressed: () async {
+                  final n = await _syncOlderFromRemoteOnce();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(n == 0 ? '원격에 더 없다' : '$n개 동기화')),
+                  );
+                },
+              ),
+            ],
+          ),
       body: SafeArea(
         child: Column(
           children: [
+            if (kDebugMode)
+                          Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: Row(
+                        children: [
+                          const Icon(Icons.bug_report, size: 16),
+                            const SizedBox(width: 8),
+                            Flexible(
+                                  child: Text(
+                                '[DEBUG] total: $_totalCount, loaded: $_loadedCount, pageSize: $_pageSize, isLoading: $_isLoadingMore',
+                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
             // 🔥 페이징되는 메시지 리스트
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: _messageLog.length,
-                itemBuilder: (context, index) {
-                  final msg = _messageLog[index];
-                  final prev = index > 0 ? _messageLog[index - 1] : null;
 
-                  final dateStr = (msg['date'] ?? '').toString();
+    // 맨 위 헤더 한 칸 추가 (로컬 더보기/원격 동기화 버튼)
+                    itemCount: _messageLog.length + 1,
+
+    itemBuilder: (context, index) {
+    if (index == 0) {
+                        return _buildHeaderBar();
+                      }
+                      final realIndex = index - 1;
+                      final msg = _messageLog[realIndex];
+                      final prev = realIndex > 0 ? _messageLog[realIndex - 1] : null;
+
+
+    final dateStr = (msg['date'] ?? '').toString();
                   final prevDateStr =
                   prev == null ? null : (prev['date'] ?? '').toString();
                   final showDateHeader = prevDateStr != dateStr;
@@ -309,6 +403,14 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
                             ),
                           ),
                         ),
+    if (kDebugMode)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '[#${index + 1}/${_messageLog.length}] id=${msg['id'] ?? '-'} ts=${msg['timestamp'] ?? '-'}',
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ),
                       ChatMessageCard(
                         msg: msg,
                         onOpenDetail: _openScheduleDetail,
@@ -377,6 +479,39 @@ class _HomeChatScreenState extends State<HomeChatScreen> with WidgetsBindingObse
       if (result != ConnectivityResult.none) {
         SyncService.uploadAllIfConnected();
       }
-    });
+    }
+    );
   }
+
+    // ────────────────
+    // 헤더(맨 위): 로컬 더보기 / 원격 동기화
+    // ────────────────
+    Widget _buildHeaderBar() {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_hasMoreLocal)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.expand_less),
+                  label: const Text('과거 더보기(로컬)'),
+                  onPressed: _loadMoreFromHive,
+                )
+              else
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.cloud_download),
+                  label: const Text('원격에서 가져오기'),
+                  onPressed: () async {
+                    final n = await _syncOlderFromRemoteOnce();
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(n == 0 ? '원격에 더 없다' : '$n개 동기화')),
+                    );
+                  },
+                ),
+            ],
+          ),
+        );
+      }
 }
